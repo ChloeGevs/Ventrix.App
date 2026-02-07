@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Ventrix.App/Ventrix.App.csproj" />
+  <Project Path="Ventrix.UI/Ventrix.UI.csproj" />
+</Solution>
