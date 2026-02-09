@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Ventrix.UI
+namespace 
 {
     public partial class Form1 : Form
     {

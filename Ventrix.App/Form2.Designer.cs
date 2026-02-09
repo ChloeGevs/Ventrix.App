@@ -1,4 +1,4 @@
-﻿namespace 
+﻿namespace Ventrix.App
 {
     partial class Form2
     {

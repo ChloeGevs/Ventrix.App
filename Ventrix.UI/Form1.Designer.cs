@@ -1,4 +1,4 @@
-﻿namespace Ventrix.UI
+﻿namespace 
 {
     partial class Form1
     {

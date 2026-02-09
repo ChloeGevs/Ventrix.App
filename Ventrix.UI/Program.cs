@@ -1,4 +1,4 @@
-namespace Ventrix.UI
+namespace 
 {
     internal static class Program
     {

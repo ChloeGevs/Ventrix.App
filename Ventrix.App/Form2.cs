@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
-namespace 
+namespace Ventrix.App
 {
     public partial class Form2 : Form
     {
