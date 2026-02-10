@@ -38,7 +38,7 @@ namespace Ventrix.App
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             this.UpdateStyles();
 
-            var preference = 2; 
+            var preference = 2;
             DwmSetWindowAttribute(this.Handle, 33, ref preference, sizeof(int));
 
             tableLayoutPanel1.BackColor = Color.Transparent;
@@ -46,15 +46,14 @@ namespace Ventrix.App
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            panelLoginCard.BorderStyle = BorderStyle.FixedSingle;
+            
             panelLoginCard.BackColor = Color.White;
             tableLayoutPanel1.BackColor = Color.Transparent;
             tableLayoutPanel1.Dock = DockStyle.Fill;
             this.BackgroundImageLayout = ImageLayout.Stretch;
             this.DoubleBuffered = true;
 
-            panelUserWrapper.BackColor = Color.FromArgb(30, 0, 0, 0);
-            panelPassWrapper.BackColor = Color.FromArgb(30, 0, 0, 0);
+
 
             SendMessage(textBoxName.Handle, 0x1501, 0, "Username or Email");
             SendMessage(textBoxPassword.Handle, 0x1501, 0, "Enter Password");
@@ -65,7 +64,7 @@ namespace Ventrix.App
             Application.Exit();
         }
 
-        private void btnMaximized_Click(object sender, EventArgs e)
+        private void btnMaximize_Click(object sender, EventArgs e)
         {
             this.SuspendLayout();
             this.WindowState = (this.WindowState == FormWindowState.Normal)
@@ -75,11 +74,11 @@ namespace Ventrix.App
             tableLayoutPanel1.PerformLayout();
 
             this.ResumeLayout(true);
-            this.Invalidate(true); 
+            this.Invalidate(true);
             this.Refresh();
         }
 
-        private void btnMinimized_Click(object sender, EventArgs e)
+        private void btnMinimize_Click(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Minimized;
         }
@@ -93,7 +92,7 @@ namespace Ventrix.App
 
             if (this.WindowState == FormWindowState.Normal)
             {
-               
+
                 this.CenterToScreen();
             }
 
@@ -106,30 +105,6 @@ namespace Ventrix.App
 
             panelLoginCard.Invalidate();
             panelLoginCard.Update();
-        }
-
-        private void textBoxName_Enter(object sender, EventArgs e)
-        {
-            panelUnderline1.BackColor = Color.FromArgb(24, 119, 242);
-            panelUnderline1.Height = 2;
-        }
-
-        private void textBoxName_Leave(object sender, EventArgs e)
-        {
-            panelUnderline1.BackColor = Color.LightGray;
-            panelUnderline1.Height = 1;
-        }
-
-        private void textBoxPassword_Enter(object sender, EventArgs e)
-        {
-            panelUnderline2.BackColor = Color.FromArgb(24, 119, 242);
-            panelUnderline2.Height = 2;
-        }
-
-        private void textBoxPassword_Leave(object sender, EventArgs e)
-        {
-            panelUnderline2.BackColor = Color.LightGray;
-            panelUnderline2.Height = 1;
         }
 
         private void btnToggle_Click(object sender, EventArgs e)
@@ -145,6 +120,6 @@ namespace Ventrix.App
                 SendMessage(this.Handle, 0x112, 0xf012, 0);
             }
         }
-        
+
     }
 }

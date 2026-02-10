@@ -28,38 +28,52 @@
         /// </summary>
         private void InitializeComponent()
         {
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form2));
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             tableLayoutPanel1 = new TableLayoutPanel();
             panel1 = new Panel();
-            btnMinimize = new Button();
-            btnMaximize = new Button();
-            btnClose = new Button();
-            panelGlowWrapper = new Panel();
-            panelCreateAccCard = new Panel();
-            btnToggleConfirmPass = new Button();
-            btnTogglePassword = new Button();
-            textBoxPassword = new TextBox();
-            linkLabelGoToLogin = new LinkLabel();
-            labelGoToLogin = new Label();
-            btnSignup = new Button();
-            labelConfirmPass = new Label();
-            textBoxConfirmPass = new TextBox();
-            labelBusinessName = new Label();
-            textBoxBusinessName = new TextBox();
-            labelPassword = new Label();
-            labelEmail = new Label();
-            labelCreateAcc = new Label();
-            textBoxEmail = new TextBox();
+            btnClose = new Guna.UI2.WinForms.Guna2Button();
+            btnMaximize = new Guna.UI2.WinForms.Guna2Button();
+            btnMinimize = new Guna.UI2.WinForms.Guna2Button();
             panel2 = new Panel();
-            pictureBox2 = new PictureBox();
-            pictureBox1 = new PictureBox();
+            guna2PictureBox1 = new Guna.UI2.WinForms.Guna2PictureBox();
+            guna2CirclePictureBox1 = new Guna.UI2.WinForms.Guna2CirclePictureBox();
+            guna2ShadowPanel1 = new Guna.UI2.WinForms.Guna2ShadowPanel();
+            labelCreateAcc = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            labelBackToLogin = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            btnCreateAccount = new Guna.UI2.WinForms.Guna2Button();
+            labelBusinessName = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            textBoxBusinessName = new Guna.UI2.WinForms.Guna2TextBox();
+            labelPassword = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            textBoxPassword = new Guna.UI2.WinForms.Guna2TextBox();
+            labelUserName = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            textBoxUserName = new Guna.UI2.WinForms.Guna2TextBox();
+            labelEmail = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            textBoxEmail = new Guna.UI2.WinForms.Guna2TextBox();
             tableLayoutPanel1.SuspendLayout();
             panel1.SuspendLayout();
-            panelGlowWrapper.SuspendLayout();
-            panelCreateAccCard.SuspendLayout();
             panel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)guna2CirclePictureBox1).BeginInit();
+            guna2ShadowPanel1.SuspendLayout();
             SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -71,8 +85,8 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 550F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             tableLayoutPanel1.Controls.Add(panel1, 2, 0);
-            tableLayoutPanel1.Controls.Add(panelGlowWrapper, 1, 1);
             tableLayoutPanel1.Controls.Add(panel2, 1, 0);
+            tableLayoutPanel1.Controls.Add(guna2ShadowPanel1, 1, 1);
             tableLayoutPanel1.Location = new Point(0, 0);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 3;
@@ -86,280 +100,299 @@
             // 
             panel1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             panel1.BackgroundImageLayout = ImageLayout.Zoom;
-            panel1.Controls.Add(btnMinimize);
-            panel1.Controls.Add(btnMaximize);
             panel1.Controls.Add(btnClose);
+            panel1.Controls.Add(btnMaximize);
+            panel1.Controls.Add(btnMinimize);
             panel1.Location = new Point(918, 3);
             panel1.Name = "panel1";
             panel1.Size = new Size(359, 69);
             panel1.TabIndex = 0;
             // 
-            // btnMinimize
-            // 
-            btnMinimize.Anchor = AnchorStyles.None;
-            btnMinimize.BackColor = Color.Transparent;
-            btnMinimize.BackgroundImage = Properties.Resources.minimize;
-            btnMinimize.BackgroundImageLayout = ImageLayout.Zoom;
-            btnMinimize.FlatAppearance.BorderSize = 0;
-            btnMinimize.FlatAppearance.MouseDownBackColor = Color.FromArgb(100, 255, 255, 255);
-            btnMinimize.FlatAppearance.MouseOverBackColor = Color.FromArgb(60, 255, 255, 255);
-            btnMinimize.FlatStyle = FlatStyle.Flat;
-            btnMinimize.Location = new Point(214, 3);
-            btnMinimize.Name = "btnMinimize";
-            btnMinimize.Size = new Size(30, 35);
-            btnMinimize.TabIndex = 2;
-            btnMinimize.UseVisualStyleBackColor = false;
-            btnMinimize.Click += btnMinimize_Click;
-            // 
-            // btnMaximize
-            // 
-            btnMaximize.Anchor = AnchorStyles.None;
-            btnMaximize.BackgroundImage = Properties.Resources.maximize;
-            btnMaximize.BackgroundImageLayout = ImageLayout.Zoom;
-            btnMaximize.FlatAppearance.BorderSize = 0;
-            btnMaximize.FlatAppearance.MouseDownBackColor = Color.FromArgb(100, 255, 255, 255);
-            btnMaximize.FlatAppearance.MouseOverBackColor = Color.FromArgb(60, 255, 255, 255);
-            btnMaximize.FlatStyle = FlatStyle.Flat;
-            btnMaximize.Location = new Point(267, 3);
-            btnMaximize.Name = "btnMaximize";
-            btnMaximize.Size = new Size(30, 35);
-            btnMaximize.TabIndex = 1;
-            btnMaximize.UseVisualStyleBackColor = true;
-            btnMaximize.Click += btnMaximize_Click;
-            // 
             // btnClose
             // 
             btnClose.Anchor = AnchorStyles.None;
-            btnClose.BackColor = Color.Transparent;
             btnClose.BackgroundImage = Properties.Resources.close;
             btnClose.BackgroundImageLayout = ImageLayout.Zoom;
-            btnClose.FlatAppearance.BorderSize = 0;
-            btnClose.FlatAppearance.MouseDownBackColor = Color.Firebrick;
-            btnClose.FlatAppearance.MouseOverBackColor = Color.FromArgb(60, 255, 255, 255);
-            btnClose.FlatStyle = FlatStyle.Flat;
-            btnClose.Location = new Point(320, 3);
+            btnClose.CustomizableEdges = customizableEdges1;
+            btnClose.DisabledState.BorderColor = Color.DarkGray;
+            btnClose.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnClose.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnClose.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnClose.FillColor = Color.Transparent;
+            btnClose.Font = new Font("Segoe UI", 9F);
+            btnClose.ForeColor = Color.White;
+            btnClose.Location = new Point(325, 3);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(30, 35);
-            btnClose.TabIndex = 0;
-            btnClose.UseVisualStyleBackColor = false;
+            btnClose.ShadowDecoration.CustomizableEdges = customizableEdges2;
+            btnClose.Size = new Size(25, 36);
+            btnClose.TabIndex = 4;
             btnClose.Click += btnClose_Click;
             // 
-            // panelGlowWrapper
+            // btnMaximize
             // 
-            panelGlowWrapper.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            panelGlowWrapper.BackColor = Color.DimGray;
-            panelGlowWrapper.Controls.Add(panelCreateAccCard);
-            panelGlowWrapper.Location = new Point(368, 78);
-            panelGlowWrapper.Name = "panelGlowWrapper";
-            panelGlowWrapper.Padding = new Padding(1);
-            panelGlowWrapper.Size = new Size(544, 644);
-            panelGlowWrapper.TabIndex = 1;
+            btnMaximize.BackgroundImage = Properties.Resources.maximize;
+            btnMaximize.BackgroundImageLayout = ImageLayout.Zoom;
+            btnMaximize.CustomizableEdges = customizableEdges3;
+            btnMaximize.DisabledState.BorderColor = Color.DarkGray;
+            btnMaximize.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnMaximize.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnMaximize.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnMaximize.FillColor = Color.Transparent;
+            btnMaximize.Font = new Font("Segoe UI", 9F);
+            btnMaximize.ForeColor = Color.White;
+            btnMaximize.Location = new Point(273, 3);
+            btnMaximize.Name = "btnMaximize";
+            btnMaximize.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            btnMaximize.Size = new Size(30, 36);
+            btnMaximize.TabIndex = 4;
+            btnMaximize.Click += btnMaximize_Click;
             // 
-            // panelCreateAccCard
+            // btnMinimize
             // 
-            panelCreateAccCard.BackColor = Color.White;
-            panelCreateAccCard.BackgroundImageLayout = ImageLayout.Zoom;
-            panelCreateAccCard.Controls.Add(btnToggleConfirmPass);
-            panelCreateAccCard.Controls.Add(btnTogglePassword);
-            panelCreateAccCard.Controls.Add(textBoxPassword);
-            panelCreateAccCard.Controls.Add(linkLabelGoToLogin);
-            panelCreateAccCard.Controls.Add(labelGoToLogin);
-            panelCreateAccCard.Controls.Add(btnSignup);
-            panelCreateAccCard.Controls.Add(labelConfirmPass);
-            panelCreateAccCard.Controls.Add(textBoxConfirmPass);
-            panelCreateAccCard.Controls.Add(labelBusinessName);
-            panelCreateAccCard.Controls.Add(textBoxBusinessName);
-            panelCreateAccCard.Controls.Add(labelPassword);
-            panelCreateAccCard.Controls.Add(labelEmail);
-            panelCreateAccCard.Controls.Add(labelCreateAcc);
-            panelCreateAccCard.Controls.Add(textBoxEmail);
-            panelCreateAccCard.Dock = DockStyle.Fill;
-            panelCreateAccCard.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            panelCreateAccCard.Location = new Point(1, 1);
-            panelCreateAccCard.Margin = new Padding(0);
-            panelCreateAccCard.Name = "panelCreateAccCard";
-            panelCreateAccCard.Padding = new Padding(20);
-            panelCreateAccCard.RightToLeft = RightToLeft.No;
-            panelCreateAccCard.Size = new Size(542, 642);
-            panelCreateAccCard.TabIndex = 0;
-            // 
-            // btnToggleConfirmPass
-            // 
-            btnToggleConfirmPass.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnToggleConfirmPass.BackColor = Color.Transparent;
-            btnToggleConfirmPass.BackgroundImage = Properties.Resources.eye;
-            btnToggleConfirmPass.BackgroundImageLayout = ImageLayout.Zoom;
-            btnToggleConfirmPass.Location = new Point(445, 294);
-            btnToggleConfirmPass.Name = "btnToggleConfirmPass";
-            btnToggleConfirmPass.Size = new Size(40, 30);
-            btnToggleConfirmPass.TabIndex = 13;
-            btnToggleConfirmPass.UseVisualStyleBackColor = false;
-            // 
-            // btnTogglePassword
-            // 
-            btnTogglePassword.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnTogglePassword.BackColor = Color.Transparent;
-            btnTogglePassword.BackgroundImage = Properties.Resources.eye;
-            btnTogglePassword.BackgroundImageLayout = ImageLayout.Zoom;
-            btnTogglePassword.Location = new Point(445, 204);
-            btnTogglePassword.Name = "btnTogglePassword";
-            btnTogglePassword.Size = new Size(41, 30);
-            btnTogglePassword.TabIndex = 12;
-            btnTogglePassword.UseVisualStyleBackColor = false;
-            // 
-            // textBoxPassword
-            // 
-            textBoxPassword.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBoxPassword.Location = new Point(49, 204);
-            textBoxPassword.Name = "textBoxPassword";
-            textBoxPassword.Size = new Size(436, 33);
-            textBoxPassword.TabIndex = 3;
-            // 
-            // linkLabelGoToLogin
-            // 
-            linkLabelGoToLogin.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            linkLabelGoToLogin.AutoSize = true;
-            linkLabelGoToLogin.Location = new Point(328, 560);
-            linkLabelGoToLogin.Name = "linkLabelGoToLogin";
-            linkLabelGoToLogin.Size = new Size(61, 29);
-            linkLabelGoToLogin.TabIndex = 11;
-            linkLabelGoToLogin.TabStop = true;
-            linkLabelGoToLogin.Text = "Log in";
-            // 
-            // labelGoToLogin
-            // 
-            labelGoToLogin.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            labelGoToLogin.AutoSize = true;
-            labelGoToLogin.Location = new Point(135, 560);
-            labelGoToLogin.Name = "labelGoToLogin";
-            labelGoToLogin.Size = new Size(211, 29);
-            labelGoToLogin.TabIndex = 10;
-            labelGoToLogin.Text = "Already have an account?";
-            // 
-            // btnSignup
-            // 
-            btnSignup.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnSignup.BackColor = Color.DarkBlue;
-            btnSignup.BackgroundImageLayout = ImageLayout.None;
-            btnSignup.FlatStyle = FlatStyle.Flat;
-            btnSignup.ForeColor = Color.White;
-            btnSignup.Location = new Point(49, 500);
-            btnSignup.Name = "btnSignup";
-            btnSignup.Size = new Size(435, 57);
-            btnSignup.TabIndex = 9;
-            btnSignup.Text = "CREATE ACCOUNT";
-            btnSignup.UseVisualStyleBackColor = false;
-            // 
-            // labelConfirmPass
-            // 
-            labelConfirmPass.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            labelConfirmPass.AutoSize = true;
-            labelConfirmPass.Location = new Point(49, 265);
-            labelConfirmPass.Name = "labelConfirmPass";
-            labelConfirmPass.Size = new Size(153, 29);
-            labelConfirmPass.TabIndex = 8;
-            labelConfirmPass.Text = "Confirm Password";
-            // 
-            // textBoxConfirmPass
-            // 
-            textBoxConfirmPass.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBoxConfirmPass.Location = new Point(49, 294);
-            textBoxConfirmPass.Name = "textBoxConfirmPass";
-            textBoxConfirmPass.Size = new Size(436, 33);
-            textBoxConfirmPass.TabIndex = 7;
-            // 
-            // labelBusinessName
-            // 
-            labelBusinessName.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            labelBusinessName.AutoSize = true;
-            labelBusinessName.Location = new Point(49, 357);
-            labelBusinessName.Name = "labelBusinessName";
-            labelBusinessName.Size = new Size(128, 29);
-            labelBusinessName.TabIndex = 6;
-            labelBusinessName.Text = "Business Name";
-            // 
-            // textBoxBusinessName
-            // 
-            textBoxBusinessName.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBoxBusinessName.Location = new Point(49, 386);
-            textBoxBusinessName.Name = "textBoxBusinessName";
-            textBoxBusinessName.Size = new Size(436, 33);
-            textBoxBusinessName.TabIndex = 5;
-            // 
-            // labelPassword
-            // 
-            labelPassword.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            labelPassword.AutoSize = true;
-            labelPassword.Location = new Point(49, 175);
-            labelPassword.Name = "labelPassword";
-            labelPassword.Size = new Size(86, 29);
-            labelPassword.TabIndex = 4;
-            labelPassword.Text = "Password";
-            // 
-            // labelEmail
-            // 
-            labelEmail.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            labelEmail.AutoSize = true;
-            labelEmail.Location = new Point(49, 82);
-            labelEmail.Name = "labelEmail";
-            labelEmail.Size = new Size(58, 29);
-            labelEmail.TabIndex = 2;
-            labelEmail.Text = "Email";
-            // 
-            // labelCreateAcc
-            // 
-            labelCreateAcc.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            labelCreateAcc.AutoSize = true;
-            labelCreateAcc.Font = new Font("Sitka Banner", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            labelCreateAcc.Location = new Point(180, 20);
-            labelCreateAcc.Name = "labelCreateAcc";
-            labelCreateAcc.Size = new Size(223, 26);
-            labelCreateAcc.TabIndex = 1;
-            labelCreateAcc.Text = "Create Your Account for Free";
-            // 
-            // textBoxEmail
-            // 
-            textBoxEmail.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            textBoxEmail.Location = new Point(50, 111);
-            textBoxEmail.Name = "textBoxEmail";
-            textBoxEmail.Size = new Size(436, 33);
-            textBoxEmail.TabIndex = 0;
-            textBoxEmail.TextChanged += textBoxEmail_TextChanged;
+            btnMinimize.BackgroundImage = Properties.Resources.minimize;
+            btnMinimize.BackgroundImageLayout = ImageLayout.Zoom;
+            btnMinimize.CustomizableEdges = customizableEdges5;
+            btnMinimize.DisabledState.BorderColor = Color.DarkGray;
+            btnMinimize.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnMinimize.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnMinimize.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnMinimize.FillColor = Color.Transparent;
+            btnMinimize.Font = new Font("Segoe UI", 9F);
+            btnMinimize.ForeColor = Color.White;
+            btnMinimize.Location = new Point(220, 3);
+            btnMinimize.Name = "btnMinimize";
+            btnMinimize.ShadowDecoration.CustomizableEdges = customizableEdges6;
+            btnMinimize.Size = new Size(25, 36);
+            btnMinimize.TabIndex = 4;
+            btnMinimize.Click += btnMinimize_Click;
             // 
             // panel2
             // 
             panel2.Anchor = AnchorStyles.Bottom;
             panel2.BackColor = Color.Transparent;
-            panel2.Controls.Add(pictureBox2);
-            panel2.Controls.Add(pictureBox1);
+            panel2.Controls.Add(guna2PictureBox1);
+            panel2.Controls.Add(guna2CirclePictureBox1);
             panel2.Location = new Point(403, 3);
             panel2.Name = "panel2";
             panel2.Size = new Size(474, 69);
             panel2.TabIndex = 2;
             // 
-            // pictureBox2
+            // guna2PictureBox1
             // 
-            pictureBox2.Anchor = AnchorStyles.None;
-            pictureBox2.BackColor = Color.Transparent;
-            pictureBox2.BackgroundImage = (Image)resources.GetObject("pictureBox2.BackgroundImage");
-            pictureBox2.BackgroundImageLayout = ImageLayout.Zoom;
-            pictureBox2.Location = new Point(126, -6);
-            pictureBox2.Name = "pictureBox2";
-            pictureBox2.Size = new Size(293, 95);
-            pictureBox2.TabIndex = 1;
-            pictureBox2.TabStop = false;
+            guna2PictureBox1.BackgroundImage = (Image)resources.GetObject("guna2PictureBox1.BackgroundImage");
+            guna2PictureBox1.BackgroundImageLayout = ImageLayout.Zoom;
+            guna2PictureBox1.CustomizableEdges = customizableEdges7;
+            guna2PictureBox1.FillColor = Color.Transparent;
+            guna2PictureBox1.ImageRotate = 0F;
+            guna2PictureBox1.Location = new Point(142, 0);
+            guna2PictureBox1.Name = "guna2PictureBox1";
+            guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges8;
+            guna2PictureBox1.Size = new Size(277, 77);
+            guna2PictureBox1.TabIndex = 3;
+            guna2PictureBox1.TabStop = false;
             // 
-            // pictureBox1
+            // guna2CirclePictureBox1
             // 
-            pictureBox1.Anchor = AnchorStyles.Bottom;
-            pictureBox1.BackColor = Color.Transparent;
-            pictureBox1.BackgroundImage = Properties.Resources.Logo2;
-            pictureBox1.BackgroundImageLayout = ImageLayout.Zoom;
-            pictureBox1.Location = new Point(60, -10);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(71, 79);
-            pictureBox1.TabIndex = 0;
-            pictureBox1.TabStop = false;
+            guna2CirclePictureBox1.BackgroundImage = Properties.Resources.Logo;
+            guna2CirclePictureBox1.BackgroundImageLayout = ImageLayout.Zoom;
+            guna2CirclePictureBox1.FillColor = Color.Transparent;
+            guna2CirclePictureBox1.ImageRotate = 0F;
+            guna2CirclePictureBox1.Location = new Point(64, -9);
+            guna2CirclePictureBox1.Name = "guna2CirclePictureBox1";
+            guna2CirclePictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges9;
+            guna2CirclePictureBox1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
+            guna2CirclePictureBox1.Size = new Size(85, 86);
+            guna2CirclePictureBox1.TabIndex = 3;
+            guna2CirclePictureBox1.TabStop = false;
+            // 
+            // guna2ShadowPanel1
+            // 
+            guna2ShadowPanel1.BackColor = Color.Transparent;
+            guna2ShadowPanel1.Controls.Add(labelCreateAcc);
+            guna2ShadowPanel1.Controls.Add(labelBackToLogin);
+            guna2ShadowPanel1.Controls.Add(btnCreateAccount);
+            guna2ShadowPanel1.Controls.Add(labelBusinessName);
+            guna2ShadowPanel1.Controls.Add(textBoxBusinessName);
+            guna2ShadowPanel1.Controls.Add(labelPassword);
+            guna2ShadowPanel1.Controls.Add(textBoxPassword);
+            guna2ShadowPanel1.Controls.Add(labelUserName);
+            guna2ShadowPanel1.Controls.Add(textBoxUserName);
+            guna2ShadowPanel1.Controls.Add(labelEmail);
+            guna2ShadowPanel1.Controls.Add(textBoxEmail);
+            guna2ShadowPanel1.Dock = DockStyle.Fill;
+            guna2ShadowPanel1.FillColor = Color.White;
+            guna2ShadowPanel1.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            guna2ShadowPanel1.Location = new Point(368, 78);
+            guna2ShadowPanel1.Name = "guna2ShadowPanel1";
+            guna2ShadowPanel1.ShadowColor = Color.Black;
+            guna2ShadowPanel1.Size = new Size(544, 644);
+            guna2ShadowPanel1.TabIndex = 3;
+            // 
+            // labelCreateAcc
+            // 
+            labelCreateAcc.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            labelCreateAcc.BackColor = Color.Transparent;
+            labelCreateAcc.Font = new Font("Sitka Heading", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelCreateAcc.Location = new Point(190, 49);
+            labelCreateAcc.Name = "labelCreateAcc";
+            labelCreateAcc.Size = new Size(185, 31);
+            labelCreateAcc.TabIndex = 39;
+            labelCreateAcc.Text = "Create Your Account";
+            // 
+            // labelBackToLogin
+            // 
+            labelBackToLogin.BackColor = Color.Transparent;
+            labelBackToLogin.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            labelBackToLogin.Location = new Point(143, 573);
+            labelBackToLogin.Name = "labelBackToLogin";
+            labelBackToLogin.Size = new Size(254, 31);
+            labelBackToLogin.TabIndex = 38;
+            labelBackToLogin.Text = "Already have an account? <font color=\"#3498db\"><u>Log in</u></font>";
+            // 
+            // btnCreateAccount
+            // 
+            btnCreateAccount.BorderRadius = 6;
+            btnCreateAccount.CustomizableEdges = customizableEdges10;
+            btnCreateAccount.DisabledState.BorderColor = Color.DarkGray;
+            btnCreateAccount.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnCreateAccount.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnCreateAccount.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnCreateAccount.FillColor = Color.DarkBlue;
+            btnCreateAccount.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnCreateAccount.ForeColor = Color.White;
+            btnCreateAccount.Location = new Point(43, 524);
+            btnCreateAccount.Name = "btnCreateAccount";
+            btnCreateAccount.ShadowDecoration.CustomizableEdges = customizableEdges11;
+            btnCreateAccount.ShadowDecoration.Enabled = true;
+            btnCreateAccount.ShadowDecoration.Shadow = new Padding(4);
+            btnCreateAccount.Size = new Size(459, 43);
+            btnCreateAccount.TabIndex = 37;
+            btnCreateAccount.Text = "Create Account";
+            // 
+            // labelBusinessName
+            // 
+            labelBusinessName.BackColor = Color.Transparent;
+            labelBusinessName.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            labelBusinessName.Location = new Point(43, 406);
+            labelBusinessName.Name = "labelBusinessName";
+            labelBusinessName.Size = new Size(118, 31);
+            labelBusinessName.TabIndex = 36;
+            labelBusinessName.Text = "Business Name";
+            // 
+            // textBoxBusinessName
+            // 
+            textBoxBusinessName.CustomizableEdges = customizableEdges12;
+            textBoxBusinessName.DefaultText = "";
+            textBoxBusinessName.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            textBoxBusinessName.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            textBoxBusinessName.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            textBoxBusinessName.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            textBoxBusinessName.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxBusinessName.Font = new Font("Segoe UI", 9F);
+            textBoxBusinessName.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxBusinessName.Location = new Point(43, 444);
+            textBoxBusinessName.Margin = new Padding(3, 4, 3, 4);
+            textBoxBusinessName.Name = "textBoxBusinessName";
+            textBoxBusinessName.PlaceholderText = "";
+            textBoxBusinessName.SelectedText = "";
+            textBoxBusinessName.ShadowDecoration.CustomizableEdges = customizableEdges13;
+            textBoxBusinessName.Size = new Size(459, 37);
+            textBoxBusinessName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            textBoxBusinessName.TabIndex = 35;
+            // 
+            // labelPassword
+            // 
+            labelPassword.BackColor = Color.Transparent;
+            labelPassword.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            labelPassword.Location = new Point(43, 311);
+            labelPassword.Name = "labelPassword";
+            labelPassword.Size = new Size(76, 31);
+            labelPassword.TabIndex = 34;
+            labelPassword.Text = "Password";
+            // 
+            // textBoxPassword
+            // 
+            textBoxPassword.CustomizableEdges = customizableEdges14;
+            textBoxPassword.DefaultText = "";
+            textBoxPassword.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            textBoxPassword.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            textBoxPassword.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            textBoxPassword.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            textBoxPassword.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxPassword.Font = new Font("Segoe UI", 9F);
+            textBoxPassword.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxPassword.IconRight = Properties.Resources.eye;
+            textBoxPassword.Location = new Point(43, 349);
+            textBoxPassword.Margin = new Padding(3, 4, 3, 4);
+            textBoxPassword.Name = "textBoxPassword";
+            textBoxPassword.PlaceholderText = "";
+            textBoxPassword.SelectedText = "";
+            textBoxPassword.ShadowDecoration.CustomizableEdges = customizableEdges15;
+            textBoxPassword.Size = new Size(459, 37);
+            textBoxPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            textBoxPassword.TabIndex = 33;
+            // 
+            // labelUserName
+            // 
+            labelUserName.BackColor = Color.Transparent;
+            labelUserName.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            labelUserName.Location = new Point(43, 127);
+            labelUserName.Name = "labelUserName";
+            labelUserName.Size = new Size(79, 31);
+            labelUserName.TabIndex = 32;
+            labelUserName.Text = "Username";
+            // 
+            // textBoxUserName
+            // 
+            textBoxUserName.CustomizableEdges = customizableEdges16;
+            textBoxUserName.DefaultText = "";
+            textBoxUserName.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            textBoxUserName.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            textBoxUserName.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            textBoxUserName.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            textBoxUserName.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxUserName.Font = new Font("Segoe UI", 9F);
+            textBoxUserName.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxUserName.Location = new Point(43, 165);
+            textBoxUserName.Margin = new Padding(3, 4, 3, 4);
+            textBoxUserName.Name = "textBoxUserName";
+            textBoxUserName.PlaceholderText = "";
+            textBoxUserName.SelectedText = "";
+            textBoxUserName.ShadowDecoration.CustomizableEdges = customizableEdges17;
+            textBoxUserName.Size = new Size(459, 37);
+            textBoxUserName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            textBoxUserName.TabIndex = 31;
+            // 
+            // labelEmail
+            // 
+            labelEmail.BackColor = Color.Transparent;
+            labelEmail.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            labelEmail.Location = new Point(43, 218);
+            labelEmail.Name = "labelEmail";
+            labelEmail.Size = new Size(48, 31);
+            labelEmail.TabIndex = 30;
+            labelEmail.Text = "Email";
+            // 
+            // textBoxEmail
+            // 
+            textBoxEmail.CustomizableEdges = customizableEdges18;
+            textBoxEmail.DefaultText = "";
+            textBoxEmail.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            textBoxEmail.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            textBoxEmail.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            textBoxEmail.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            textBoxEmail.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxEmail.Font = new Font("Segoe UI", 9F);
+            textBoxEmail.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            textBoxEmail.Location = new Point(43, 256);
+            textBoxEmail.Margin = new Padding(3, 4, 3, 4);
+            textBoxEmail.Name = "textBoxEmail";
+            textBoxEmail.PlaceholderText = "";
+            textBoxEmail.SelectedText = "";
+            textBoxEmail.ShadowDecoration.CustomizableEdges = customizableEdges19;
+            textBoxEmail.Size = new Size(459, 37);
+            textBoxEmail.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            textBoxEmail.TabIndex = 29;
             // 
             // Form2
             // 
@@ -369,6 +402,7 @@
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1280, 800);
             Controls.Add(tableLayoutPanel1);
+            DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.None;
             Name = "Form2";
             StartPosition = FormStartPosition.CenterScreen;
@@ -377,12 +411,11 @@
             SizeChanged += Form2_SizeChanged;
             tableLayoutPanel1.ResumeLayout(false);
             panel1.ResumeLayout(false);
-            panelGlowWrapper.ResumeLayout(false);
-            panelCreateAccCard.ResumeLayout(false);
-            panelCreateAccCard.PerformLayout();
             panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)guna2CirclePictureBox1).EndInit();
+            guna2ShadowPanel1.ResumeLayout(false);
+            guna2ShadowPanel1.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -390,27 +423,23 @@
 
         private TableLayoutPanel tableLayoutPanel1;
         private Panel panel1;
-        private Button btnMaximize;
-        private Button btnClose;
-        private Button btnMinimize;
-        private Panel panelGlowWrapper;
-        private Panel panelCreateAccCard;
         private Panel panel2;
-        private PictureBox pictureBox2;
-        private PictureBox pictureBox1;
-        private Label labelEmail;
-        private Label labelCreateAcc;
-        private TextBox textBoxEmail;
-        private TextBox textBoxPassword;
-        private Label labelBusinessName;
-        private TextBox textBoxBusinessName;
-        private Label labelPassword;
-        private LinkLabel linkLabelGoToLogin;
-        private Label labelGoToLogin;
-        private Button btnSignup;
-        private Label labelConfirmPass;
-        private TextBox textBoxConfirmPass;
-        private Button btnTogglePassword;
-        private Button btnToggleConfirmPass;
+        private Guna.UI2.WinForms.Guna2PictureBox guna2PictureBox1;
+        private Guna.UI2.WinForms.Guna2CirclePictureBox guna2CirclePictureBox1;
+        private Guna.UI2.WinForms.Guna2ShadowPanel guna2ShadowPanel1;
+        private Guna.UI2.WinForms.Guna2HtmlLabel labelCreateAcc;
+        private Guna.UI2.WinForms.Guna2HtmlLabel labelBackToLogin;
+        private Guna.UI2.WinForms.Guna2Button btnCreateAccount;
+        private Guna.UI2.WinForms.Guna2HtmlLabel labelBusinessName;
+        private Guna.UI2.WinForms.Guna2TextBox textBoxBusinessName;
+        private Guna.UI2.WinForms.Guna2HtmlLabel labelPassword;
+        private Guna.UI2.WinForms.Guna2TextBox textBoxPassword;
+        private Guna.UI2.WinForms.Guna2HtmlLabel labelUserName;
+        private Guna.UI2.WinForms.Guna2TextBox textBoxUserName;
+        private Guna.UI2.WinForms.Guna2HtmlLabel labelEmail;
+        private Guna.UI2.WinForms.Guna2TextBox textBoxEmail;
+        private Guna.UI2.WinForms.Guna2Button btnClose;
+        private Guna.UI2.WinForms.Guna2Button btnMaximize;
+        private Guna.UI2.WinForms.Guna2Button btnMinimize;
     }
 }
