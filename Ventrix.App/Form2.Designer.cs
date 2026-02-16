@@ -45,6 +45,8 @@
             // 
             // regTableLayout
             // 
+            regTableLayout.BackgroundImage = Properties.Resources._5_imresizer__1_;
+            regTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
             regTableLayout.ColumnCount = 3;
             regTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             regTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 500F));
@@ -84,20 +86,16 @@
             // 
             // lblHeader
             // 
-            lblHeader.BackColor = Color.White;
+            lblHeader.AutoSize = false;
+            lblHeader.BackColor = Color.Transparent;
             lblHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
             lblHeader.ForeColor = Color.FromArgb(13, 71, 161);
-            lblHeader.Location = new Point(26, 34);
+            lblHeader.Location = new Point(0, 20);
             lblHeader.Name = "lblHeader";
-            lblHeader.Size = new Size(437, 55);
+            lblHeader.Size = new Size(494, 70);
             lblHeader.TabIndex = 0;
             lblHeader.Text = "STUDENT REGISTRATION";
             lblHeader.TextAlignment = ContentAlignment.MiddleCenter;
-            lblHeader.AutoSize = false; // Disable auto-size to manual control width
-            lblHeader.Location = new System.Drawing.Point(0, 20); // Start from the far left
-            lblHeader.Size = new System.Drawing.Size(494, 70); // Match the width of pnlRegCard
-            lblHeader.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter; // Perfect center
-            lblHeader.BackColor = System.Drawing.Color.Transparent;
             // 
             // cmbRole
             // 

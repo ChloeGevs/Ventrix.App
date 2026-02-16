@@ -110,6 +110,20 @@ namespace Ventrix.App
                 card.BorderColor = accentColor;
             };
 
+            cmbAccountActions.SelectedIndexChanged += (s, e) => {
+                string selected = cmbAccountActions.SelectedItem.ToString();
+
+                if (selected == "Sign out")
+                {
+                    new Form1().Show();
+                    this.Close();
+                }
+
+                // FORCE RESET: This prevents the selected text from appearing below "Admin"
+                // It keeps the ComboBox functionally there for the dropdown, but visually "empty"
+                cmbAccountActions.Text = "";
+            };
+
             Action resetGlow = () => {
                 card.ShadowDecoration.Color = Color.FromArgb(50, Color.Black);
                 card.ShadowDecoration.Shadow = new Padding(8);
@@ -191,7 +205,14 @@ namespace Ventrix.App
 
             lblDashboardHeader.Location = new Point(70, 20);
             txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20);
+            picUser.BackColor = Color.Transparent;
+            lblOwnerRole.BackColor = Color.Transparent;
+            lblOwnerRole.ForeColor = Color.White;
 
+            // Set ComboBox background to match sidebar navy blue exactly
+            cmbAccountActions.FillColor = Color.FromArgb(13, 71, 161);
+            cmbAccountActions.BackColor = Color.Transparent;
+            cmbAccountActions.ForeColor = Color.White;
             int spacing = 20;
             int cardWidth = (pnlMainContent.Width - 100) / 3;
             cardTotal.Size = cardAvailable.Size = cardPending.Size = new Size(cardWidth, 130);
@@ -212,6 +233,24 @@ namespace Ventrix.App
             btnCreate.Location = new Point(10, 120);
             btnEdit.Location = new Point(10, 180);
             btnDelete.Location = new Point(10, 240);
+
+            lblOwnerRole.Location = new Point(68, 22);
+            cmbAccountActions.Location = new Point(63, 42);
+
+            //Sidebar Profile Section
+            picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25);
+            picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40);
+
+            lblOwnerRole.Visible = isSidebarExpanded;
+            cmbAccountActions.Visible = isSidebarExpanded;
+
+            if (isSidebarExpanded)
+            {
+                lblOwnerRole.Location = new Point(70, 25);
+                cmbAccountActions.Location = new Point(65, 42);
+                cmbAccountActions.Size = new Size(160, 30);
+            }
         }
+
     }
 }

@@ -27,6 +27,9 @@ namespace Ventrix.App
             // Toggle Events
             btnStaffToggle.Click += (s, e) => SetLoginMode("Staff");
             btnStudentToggle.Click += (s, e) => SetLoginMode("Student");
+            var method = typeof(Control).GetProperty("DoubleBuffered",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method.SetValue(mainTableLayout, true, null);
 
             // Navigation to Registration
             lblCreateAccount.Click += (s, e) => {
