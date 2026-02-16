@@ -12,6 +12,7 @@
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -19,228 +20,191 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form3));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form3));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             pnlSidebar = new Guna.UI2.WinForms.Guna2Panel();
-            btnInventory = new Guna.UI2.WinForms.Guna2Button();
-            btnDashboard = new Guna.UI2.WinForms.Guna2Button();
-            btnMenuToggle = new Guna.UI2.WinForms.Guna2Button();
-            tcMain = new Guna.UI2.WinForms.Guna2TabControl();
-            tpDashboard = new TabPage();
-            flpDashboard = new FlowLayoutPanel();
-            cardTotalItems = new Guna.UI2.WinForms.Guna2Panel();
-            lblTotalItemsValue = new Label();
-            lblTotalItemsTitle = new Label();
-            lblPageTitle = new Label();
-            tpInventory = new TabPage();
-            dgvInventory = new Guna.UI2.WinForms.Guna2DataGridView();
-            dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
-            dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
-            pnlInventoryHeader = new Guna.UI2.WinForms.Guna2Panel();
+            btnCreate = new Guna.UI2.WinForms.Guna2Button();
+            btnEdit = new Guna.UI2.WinForms.Guna2Button();
+            btnDelete = new Guna.UI2.WinForms.Guna2Button();
+            pnlTopBar = new Guna.UI2.WinForms.Guna2Panel();
+            btnHamburger = new Guna.UI2.WinForms.Guna2ImageButton();
+            lblDashboardHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtSearch = new Guna.UI2.WinForms.Guna2TextBox();
-            btnMarkReturned = new Guna.UI2.WinForms.Guna2Button();
-            btnNewBorrow = new Guna.UI2.WinForms.Guna2Button();
+            pnlMainContent = new Guna.UI2.WinForms.Guna2Panel();
+            pnlGridContainer = new Guna.UI2.WinForms.Guna2Panel();
+            dgvInventory = new Guna.UI2.WinForms.Guna2DataGridView();
+            cardAvailable = new Guna.UI2.WinForms.Guna2Panel();
+            cardTotal = new Guna.UI2.WinForms.Guna2Panel();
+            cardPending = new Guna.UI2.WinForms.Guna2Panel();
+            lblTotalTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblTotalCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblAvailTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblAvailCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblPendingTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblPendingCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            sidebarTimer = new System.Windows.Forms.Timer(components);
             pnlSidebar.SuspendLayout();
-            tcMain.SuspendLayout();
-            tpDashboard.SuspendLayout();
-            flpDashboard.SuspendLayout();
-            cardTotalItems.SuspendLayout();
-            tpInventory.SuspendLayout();
+            pnlTopBar.SuspendLayout();
+            pnlMainContent.SuspendLayout();
+            pnlGridContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvInventory).BeginInit();
-            pnlInventoryHeader.SuspendLayout();
             SuspendLayout();
             // 
             // pnlSidebar
             // 
-            pnlSidebar.BackColor = Color.Navy;
-            pnlSidebar.Controls.Add(btnInventory);
-            pnlSidebar.Controls.Add(btnDashboard);
-            pnlSidebar.Controls.Add(btnMenuToggle);
+            pnlSidebar.Controls.Add(btnCreate);
+            pnlSidebar.Controls.Add(btnEdit);
+            pnlSidebar.Controls.Add(btnDelete);
             pnlSidebar.CustomizableEdges = customizableEdges7;
             pnlSidebar.Dock = DockStyle.Left;
-            pnlSidebar.Location = new Point(3, 64);
+            pnlSidebar.FillColor = Color.FromArgb(13, 71, 161);
+            pnlSidebar.Location = new Point(3, 144);
             pnlSidebar.Name = "pnlSidebar";
             pnlSidebar.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            pnlSidebar.Size = new Size(260, 733);
-            pnlSidebar.TabIndex = 1;
+            pnlSidebar.Size = new Size(240, 703);
+            pnlSidebar.TabIndex = 2;
             // 
-            // btnInventory
+            // btnCreate
             // 
-            btnInventory.ButtonMode = Guna.UI2.WinForms.Enums.ButtonMode.RadioButton;
-            btnInventory.CheckedState.FillColor = Color.FromArgb(40, 52, 70);
-            btnInventory.CustomizableEdges = customizableEdges1;
-            btnInventory.Dock = DockStyle.Top;
-            btnInventory.FillColor = Color.Transparent;
-            btnInventory.Font = new Font("Segoe UI Semibold", 11F);
-            btnInventory.ForeColor = Color.White;
-            btnInventory.Location = new Point(0, 115);
-            btnInventory.Name = "btnInventory";
-            btnInventory.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            btnInventory.Size = new Size(260, 55);
-            btnInventory.TabIndex = 0;
-            btnInventory.Text = "      Inventory";
-            btnInventory.TextAlign = HorizontalAlignment.Left;
+            btnCreate.CustomizableEdges = customizableEdges1;
+            btnCreate.Font = new Font("Segoe UI", 9F);
+            btnCreate.ForeColor = Color.White;
+            btnCreate.Location = new Point(0, 0);
+            btnCreate.Name = "btnCreate";
+            btnCreate.ShadowDecoration.CustomizableEdges = customizableEdges2;
+            btnCreate.Size = new Size(180, 45);
+            btnCreate.TabIndex = 0;
             // 
-            // btnDashboard
+            // btnEdit
             // 
-            btnDashboard.ButtonMode = Guna.UI2.WinForms.Enums.ButtonMode.RadioButton;
-            btnDashboard.Checked = true;
-            btnDashboard.CheckedState.FillColor = Color.FromArgb(40, 52, 70);
-            btnDashboard.CustomizableEdges = customizableEdges3;
-            btnDashboard.Dock = DockStyle.Top;
-            btnDashboard.FillColor = Color.Transparent;
-            btnDashboard.Font = new Font("Segoe UI Semibold", 11F);
-            btnDashboard.ForeColor = Color.White;
-            btnDashboard.Location = new Point(0, 60);
-            btnDashboard.Name = "btnDashboard";
-            btnDashboard.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnDashboard.Size = new Size(260, 55);
-            btnDashboard.TabIndex = 1;
-            btnDashboard.Text = "      Dashboard";
-            btnDashboard.TextAlign = HorizontalAlignment.Left;
+            btnEdit.CustomizableEdges = customizableEdges3;
+            btnEdit.Font = new Font("Segoe UI", 9F);
+            btnEdit.ForeColor = Color.White;
+            btnEdit.Location = new Point(0, 0);
+            btnEdit.Name = "btnEdit";
+            btnEdit.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            btnEdit.Size = new Size(180, 45);
+            btnEdit.TabIndex = 1;
             // 
-            // btnMenuToggle
+            // btnDelete
             // 
-            btnMenuToggle.CustomizableEdges = customizableEdges5;
-            btnMenuToggle.Dock = DockStyle.Top;
-            btnMenuToggle.FillColor = Color.Transparent;
-            btnMenuToggle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
-            btnMenuToggle.ForeColor = Color.White;
-            btnMenuToggle.Image = (Image)resources.GetObject("btnMenuToggle.Image");
-            btnMenuToggle.Location = new Point(0, 0);
-            btnMenuToggle.Name = "btnMenuToggle";
-            btnMenuToggle.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            btnMenuToggle.Size = new Size(260, 60);
-            btnMenuToggle.TabIndex = 2;
+            btnDelete.CustomizableEdges = customizableEdges5;
+            btnDelete.Font = new Font("Segoe UI", 9F);
+            btnDelete.ForeColor = Color.White;
+            btnDelete.Location = new Point(0, 0);
+            btnDelete.Name = "btnDelete";
+            btnDelete.ShadowDecoration.CustomizableEdges = customizableEdges6;
+            btnDelete.Size = new Size(180, 45);
+            btnDelete.TabIndex = 2;
             // 
-            // tcMain
+            // pnlTopBar
             // 
-            tcMain.Alignment = TabAlignment.Left;
-            tcMain.Controls.Add(tpDashboard);
-            tcMain.Controls.Add(tpInventory);
-            tcMain.Dock = DockStyle.Fill;
-            tcMain.ItemSize = new Size(0, 1);
-            tcMain.Location = new Point(263, 64);
-            tcMain.Name = "tcMain";
-            tcMain.SelectedIndex = 0;
-            tcMain.Size = new Size(934, 733);
-            tcMain.TabButtonHoverState.BorderColor = Color.Empty;
-            tcMain.TabButtonHoverState.FillColor = Color.FromArgb(40, 52, 70);
-            tcMain.TabButtonHoverState.Font = new Font("Segoe UI Semibold", 10F);
-            tcMain.TabButtonHoverState.ForeColor = Color.White;
-            tcMain.TabButtonHoverState.InnerColor = Color.FromArgb(40, 52, 70);
-            tcMain.TabButtonIdleState.BorderColor = Color.Empty;
-            tcMain.TabButtonIdleState.FillColor = Color.FromArgb(33, 42, 57);
-            tcMain.TabButtonIdleState.Font = new Font("Segoe UI Semibold", 10F);
-            tcMain.TabButtonIdleState.ForeColor = Color.FromArgb(156, 160, 167);
-            tcMain.TabButtonIdleState.InnerColor = Color.FromArgb(33, 42, 57);
-            tcMain.TabButtonSelectedState.BorderColor = Color.Empty;
-            tcMain.TabButtonSelectedState.FillColor = Color.FromArgb(29, 37, 49);
-            tcMain.TabButtonSelectedState.Font = new Font("Segoe UI Semibold", 10F);
-            tcMain.TabButtonSelectedState.ForeColor = Color.White;
-            tcMain.TabButtonSelectedState.InnerColor = Color.FromArgb(76, 132, 255);
-            tcMain.TabButtonSize = new Size(0, 1);
-            tcMain.TabIndex = 0;
-            tcMain.TabMenuBackColor = Color.FromArgb(33, 42, 57);
+            pnlTopBar.Controls.Add(btnHamburger);
+            pnlTopBar.Controls.Add(lblDashboardHeader);
+            pnlTopBar.Controls.Add(txtSearch);
+            pnlTopBar.CustomizableEdges = customizableEdges12;
+            pnlTopBar.Dock = DockStyle.Top;
+            pnlTopBar.FillColor = Color.White;
+            pnlTopBar.Location = new Point(3, 64);
+            pnlTopBar.Name = "pnlTopBar";
+            pnlTopBar.ShadowDecoration.CustomizableEdges = customizableEdges13;
+            pnlTopBar.ShadowDecoration.Enabled = true;
+            pnlTopBar.Size = new Size(1274, 80);
+            pnlTopBar.TabIndex = 1;
             // 
-            // tpDashboard
+            // btnHamburger
             // 
-            tpDashboard.BackColor = Color.FromArgb(242, 245, 250);
-            tpDashboard.Controls.Add(flpDashboard);
-            tpDashboard.Controls.Add(lblPageTitle);
-            tpDashboard.Location = new Point(31, 4);
-            tpDashboard.Name = "tpDashboard";
-            tpDashboard.Size = new Size(899, 725);
-            tpDashboard.TabIndex = 0;
+            btnHamburger.BackColor = Color.White;
+            btnHamburger.BackgroundImageLayout = ImageLayout.Zoom;
+            btnHamburger.CheckedState.ImageSize = new Size(64, 64);
+            btnHamburger.HoverState.ImageSize = new Size(30, 30);
+            btnHamburger.Image = (Image)resources.GetObject("btnHamburger.Image");
+            btnHamburger.ImageOffset = new Point(0, 0);
+            btnHamburger.ImageRotate = 0F;
+            btnHamburger.ImageSize = new Size(28, 28);
+            btnHamburger.Location = new Point(15, 20);
+            btnHamburger.Name = "btnHamburger";
+            btnHamburger.ShadowDecoration.CustomizableEdges = customizableEdges9;
+            btnHamburger.Size = new Size(40, 40);
+            btnHamburger.TabIndex = 0;
             // 
-            // flpDashboard
+            // lblDashboardHeader
             // 
-            flpDashboard.Controls.Add(cardTotalItems);
-            flpDashboard.Dock = DockStyle.Fill;
-            flpDashboard.Location = new Point(0, 75);
-            flpDashboard.Name = "flpDashboard";
-            flpDashboard.Padding = new Padding(20);
-            flpDashboard.Size = new Size(899, 650);
-            flpDashboard.TabIndex = 0;
+            lblDashboardHeader.BackColor = Color.Transparent;
+            lblDashboardHeader.Location = new Point(0, 0);
+            lblDashboardHeader.Name = "lblDashboardHeader";
+            lblDashboardHeader.Size = new Size(3, 2);
+            lblDashboardHeader.TabIndex = 1;
+            lblDashboardHeader.Text = null;
             // 
-            // cardTotalItems
+            // txtSearch
             // 
-            cardTotalItems.BackColor = Color.Transparent;
-            cardTotalItems.BorderRadius = 15;
-            cardTotalItems.Controls.Add(lblTotalItemsValue);
-            cardTotalItems.Controls.Add(lblTotalItemsTitle);
-            cardTotalItems.CustomizableEdges = customizableEdges9;
-            cardTotalItems.FillColor = Color.White;
-            cardTotalItems.Location = new Point(23, 23);
-            cardTotalItems.Name = "cardTotalItems";
-            cardTotalItems.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            cardTotalItems.ShadowDecoration.Enabled = true;
-            cardTotalItems.Size = new Size(250, 130);
-            cardTotalItems.TabIndex = 0;
+            txtSearch.BorderRadius = 10;
+            txtSearch.CustomizableEdges = customizableEdges10;
+            txtSearch.DefaultText = "";
+            txtSearch.Font = new Font("Segoe UI", 9F);
+            txtSearch.Location = new Point(0, 0);
+            txtSearch.Margin = new Padding(3, 4, 3, 4);
+            txtSearch.Name = "txtSearch";
+            txtSearch.PlaceholderText = "";
+            txtSearch.SelectedText = "";
+            txtSearch.ShadowDecoration.CustomizableEdges = customizableEdges11;
+            txtSearch.Size = new Size(229, 48);
+            txtSearch.TabIndex = 2;
             // 
-            // lblTotalItemsValue
+            // pnlMainContent
             // 
-            lblTotalItemsValue.Font = new Font("Segoe UI", 26F, FontStyle.Bold);
-            lblTotalItemsValue.Location = new Point(15, 45);
-            lblTotalItemsValue.Name = "lblTotalItemsValue";
-            lblTotalItemsValue.Size = new Size(220, 50);
-            lblTotalItemsValue.TabIndex = 0;
-            lblTotalItemsValue.Text = "254";
+            pnlMainContent.Controls.Add(cardPending);
+            pnlMainContent.Controls.Add(pnlGridContainer);
+            pnlMainContent.Controls.Add(cardAvailable);
+            pnlMainContent.Controls.Add(cardTotal);
+            pnlMainContent.CustomizableEdges = customizableEdges22;
+            pnlMainContent.Dock = DockStyle.Fill;
+            pnlMainContent.Location = new Point(3, 64);
+            pnlMainContent.Name = "pnlMainContent";
+            pnlMainContent.Padding = new Padding(30);
+            pnlMainContent.ShadowDecoration.CustomizableEdges = customizableEdges23;
+            pnlMainContent.Size = new Size(1274, 783);
+            pnlMainContent.TabIndex = 0;
             // 
-            // lblTotalItemsTitle
+            // pnlGridContainer
             // 
-            lblTotalItemsTitle.ForeColor = Color.Gray;
-            lblTotalItemsTitle.Location = new Point(18, 20);
-            lblTotalItemsTitle.Name = "lblTotalItemsTitle";
-            lblTotalItemsTitle.Size = new Size(100, 23);
-            lblTotalItemsTitle.TabIndex = 1;
-            lblTotalItemsTitle.Text = "TOTAL ITEMS";
-            // 
-            // lblPageTitle
-            // 
-            lblPageTitle.Dock = DockStyle.Top;
-            lblPageTitle.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
-            lblPageTitle.Location = new Point(0, 0);
-            lblPageTitle.Name = "lblPageTitle";
-            lblPageTitle.Padding = new Padding(25, 25, 0, 0);
-            lblPageTitle.Size = new Size(899, 75);
-            lblPageTitle.TabIndex = 1;
-            lblPageTitle.Text = "DASHBOARD OVERVIEW";
-            // 
-            // tpInventory
-            // 
-            tpInventory.BackColor = Color.FromArgb(242, 245, 250);
-            tpInventory.Controls.Add(dgvInventory);
-            tpInventory.Controls.Add(pnlInventoryHeader);
-            tpInventory.Location = new Point(31, 4);
-            tpInventory.Name = "tpInventory";
-            tpInventory.Padding = new Padding(25);
-            tpInventory.Size = new Size(899, 725);
-            tpInventory.TabIndex = 1;
+            pnlGridContainer.BackColor = Color.Transparent;
+            pnlGridContainer.BorderRadius = 15;
+            pnlGridContainer.Controls.Add(dgvInventory);
+            pnlGridContainer.CustomizableEdges = customizableEdges16;
+            pnlGridContainer.FillColor = Color.White;
+            pnlGridContainer.Location = new Point(0, 80);
+            pnlGridContainer.Name = "pnlGridContainer";
+            pnlGridContainer.ShadowDecoration.CustomizableEdges = customizableEdges17;
+            pnlGridContainer.ShadowDecoration.Enabled = true;
+            pnlGridContainer.Size = new Size(974, 563);
+            pnlGridContainer.TabIndex = 0;
             // 
             // dgvInventory
             // 
             dataGridViewCellStyle1.BackColor = Color.White;
             dgvInventory.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = Color.FromArgb(13, 71, 161);
+            dataGridViewCellStyle2.BackColor = Color.FromArgb(100, 88, 255);
             dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
             dataGridViewCellStyle2.ForeColor = Color.White;
             dataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight;
@@ -248,7 +212,6 @@
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
             dgvInventory.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
             dgvInventory.ColumnHeadersHeight = 29;
-            dgvInventory.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, dataGridViewTextBoxColumn2, dataGridViewTextBoxColumn3, dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5, dataGridViewTextBoxColumn6 });
             dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = Color.White;
             dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
@@ -259,11 +222,11 @@
             dgvInventory.DefaultCellStyle = dataGridViewCellStyle3;
             dgvInventory.Dock = DockStyle.Fill;
             dgvInventory.GridColor = Color.FromArgb(231, 229, 255);
-            dgvInventory.Location = new Point(25, 105);
+            dgvInventory.Location = new Point(0, 0);
             dgvInventory.Name = "dgvInventory";
             dgvInventory.RowHeadersVisible = false;
             dgvInventory.RowHeadersWidth = 51;
-            dgvInventory.Size = new Size(849, 595);
+            dgvInventory.Size = new Size(974, 563);
             dgvInventory.TabIndex = 0;
             dgvInventory.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvInventory.ThemeStyle.AlternatingRowsStyle.Font = null;
@@ -272,7 +235,7 @@
             dgvInventory.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty;
             dgvInventory.ThemeStyle.BackColor = Color.White;
             dgvInventory.ThemeStyle.GridColor = Color.FromArgb(231, 229, 255);
-            dgvInventory.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(13, 71, 161);
+            dgvInventory.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(100, 88, 255);
             dgvInventory.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None;
             dgvInventory.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             dgvInventory.ThemeStyle.HeaderStyle.ForeColor = Color.White;
@@ -287,140 +250,116 @@
             dgvInventory.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvInventory.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
             // 
-            // dataGridViewTextBoxColumn1
+            // cardAvailable
             // 
-            dataGridViewTextBoxColumn1.HeaderText = "Student Name";
-            dataGridViewTextBoxColumn1.MinimumWidth = 6;
-            dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            cardAvailable.CustomizableEdges = customizableEdges18;
+            cardAvailable.Location = new Point(0, 0);
+            cardAvailable.Name = "cardAvailable";
+            cardAvailable.ShadowDecoration.CustomizableEdges = customizableEdges19;
+            cardAvailable.Size = new Size(200, 100);
+            cardAvailable.TabIndex = 2;
             // 
-            // dataGridViewTextBoxColumn2
+            // cardTotal
             // 
-            dataGridViewTextBoxColumn2.HeaderText = "Student ID";
-            dataGridViewTextBoxColumn2.MinimumWidth = 6;
-            dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            cardTotal.CustomizableEdges = customizableEdges20;
+            cardTotal.Location = new Point(0, 0);
+            cardTotal.Name = "cardTotal";
+            cardTotal.ShadowDecoration.CustomizableEdges = customizableEdges21;
+            cardTotal.Size = new Size(200, 100);
+            cardTotal.TabIndex = 3;
             // 
-            // dataGridViewTextBoxColumn3
+            // cardPending
             // 
-            dataGridViewTextBoxColumn3.HeaderText = "Material";
-            dataGridViewTextBoxColumn3.MinimumWidth = 6;
-            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            cardPending.BackColor = Color.White;
+            cardPending.CustomizableEdges = customizableEdges14;
+            cardPending.Location = new Point(0, 0);
+            cardPending.Name = "cardPending";
+            cardPending.ShadowDecoration.CustomizableEdges = customizableEdges15;
+            cardPending.Size = new Size(200, 100);
+            cardPending.TabIndex = 1;
             // 
-            // dataGridViewTextBoxColumn4
+            // lblTotalTitle
             // 
-            dataGridViewTextBoxColumn4.HeaderText = "Date Borrowed";
-            dataGridViewTextBoxColumn4.MinimumWidth = 6;
-            dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            lblTotalTitle.BackColor = Color.Transparent;
+            lblTotalTitle.Location = new Point(0, 0);
+            lblTotalTitle.Name = "lblTotalTitle";
+            lblTotalTitle.Size = new Size(3, 2);
+            lblTotalTitle.TabIndex = 0;
+            lblTotalTitle.Text = null;
             // 
-            // dataGridViewTextBoxColumn5
+            // lblTotalCount
             // 
-            dataGridViewTextBoxColumn5.HeaderText = "Return Date";
-            dataGridViewTextBoxColumn5.MinimumWidth = 6;
-            dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            lblTotalCount.BackColor = Color.Transparent;
+            lblTotalCount.Location = new Point(0, 0);
+            lblTotalCount.Name = "lblTotalCount";
+            lblTotalCount.Size = new Size(3, 2);
+            lblTotalCount.TabIndex = 0;
+            lblTotalCount.Text = null;
             // 
-            // dataGridViewTextBoxColumn6
+            // lblAvailTitle
             // 
-            dataGridViewTextBoxColumn6.HeaderText = "Status";
-            dataGridViewTextBoxColumn6.MinimumWidth = 6;
-            dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+            lblAvailTitle.BackColor = Color.Transparent;
+            lblAvailTitle.Location = new Point(0, 0);
+            lblAvailTitle.Name = "lblAvailTitle";
+            lblAvailTitle.Size = new Size(3, 2);
+            lblAvailTitle.TabIndex = 0;
+            lblAvailTitle.Text = null;
             // 
-            // pnlInventoryHeader
+            // lblAvailCount
             // 
-            pnlInventoryHeader.Controls.Add(txtSearch);
-            pnlInventoryHeader.Controls.Add(btnMarkReturned);
-            pnlInventoryHeader.Controls.Add(btnNewBorrow);
-            pnlInventoryHeader.CustomizableEdges = customizableEdges17;
-            pnlInventoryHeader.Dock = DockStyle.Top;
-            pnlInventoryHeader.Location = new Point(25, 25);
-            pnlInventoryHeader.Name = "pnlInventoryHeader";
-            pnlInventoryHeader.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            pnlInventoryHeader.Size = new Size(849, 80);
-            pnlInventoryHeader.TabIndex = 1;
+            lblAvailCount.BackColor = Color.Transparent;
+            lblAvailCount.Location = new Point(0, 0);
+            lblAvailCount.Name = "lblAvailCount";
+            lblAvailCount.Size = new Size(3, 2);
+            lblAvailCount.TabIndex = 0;
+            lblAvailCount.Text = null;
             // 
-            // txtSearch
+            // lblPendingTitle
             // 
-            txtSearch.BorderRadius = 20;
-            txtSearch.CustomizableEdges = customizableEdges11;
-            txtSearch.DefaultText = "";
-            txtSearch.Font = new Font("Segoe UI", 9F);
-            txtSearch.Location = new Point(0, 15);
-            txtSearch.Margin = new Padding(3, 4, 3, 4);
-            txtSearch.Name = "txtSearch";
-            txtSearch.PlaceholderText = "Search Student or ID...";
-            txtSearch.SelectedText = "";
-            txtSearch.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            txtSearch.Size = new Size(350, 45);
-            txtSearch.TabIndex = 0;
+            lblPendingTitle.BackColor = Color.Transparent;
+            lblPendingTitle.Location = new Point(0, 0);
+            lblPendingTitle.Name = "lblPendingTitle";
+            lblPendingTitle.Size = new Size(3, 2);
+            lblPendingTitle.TabIndex = 0;
+            lblPendingTitle.Text = null;
             // 
-            // btnMarkReturned
+            // lblPendingCount
             // 
-            btnMarkReturned.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnMarkReturned.BorderRadius = 10;
-            btnMarkReturned.CustomizableEdges = customizableEdges13;
-            btnMarkReturned.FillColor = Color.FromArgb(46, 125, 50);
-            btnMarkReturned.Font = new Font("Segoe UI", 9F);
-            btnMarkReturned.ForeColor = Color.White;
-            btnMarkReturned.Location = new Point(508, 15);
-            btnMarkReturned.Name = "btnMarkReturned";
-            btnMarkReturned.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            btnMarkReturned.Size = new Size(160, 45);
-            btnMarkReturned.TabIndex = 1;
-            btnMarkReturned.Text = "Mark Returned";
+            lblPendingCount.BackColor = Color.Transparent;
+            lblPendingCount.Location = new Point(0, 0);
+            lblPendingCount.Name = "lblPendingCount";
+            lblPendingCount.Size = new Size(3, 2);
+            lblPendingCount.TabIndex = 0;
+            lblPendingCount.Text = null;
             // 
-            // btnNewBorrow
+            // sidebarTimer
             // 
-            btnNewBorrow.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnNewBorrow.BorderRadius = 10;
-            btnNewBorrow.CustomizableEdges = customizableEdges15;
-            btnNewBorrow.FillColor = Color.FromArgb(13, 71, 161);
-            btnNewBorrow.Font = new Font("Segoe UI", 9F);
-            btnNewBorrow.ForeColor = Color.White;
-            btnNewBorrow.Location = new Point(678, 15);
-            btnNewBorrow.Name = "btnNewBorrow";
-            btnNewBorrow.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            btnNewBorrow.Size = new Size(160, 45);
-            btnNewBorrow.TabIndex = 2;
-            btnNewBorrow.Text = "+ New Borrow";
+            sidebarTimer.Interval = 5;
             // 
             // Form3
             // 
-            ClientSize = new Size(1200, 800);
-            Controls.Add(tcMain);
+            AutoScaleMode = AutoScaleMode.None;
+            BackColor = Color.FromArgb(242, 245, 250);
+            ClientSize = new Size(1280, 850);
             Controls.Add(pnlSidebar);
+            Controls.Add(pnlTopBar);
+            Controls.Add(pnlMainContent);
             Name = "Form3";
-            StartPosition = FormStartPosition.CenterScreen;
             pnlSidebar.ResumeLayout(false);
-            tcMain.ResumeLayout(false);
-            tpDashboard.ResumeLayout(false);
-            flpDashboard.ResumeLayout(false);
-            cardTotalItems.ResumeLayout(false);
-            tpInventory.ResumeLayout(false);
+            pnlTopBar.ResumeLayout(false);
+            pnlTopBar.PerformLayout();
+            pnlMainContent.ResumeLayout(false);
+            pnlGridContainer.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvInventory).EndInit();
-            pnlInventoryHeader.ResumeLayout(false);
             ResumeLayout(false);
         }
 
-        private Guna.UI2.WinForms.Guna2Panel pnlSidebar;
-        private Guna.UI2.WinForms.Guna2Button btnMenuToggle;
-        private Guna.UI2.WinForms.Guna2Button btnDashboard;
-        private Guna.UI2.WinForms.Guna2Button btnInventory;
-        private Guna.UI2.WinForms.Guna2TabControl tcMain;
-        private TabPage tpDashboard;
-        private FlowLayoutPanel flpDashboard;
-        private TabPage tpInventory;
-        private Label lblPageTitle;
-        private Guna.UI2.WinForms.Guna2Panel cardTotalItems;
-        private Label lblTotalItemsValue;
-        private Label lblTotalItemsTitle;
-        private Guna.UI2.WinForms.Guna2Panel pnlInventoryHeader;
+        private Guna.UI2.WinForms.Guna2Panel pnlSidebar, pnlTopBar, pnlMainContent, cardTotal, cardAvailable, cardPending, pnlGridContainer;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblDashboardHeader, lblTotalTitle, lblTotalCount, lblAvailTitle, lblAvailCount, lblPendingTitle, lblPendingCount;
         private Guna.UI2.WinForms.Guna2TextBox txtSearch;
-        private Guna.UI2.WinForms.Guna2Button btnMarkReturned;
-        private Guna.UI2.WinForms.Guna2Button btnNewBorrow;
         private Guna.UI2.WinForms.Guna2DataGridView dgvInventory;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private Guna.UI2.WinForms.Guna2Button btnCreate, btnEdit, btnDelete;
+        private Guna.UI2.WinForms.Guna2ImageButton btnHamburger;
+        private System.Windows.Forms.Timer sidebarTimer;
     }
 }

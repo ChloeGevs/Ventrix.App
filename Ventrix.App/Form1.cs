@@ -28,29 +28,80 @@ namespace Ventrix.App
             btnStaffToggle.Click += (s, e) => SetLoginMode("Staff");
             btnStudentToggle.Click += (s, e) => SetLoginMode("Student");
 
-            // Navigation
+            // Navigation to Registration
             lblCreateAccount.Click += (s, e) => {
                 Form2 regForm = new Form2();
                 regForm.ShowDialog();
             };
+            
+            btnLogin.Click += (s, e) => {
+                // Navigate to Admin Dashboard
+                Form3 dashboard = new Form3();
+                dashboard.Show();
+                this.Hide();
+            };
 
-            SetLoginMode("Staff"); // Default view
+            SetLoginMode("Student"); // Default to Borrower view for quick access
         }
 
         private void SetLoginMode(string mode)
         {
-            bool isStaff = (mode == "Staff");
+            bool isAdminLogin = (mode == "Staff");
 
-            lblLoginHeader.Text = isStaff ? "STAFF LOGIN" : "STUDENT ACCESS";
-            txtUsername.PlaceholderText = isStaff ? "Username" : "Student ID Number";
-            lblCreateAccount.Visible = isStaff;
+            // Update Headers and Placeholders
+            lblLoginHeader.Text = isAdminLogin ? "ADMIN LOGIN" : "BORROWING PORTAL";
+            txtStudentId.PlaceholderText = isAdminLogin ? "Username / Admin ID" : "Student or Staff ID Number";
+            lblLoginHeader.AutoSize = false;
+            lblLoginHeader.Width = pnlLoginCard.Width;
+            lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
+            lblLoginHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+
+            //Define your Sitka Fonts
+            Font sitkaBanner = new Font("Sitka Banner", 12F, FontStyle.Bold);
+            Font sitkaText = new Font("Sitka Text", 10F, FontStyle.Regular);
+            Font sitkaDisplay = new Font("Sitka Display", 10F, FontStyle.Bold);
+
+            //Force apply to Buttons
+            btnStaffToggle.Font = sitkaBanner;
+            btnStudentToggle.Font = sitkaBanner;
+            btnBorrow.Font = sitkaBanner;
+            btnReturn.Font = sitkaBanner;
+            btnLogin.Font = sitkaBanner;
+
+            //Force apply to TextBoxes & ComboBox
+            txtStudentId.Font = new Font("Segoe UI Regular", 8F);
+            txtSubject.Font = new Font("Segoe UI Regular", 8F);
+            cmbListEquipments.Font = sitkaBanner;
+
+            //Force apply to Labels 
+            lblQuantity.Font = sitkaDisplay;
+            lblSubject.Font = sitkaDisplay;
+
+            // Visibility Toggles
+            lblCreateAccount.Visible = !isAdminLogin;
+            btnLogin.Visible = isAdminLogin;
+            // Toggle Visibility of Borrower-specific fields
+            cmbListEquipments.Visible = !isAdminLogin;
+            numQuantity.Visible = !isAdminLogin;
+            txtSubject.Visible = !isAdminLogin;
+            lblQuantity.Visible = !isAdminLogin;
+            lblSubject.Visible = !isAdminLogin;
+            btnBorrow.Visible = !isAdminLogin;
+            btnReturn.Visible = !isAdminLogin;
+
+
+            if (isAdminLogin)
+            {
+                btnLogin.BringToFront(); // Ensures the button isn't hidden behind the panel
+            }
+
+            // Force the custom font to stay active
+            lblLoginHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
 
             // Visual feedback for toggles
-            btnStaffToggle.FillColor = isStaff ? Color.FromArgb(13, 71, 161) : Color.FromArgb(224, 224, 224);
-            btnStaffToggle.ForeColor = isStaff ? Color.White : Color.DimGray;
-
-            btnStudentToggle.FillColor = !isStaff ? Color.FromArgb(13, 71, 161) : Color.FromArgb(224, 224, 224);
-            btnStudentToggle.ForeColor = !isStaff ? Color.White : Color.DimGray;
+            btnStaffToggle.FillColor = isAdminLogin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(224, 224, 224);
+            btnStudentToggle.FillColor = !isAdminLogin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(224, 224, 224);
         }
+
     }
 }
