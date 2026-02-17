@@ -25,13 +25,15 @@ namespace Ventrix.App
                 TextShade.WHITE
             );
 
-            // FIX: Initialize columns before LoadFilteredData is ever called
-            InitializeInventoryGrid();
+            btnCreate.BorderRadius = 10;
+            btnEdit.BorderRadius = 10;
+            btnDelete.BorderRadius = 10;
 
             // Card Click Events
             cardTotal.Click += (s, e) => LoadFilteredData("All");
             cardAvailable.Click += (s, e) => LoadFilteredData("Available");
             cardPending.Click += (s, e) => LoadFilteredData("Borrowed");
+            cardBorrowers.Click += (s, e) => LoadFilteredData("Borrowers");
 
             // Sidebar Events
             sidebarTimer.Interval = 1;
@@ -40,20 +42,6 @@ namespace Ventrix.App
 
             this.Load += (s, e) => { ApplyModernBranding(); RefreshLayout(); LoadFilteredData("All"); };
             this.Resize += (s, e) => RefreshLayout();
-        }
-
-        private void InitializeInventoryGrid()
-        {
-            // Explicitly defining columns to prevent the "No columns" exception
-            dgvInventory.Columns.Clear();
-            dgvInventory.Columns.Add("ID", "ID");
-            dgvInventory.Columns.Add("Name", "Material Name");
-            dgvInventory.Columns.Add("Status", "Status");
-            dgvInventory.Columns.Add("Borrowed", "Date Borrowed");
-            dgvInventory.Columns.Add("Return", "Return Date");
-
-            dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvInventory.AllowUserToAddRows = false;
         }
 
         private void ApplyModernBranding()
@@ -65,6 +53,7 @@ namespace Ventrix.App
             SetupCard(cardTotal, lblTotalTitle, lblTotalCount, "TOTAL ITEMS", "1,240", Color.FromArgb(13, 71, 161));
             SetupCard(cardAvailable, lblAvailTitle, lblAvailCount, "AVAILABLE", "856", Color.Teal);
             SetupCard(cardPending, lblPendingTitle, lblPendingCount, "BORROWED", "384", Color.FromArgb(192, 0, 0));
+            SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "BORROWERS LIST", "12", Color.Orange);
 
             StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
             StyleNavButton(btnEdit, "EDIT RECORD", Color.FromArgb(33, 150, 243));
@@ -73,55 +62,33 @@ namespace Ventrix.App
 
         private void SetupCard(Guna.UI2.WinForms.Guna2Panel card, Guna.UI2.WinForms.Guna2HtmlLabel title, Guna.UI2.WinForms.Guna2HtmlLabel count, string titleText, string countText, Color accentColor)
         {
-            // 1. Establish Parent-Child Relationship
-            // This ensures labels move and display relative to the card, not the form
             title.Parent = card;
             count.Parent = card;
 
-            // 2. Configure Card Visuals
             card.FillColor = Color.White;
             card.BorderRadius = 15;
             card.ShadowDecoration.Enabled = true;
             card.ShadowDecoration.Shadow = new Padding(10);
             card.Cursor = Cursors.Hand;
 
-            // 3. Style Title Label
             title.Text = titleText;
             title.Font = new Font("Segoe UI Semibold", 9F);
             title.ForeColor = Color.Gray;
-            title.BackColor = Color.Transparent; // Important: Prevents a white box over the card
+            title.BackColor = Color.Transparent;
 
-            // 4. Style Count Label
             count.Text = countText;
             count.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
             count.ForeColor = accentColor;
             count.BackColor = Color.Transparent;
 
-            // 5. Force Z-Order
-            // This prevents the card background from covering the text
             title.BringToFront();
             count.BringToFront();
 
-            // 6. Interactive Glow Logic (Corrected Event Handlers)
             card.MouseDown += (s, e) => {
                 card.ShadowDecoration.Color = accentColor;
                 card.ShadowDecoration.Shadow = new Padding(15);
                 card.BorderThickness = 2;
                 card.BorderColor = accentColor;
-            };
-
-            cmbAccountActions.SelectedIndexChanged += (s, e) => {
-                string selected = cmbAccountActions.SelectedItem.ToString();
-
-                if (selected == "Sign out")
-                {
-                    new Form1().Show();
-                    this.Close();
-                }
-
-                // FORCE RESET: This prevents the selected text from appearing below "Admin"
-                // It keeps the ComboBox functionally there for the dropdown, but visually "empty"
-                cmbAccountActions.Text = "";
             };
 
             Action resetGlow = () => {
@@ -136,20 +103,48 @@ namespace Ventrix.App
 
         private void LoadFilteredData(string status)
         {
-            // Safety Check: Do not attempt to add rows if columns haven't been created yet
-            if (dgvInventory.Columns.Count == 0) return;
-
+            // Clear everything to allow different column structures
             dgvInventory.Rows.Clear();
-            if (status == "All" || status == "Available")
+            dgvInventory.Columns.Clear();
+
+            if (status == "Borrowers")
             {
-                dgvInventory.Rows.Add("101", "Projector A", "Available", "-", "-");
-                dgvInventory.Rows.Add("102", "HDMI Cable", "Available", "-", "-");
+                // UI Columns for Borrowers View
+                dgvInventory.Columns.Add("ID", "ID");
+                dgvInventory.Columns.Add("Borrower", "Borrower Name");
+                dgvInventory.Columns.Add("Material", "Material");
+                dgvInventory.Columns.Add("Qty", "Qty");
+                dgvInventory.Columns.Add("Purpose", "Subject/Purpose");
+                dgvInventory.Columns.Add("Borrowed", "Date Borrowed");
+                dgvInventory.Columns.Add("Return", "Return Date");
+                dgvInventory.Columns.Add("Remarks", "Remarks");
+
+                // Sample Data for Borrowers
+                dgvInventory.Rows.Add("1", "John Doe", "Projector A", "1", "CS101 - Lecture", "2026-02-14", "2026-02-17", "Good Condition");
+                dgvInventory.Rows.Add("2", "Jane Smith", "Laptop #4", "1", "Thesis Defense", "2026-02-15", "2026-02-16", "For Repair");
             }
-            if (status == "All" || status == "Borrowed")
+            else
             {
-                dgvInventory.Rows.Add("201", "Laptop Dell #4", "Borrowed", "2026-02-14", "2026-02-17");
-                dgvInventory.Rows.Add("205", "Digital Camera", "Borrowed", "2026-02-15", "2026-02-16");
+                // Standard UI Columns for Inventory Views
+                dgvInventory.Columns.Add("ID", "ID");
+                dgvInventory.Columns.Add("Name", "Material Name");
+                dgvInventory.Columns.Add("Status", "Status");
+                dgvInventory.Columns.Add("Borrowed", "Date Borrowed");
+                dgvInventory.Columns.Add("Return", "Return Date");
+
+                if (status == "All" || status == "Available")
+                {
+                    dgvInventory.Rows.Add("101", "Projector A", "Available", "-", "-");
+                    dgvInventory.Rows.Add("102", "HDMI Cable", "Available", "-", "-");
+                }
+                if (status == "All" || status == "Borrowed")
+                {
+                    dgvInventory.Rows.Add("201", "Laptop Dell #4", "Borrowed", "2026-02-14", "2026-02-17");
+                    dgvInventory.Rows.Add("205", "Digital Camera", "Borrowed", "2026-02-15", "2026-02-16");
+                }
             }
+
+            dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             lblDashboardHeader.Text = $"INVENTORY: {status.ToUpper()}";
         }
 
@@ -205,27 +200,33 @@ namespace Ventrix.App
 
             lblDashboardHeader.Location = new Point(70, 20);
             txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20);
-            picUser.BackColor = Color.Transparent;
-            lblOwnerRole.BackColor = Color.Transparent;
-            lblOwnerRole.ForeColor = Color.White;
 
-            // Set ComboBox background to match sidebar navy blue exactly
             cmbAccountActions.FillColor = Color.FromArgb(13, 71, 161);
             cmbAccountActions.BackColor = Color.Transparent;
             cmbAccountActions.ForeColor = Color.White;
-            int spacing = 20;
-            int cardWidth = (pnlMainContent.Width - 100) / 3;
-            cardTotal.Size = cardAvailable.Size = cardPending.Size = new Size(cardWidth, 130);
 
-            cardTotal.Location = new Point(30, 30);
+            lblOwnerRole.BackColor = Color.Transparent;
+            lblOwnerRole.ForeColor = Color.White;
+            picUser.BackColor = Color.Transparent;
+
+            // Updated Layout for 4 Cards
+            int spacing = 20;
+            int totalSpacing = spacing * 5; // Left, Right, and 3 gaps between 4 cards
+            int cardWidth = (pnlMainContent.Width - totalSpacing) / 4;
+
+            Size cardSize = new Size(cardWidth, 130);
+            cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSize;
+
+            cardTotal.Location = new Point(20, 30);
             cardAvailable.Location = new Point(cardTotal.Right + spacing, 30);
             cardPending.Location = new Point(cardAvailable.Right + spacing, 30);
+            cardBorrowers.Location = new Point(cardPending.Right + spacing, 30);
 
-            lblTotalTitle.Location = lblAvailTitle.Location = lblPendingTitle.Location = new Point(15, 15);
-            lblTotalCount.Location = lblAvailCount.Location = lblPendingCount.Location = new Point(15, 45);
+            lblTotalTitle.Location = lblAvailTitle.Location = lblPendingTitle.Location = lblBorrowersTitle.Location = new Point(15, 15);
+            lblTotalCount.Location = lblAvailCount.Location = lblPendingCount.Location = lblBorrowersCount.Location = new Point(15, 45);
 
-            pnlGridContainer.Location = new Point(30, 180);
-            pnlGridContainer.Width = pnlMainContent.Width - 60;
+            pnlGridContainer.Location = new Point(20, 180);
+            pnlGridContainer.Width = pnlMainContent.Width - 40;
             pnlGridContainer.Height = pnlMainContent.Height - 210;
 
             int btnWidth = pnlSidebar.Width - 20;
@@ -234,10 +235,6 @@ namespace Ventrix.App
             btnEdit.Location = new Point(10, 180);
             btnDelete.Location = new Point(10, 240);
 
-            lblOwnerRole.Location = new Point(68, 22);
-            cmbAccountActions.Location = new Point(63, 42);
-
-            //Sidebar Profile Section
             picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25);
             picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40);
 
@@ -251,6 +248,5 @@ namespace Ventrix.App
                 cmbAccountActions.Size = new Size(160, 30);
             }
         }
-
     }
 }

@@ -24,6 +24,10 @@ namespace Ventrix.App
                 TextShade.WHITE
             );
 
+            pnlLoginCard.BorderRadius = 20;
+            pnlLoginCard.ShadowDecoration.BorderRadius = 20;
+            pnlLoginCard.BackColor = Color.Transparent;
+
             // Toggle Events
             btnStaffToggle.Click += (s, e) => SetLoginMode("Staff");
             btnStudentToggle.Click += (s, e) => SetLoginMode("Student");
@@ -53,7 +57,7 @@ namespace Ventrix.App
 
             // Update Headers and Placeholders
             lblLoginHeader.Text = isAdminLogin ? "ADMIN LOGIN" : "BORROWING PORTAL";
-            txtStudentId.PlaceholderText = isAdminLogin ? "Username / Admin ID" : "Student or Staff ID Number";
+            txtStudentId.PlaceholderText = isAdminLogin ? "Admin ID" : "Student or Staff ID Number";
             lblLoginHeader.AutoSize = false;
             lblLoginHeader.Width = pnlLoginCard.Width;
             lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
@@ -79,10 +83,13 @@ namespace Ventrix.App
             //Force apply to Labels 
             lblQuantity.Font = sitkaDisplay;
             lblSubject.Font = sitkaDisplay;
+            lblEquipmentList.Font = sitkaText;
 
             // Visibility Toggles
             lblCreateAccount.Visible = !isAdminLogin;
             btnLogin.Visible = isAdminLogin;
+            txtPassword.Visible = isAdminLogin;
+
             // Toggle Visibility of Borrower-specific fields
             cmbListEquipments.Visible = !isAdminLogin;
             numQuantity.Visible = !isAdminLogin;
@@ -92,9 +99,12 @@ namespace Ventrix.App
             btnBorrow.Visible = !isAdminLogin;
             btnReturn.Visible = !isAdminLogin;
 
+            pnlLoginCard.Invalidate();
 
             if (isAdminLogin)
             {
+                txtPassword.Location = new Point(50, 220);
+                txtPassword.BringToFront();
                 btnLogin.BringToFront(); // Ensures the button isn't hidden behind the panel
             }
 

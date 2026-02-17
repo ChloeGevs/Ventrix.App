@@ -7,12 +7,11 @@ namespace Ventrix.App
 {
     public partial class FormRegistrationSuccess : Form
     {
-        public FormRegistrationSuccess(string role, string name, string id)
+        public FormRegistrationSuccess(string role, string name)
         {
             InitializeComponent();
             lblTitle.Text = "Registration Successful!";
             lblMessage.Text = $"Welcome to Ventrix, {name}!";
-            lblDetails.Text = $"Role: {role}\nID Number: {id}";
 
             // Auto-close or click button to return
             btnDone.Click += (s, e) => this.DialogResult = DialogResult.OK;
@@ -21,60 +20,115 @@ namespace Ventrix.App
         // Setup the UI components manually for speed or use Designer
         private void InitializeComponent()
         {
-            this.pnlBackground = new Guna2Panel();
-            this.lblTitle = new Label();
-            this.lblMessage = new Label();
-            this.lblDetails = new Label();
-            this.btnDone = new Guna2Button();
-            this.iconCheck = new Guna2CirclePictureBox();
-
-            // Form Settings
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Size = new Size(400, 450);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.BackColor = Color.White;
-
-            // Background with Shadow
-            pnlBackground.Dock = DockStyle.Fill;
-            pnlBackground.BorderColor = Color.FromArgb(224, 224, 224);
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            pnlBackground = new Guna2GradientPanel();
+            iconCheck = new Guna2CirclePictureBox();
+            lblTitle = new Label();
+            lblMessage = new Label();
+            lblDetails = new Label();
+            btnDone = new Guna2Button();
+            pnlBackground.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)iconCheck).BeginInit();
+            SuspendLayout();
+            // 
+            // pnlBackground
+            // 
+            pnlBackground.BackColor = Color.Transparent;
+            pnlBackground.BorderColor = Color.Transparent;
             pnlBackground.BorderThickness = 1;
+            pnlBackground.Controls.Add(iconCheck);
+            pnlBackground.Controls.Add(lblTitle);
+            pnlBackground.Controls.Add(lblMessage);
+            pnlBackground.Controls.Add(lblDetails);
+            pnlBackground.Controls.Add(btnDone);
+            pnlBackground.CustomizableEdges = customizableEdges4;
+            pnlBackground.Dock = DockStyle.Fill;
+            pnlBackground.FillColor = Color.FromArgb(192, 255, 255);
+            pnlBackground.FillColor2 = Color.Teal;
+            pnlBackground.GradientMode = System.Drawing.Drawing2D.LinearGradientMode.Vertical;
+            pnlBackground.Location = new Point(0, 0);
+            pnlBackground.Name = "pnlBackground";
+            pnlBackground.ShadowDecoration.CustomizableEdges = customizableEdges5;
             pnlBackground.ShadowDecoration.Enabled = true;
-
-            // Icon
-            iconCheck.FillColor = Color.FromArgb(46, 125, 50);
-            iconCheck.Location = new Point(150, 40);
-            iconCheck.Size = new Size(100, 100);
-
-            // Labels
-            lblTitle.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            pnlBackground.Size = new Size(400, 450);
+            pnlBackground.TabIndex = 0;
+            pnlBackground.Paint += pnlBackground_Paint;
+            // 
+            // iconCheck
+            // 
+            iconCheck.BackColor = Color.Transparent;
+            iconCheck.BackgroundImage = Properties.Resources.Logo;
+            iconCheck.BackgroundImageLayout = ImageLayout.Zoom;
+            iconCheck.FillColor = Color.Transparent;
+            iconCheck.ImageRotate = 0F;
+            iconCheck.Location = new Point(118, 27);
+            iconCheck.Name = "iconCheck";
+            iconCheck.ShadowDecoration.CustomizableEdges = customizableEdges1;
+            iconCheck.Size = new Size(159, 118);
+            iconCheck.TabIndex = 0;
+            iconCheck.TabStop = false;
+            // 
+            // lblTitle
+            // 
+            lblTitle.Font = new Font("Sitka Heading", 18F, FontStyle.Bold);
             lblTitle.Location = new Point(0, 160);
+            lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(400, 40);
+            lblTitle.TabIndex = 1;
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-
-            lblMessage.Font = new Font("Segoe UI", 11F);
+            // 
+            // lblMessage
+            // 
+            lblMessage.Font = new Font("Sitka Display", 11F);
             lblMessage.Location = new Point(0, 200);
+            lblMessage.Name = "lblMessage";
             lblMessage.Size = new Size(400, 30);
+            lblMessage.TabIndex = 2;
             lblMessage.TextAlign = ContentAlignment.MiddleCenter;
-
-            lblDetails.Font = new Font("Segoe UI Semilight", 10F);
+            // 
+            // lblDetails
+            // 
+            lblDetails.Font = new Font("Sitka Banner", 10F);
             lblDetails.ForeColor = Color.Gray;
             lblDetails.Location = new Point(50, 240);
+            lblDetails.Name = "lblDetails";
             lblDetails.Size = new Size(300, 60);
+            lblDetails.TabIndex = 3;
             lblDetails.TextAlign = ContentAlignment.MiddleCenter;
-
-            // Button
+            // 
+            // btnDone
+            // 
             btnDone.BorderRadius = 10;
+            btnDone.CustomizableEdges = customizableEdges2;
             btnDone.FillColor = Color.FromArgb(13, 71, 161);
             btnDone.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDone.ForeColor = Color.White;
             btnDone.Location = new Point(100, 340);
+            btnDone.Name = "btnDone";
+            btnDone.ShadowDecoration.CustomizableEdges = customizableEdges3;
             btnDone.Size = new Size(200, 45);
+            btnDone.TabIndex = 4;
             btnDone.Text = "CONTINUE TO LOGIN";
-
-            this.Controls.Add(pnlBackground);
-            pnlBackground.Controls.AddRange(new Control[] { iconCheck, lblTitle, lblMessage, lblDetails, btnDone });
+            // 
+            // FormRegistrationSuccess
+            // 
+            BackColor = Color.White;
+            ClientSize = new Size(400, 450);
+            Controls.Add(pnlBackground);
+            DoubleBuffered = true;
+            FormBorderStyle = FormBorderStyle.None;
+            Name = "FormRegistrationSuccess";
+            StartPosition = FormStartPosition.CenterParent;
+            pnlBackground.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)iconCheck).EndInit();
+            ResumeLayout(false);
         }
 
-        private Guna2Panel pnlBackground;
+        private Guna2GradientPanel pnlBackground;
         private Guna2CirclePictureBox iconCheck;
         private Label lblTitle, lblMessage, lblDetails;
         private Guna2Button btnDone;

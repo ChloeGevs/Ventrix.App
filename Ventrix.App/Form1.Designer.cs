@@ -12,29 +12,32 @@
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges39 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges40 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges27 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges28 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges29 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges30 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges31 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges32 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges33 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges34 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges35 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges36 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges37 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges38 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             mainTableLayout = new TableLayoutPanel();
             pnlLoginCard = new Guna.UI2.WinForms.Guna2Panel();
+            txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
+            lblEquipmentList = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblCreateAccount = new Guna.UI2.WinForms.Guna2HtmlLabel();
             btnStaffToggle = new Guna.UI2.WinForms.Guna2Button();
             btnStudentToggle = new Guna.UI2.WinForms.Guna2Button();
@@ -55,8 +58,8 @@
             // 
             // mainTableLayout
             // 
-            mainTableLayout.BackColor = SystemColors.Control;
-            mainTableLayout.BackgroundImage = (Image)resources.GetObject("mainTableLayout.BackgroundImage");
+            mainTableLayout.BackColor = Color.Transparent;
+            mainTableLayout.BackgroundImage = Properties.Resources._5_imresizer__1_;
             mainTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
             mainTableLayout.ColumnCount = 3;
             mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -77,6 +80,8 @@
             // 
             pnlLoginCard.BackColor = Color.Transparent;
             pnlLoginCard.BorderRadius = 20;
+            pnlLoginCard.Controls.Add(txtPassword);
+            pnlLoginCard.Controls.Add(lblEquipmentList);
             pnlLoginCard.Controls.Add(lblCreateAccount);
             pnlLoginCard.Controls.Add(btnStaffToggle);
             pnlLoginCard.Controls.Add(btnStudentToggle);
@@ -90,15 +95,43 @@
             pnlLoginCard.Controls.Add(btnReturn);
             pnlLoginCard.Controls.Add(btnBorrow);
             pnlLoginCard.Controls.Add(btnLogin);
-            pnlLoginCard.CustomizableEdges = customizableEdges39;
+            pnlLoginCard.CustomizableEdges = customizableEdges21;
             pnlLoginCard.Dock = DockStyle.Fill;
             pnlLoginCard.FillColor = Color.White;
             pnlLoginCard.Location = new Point(375, 59);
             pnlLoginCard.Name = "pnlLoginCard";
-            pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges40;
+            pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges22;
             pnlLoginCard.ShadowDecoration.Enabled = true;
             pnlLoginCard.Size = new Size(444, 614);
             pnlLoginCard.TabIndex = 0;
+            // 
+            // txtPassword
+            // 
+            txtPassword.BorderRadius = 10;
+            txtPassword.CustomizableEdges = customizableEdges1;
+            txtPassword.DefaultText = "";
+            txtPassword.Font = new Font("Sitka Text", 11F);
+            txtPassword.IconRight = Properties.Resources.eye;
+            txtPassword.Location = new Point(50, 220);
+            txtPassword.Margin = new Padding(3, 4, 3, 4);
+            txtPassword.Name = "txtPassword";
+            txtPassword.PasswordChar = '●';
+            txtPassword.PlaceholderText = "Password";
+            txtPassword.SelectedText = "";
+            txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges2;
+            txtPassword.Size = new Size(350, 50);
+            txtPassword.TabIndex = 4;
+            txtPassword.UseSystemPasswordChar = true;
+            txtPassword.Visible = false;
+            // 
+            // lblEquipmentList
+            // 
+            lblEquipmentList.BackColor = Color.Transparent;
+            lblEquipmentList.Location = new Point(64, 235);
+            lblEquipmentList.Name = "lblEquipmentList";
+            lblEquipmentList.Size = new Size(125, 22);
+            lblEquipmentList.TabIndex = 16;
+            lblEquipmentList.Text = "List of Equipments";
             // 
             // lblCreateAccount
             // 
@@ -113,12 +146,12 @@
             // btnStaffToggle
             // 
             btnStaffToggle.BorderRadius = 10;
-            btnStaffToggle.CustomizableEdges = customizableEdges21;
+            btnStaffToggle.CustomizableEdges = customizableEdges3;
             btnStaffToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnStaffToggle.ForeColor = Color.White;
             btnStaffToggle.Location = new Point(50, 80);
             btnStaffToggle.Name = "btnStaffToggle";
-            btnStaffToggle.ShadowDecoration.CustomizableEdges = customizableEdges22;
+            btnStaffToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
             btnStaffToggle.Size = new Size(170, 45);
             btnStaffToggle.TabIndex = 0;
             btnStaffToggle.Text = "ADMIN LOGIN";
@@ -126,12 +159,12 @@
             // btnStudentToggle
             // 
             btnStudentToggle.BorderRadius = 10;
-            btnStudentToggle.CustomizableEdges = customizableEdges23;
+            btnStudentToggle.CustomizableEdges = customizableEdges5;
             btnStudentToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnStudentToggle.ForeColor = Color.White;
             btnStudentToggle.Location = new Point(230, 80);
             btnStudentToggle.Name = "btnStudentToggle";
-            btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges24;
+            btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges6;
             btnStudentToggle.Size = new Size(170, 45);
             btnStudentToggle.TabIndex = 1;
             btnStudentToggle.Text = "BORROWER";
@@ -152,7 +185,7 @@
             // txtStudentId
             // 
             txtStudentId.BorderRadius = 10;
-            txtStudentId.CustomizableEdges = customizableEdges25;
+            txtStudentId.CustomizableEdges = customizableEdges7;
             txtStudentId.DefaultText = "";
             txtStudentId.Font = new Font("Sitka Text", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtStudentId.Location = new Point(50, 156);
@@ -160,7 +193,7 @@
             txtStudentId.Name = "txtStudentId";
             txtStudentId.PlaceholderText = "";
             txtStudentId.SelectedText = "";
-            txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges26;
+            txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges8;
             txtStudentId.Size = new Size(350, 50);
             txtStudentId.TabIndex = 3;
             // 
@@ -168,7 +201,7 @@
             // 
             cmbListEquipments.BackColor = Color.Transparent;
             cmbListEquipments.BorderRadius = 10;
-            cmbListEquipments.CustomizableEdges = customizableEdges27;
+            cmbListEquipments.CustomizableEdges = customizableEdges9;
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbListEquipments.FocusedColor = Color.Empty;
@@ -177,7 +210,7 @@
             cmbListEquipments.ItemHeight = 30;
             cmbListEquipments.Location = new Point(50, 228);
             cmbListEquipments.Name = "cmbListEquipments";
-            cmbListEquipments.ShadowDecoration.CustomizableEdges = customizableEdges28;
+            cmbListEquipments.ShadowDecoration.CustomizableEdges = customizableEdges10;
             cmbListEquipments.Size = new Size(350, 36);
             cmbListEquipments.TabIndex = 4;
             // 
@@ -195,13 +228,13 @@
             // 
             numQuantity.BackColor = Color.Transparent;
             numQuantity.BorderRadius = 10;
-            numQuantity.CustomizableEdges = customizableEdges29;
+            numQuantity.CustomizableEdges = customizableEdges11;
             numQuantity.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             numQuantity.Location = new Point(50, 332);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
             numQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQuantity.Name = "numQuantity";
-            numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges30;
+            numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges12;
             numQuantity.Size = new Size(100, 45);
             numQuantity.TabIndex = 6;
             numQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
@@ -219,7 +252,7 @@
             // txtSubject
             // 
             txtSubject.BorderRadius = 10;
-            txtSubject.CustomizableEdges = customizableEdges31;
+            txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
             txtSubject.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtSubject.Location = new Point(165, 332);
@@ -227,19 +260,19 @@
             txtSubject.Name = "txtSubject";
             txtSubject.PlaceholderText = "e.g., IT 211";
             txtSubject.SelectedText = "";
-            txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges32;
+            txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges14;
             txtSubject.Size = new Size(235, 45);
             txtSubject.TabIndex = 8;
             // 
             // btnReturn
             // 
             btnReturn.BorderRadius = 12;
-            btnReturn.CustomizableEdges = customizableEdges33;
+            btnReturn.CustomizableEdges = customizableEdges15;
             btnReturn.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnReturn.ForeColor = Color.White;
             btnReturn.Location = new Point(50, 448);
             btnReturn.Name = "btnReturn";
-            btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges34;
+            btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges16;
             btnReturn.Size = new Size(165, 50);
             btnReturn.TabIndex = 9;
             btnReturn.Text = "RETURN";
@@ -247,13 +280,13 @@
             // btnBorrow
             // 
             btnBorrow.BorderRadius = 12;
-            btnBorrow.CustomizableEdges = customizableEdges35;
+            btnBorrow.CustomizableEdges = customizableEdges17;
             btnBorrow.FillColor = Color.Teal;
             btnBorrow.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnBorrow.ForeColor = Color.White;
             btnBorrow.Location = new Point(235, 448);
             btnBorrow.Name = "btnBorrow";
-            btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges36;
+            btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges18;
             btnBorrow.Size = new Size(165, 50);
             btnBorrow.TabIndex = 10;
             btnBorrow.Text = "BORROW";
@@ -261,13 +294,13 @@
             // btnLogin
             // 
             btnLogin.BorderRadius = 12;
-            btnLogin.CustomizableEdges = customizableEdges37;
+            btnLogin.CustomizableEdges = customizableEdges19;
             btnLogin.FillColor = Color.FromArgb(13, 71, 161);
             btnLogin.Font = new Font("Sitka Display", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
-            btnLogin.Location = new Point(50, 410);
+            btnLogin.Location = new Point(50, 443);
             btnLogin.Name = "btnLogin";
-            btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges38;
+            btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges20;
             btnLogin.Size = new Size(350, 55);
             btnLogin.TabIndex = 13;
             btnLogin.Text = "LOGIN";
@@ -302,5 +335,7 @@
         private Guna.UI2.WinForms.Guna2Button btnBorrow;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblCreateAccount;
         private Guna.UI2.WinForms.Guna2Button btnLogin;
+        private Guna.UI2.WinForms.Guna2TextBox txtPassword;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblEquipmentList;
     }
 }

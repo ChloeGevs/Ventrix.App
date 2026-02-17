@@ -29,8 +29,8 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges27 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges28 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -39,6 +39,8 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
@@ -55,21 +57,28 @@
             txtSearch = new Guna.UI2.WinForms.Guna2TextBox();
             pnlMainContent = new Guna.UI2.WinForms.Guna2Panel();
             cardTotal = new Guna.UI2.WinForms.Guna2Panel();
-            cardAvailable = new Guna.UI2.WinForms.Guna2Panel();
-            cardPending = new Guna.UI2.WinForms.Guna2Panel();
-            pnlGridContainer = new Guna.UI2.WinForms.Guna2Panel();
-            dgvInventory = new Guna.UI2.WinForms.Guna2DataGridView();
             lblTotalTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblTotalCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            cardAvailable = new Guna.UI2.WinForms.Guna2Panel();
             lblAvailTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblAvailCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            cardPending = new Guna.UI2.WinForms.Guna2Panel();
             lblPendingTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblPendingCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            cardBorrowers = new Guna.UI2.WinForms.Guna2Panel();
+            lblBorrowersTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblBorrowersCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            pnlGridContainer = new Guna.UI2.WinForms.Guna2Panel();
+            dgvInventory = new Guna.UI2.WinForms.Guna2DataGridView();
             sidebarTimer = new System.Windows.Forms.Timer(components);
             pnlSidebar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picUser).BeginInit();
             pnlTopBar.SuspendLayout();
             pnlMainContent.SuspendLayout();
+            cardTotal.SuspendLayout();
+            cardAvailable.SuspendLayout();
+            cardPending.SuspendLayout();
+            cardBorrowers.SuspendLayout();
             pnlGridContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvInventory).BeginInit();
             SuspendLayout();
@@ -93,33 +102,42 @@
             // 
             // btnCreate
             // 
+            btnCreate.BackColor = Color.Transparent;
+            btnCreate.BorderRadius = 10;
             btnCreate.CustomizableEdges = customizableEdges1;
             btnCreate.Font = new Font("Segoe UI", 9F);
             btnCreate.ForeColor = Color.White;
             btnCreate.Location = new Point(3, 0);
             btnCreate.Name = "btnCreate";
+            btnCreate.ShadowDecoration.BorderRadius = 10;
             btnCreate.ShadowDecoration.CustomizableEdges = customizableEdges2;
             btnCreate.Size = new Size(180, 45);
             btnCreate.TabIndex = 0;
             // 
             // btnEdit
             // 
+            btnEdit.BackColor = Color.Transparent;
+            btnEdit.BorderRadius = 10;
             btnEdit.CustomizableEdges = customizableEdges3;
             btnEdit.Font = new Font("Segoe UI", 9F);
             btnEdit.ForeColor = Color.White;
             btnEdit.Location = new Point(0, 0);
             btnEdit.Name = "btnEdit";
+            btnEdit.ShadowDecoration.BorderRadius = 10;
             btnEdit.ShadowDecoration.CustomizableEdges = customizableEdges4;
             btnEdit.Size = new Size(180, 45);
             btnEdit.TabIndex = 1;
             // 
             // btnDelete
             // 
+            btnDelete.BackColor = Color.Transparent;
+            btnDelete.BorderRadius = 10;
             btnDelete.CustomizableEdges = customizableEdges5;
             btnDelete.Font = new Font("Segoe UI", 9F);
             btnDelete.ForeColor = Color.White;
             btnDelete.Location = new Point(0, 0);
             btnDelete.Name = "btnDelete";
+            btnDelete.ShadowDecoration.BorderRadius = 10;
             btnDelete.ShadowDecoration.CustomizableEdges = customizableEdges6;
             btnDelete.Size = new Size(180, 45);
             btnDelete.TabIndex = 2;
@@ -227,17 +245,20 @@
             pnlMainContent.Controls.Add(cardTotal);
             pnlMainContent.Controls.Add(cardAvailable);
             pnlMainContent.Controls.Add(cardPending);
+            pnlMainContent.Controls.Add(cardBorrowers);
             pnlMainContent.Controls.Add(pnlGridContainer);
-            pnlMainContent.CustomizableEdges = customizableEdges25;
+            pnlMainContent.CustomizableEdges = customizableEdges27;
             pnlMainContent.Dock = DockStyle.Fill;
             pnlMainContent.Location = new Point(243, 144);
             pnlMainContent.Name = "pnlMainContent";
-            pnlMainContent.ShadowDecoration.CustomizableEdges = customizableEdges26;
+            pnlMainContent.ShadowDecoration.CustomizableEdges = customizableEdges28;
             pnlMainContent.Size = new Size(1034, 703);
             pnlMainContent.TabIndex = 0;
             // 
             // cardTotal
             // 
+            cardTotal.Controls.Add(lblTotalTitle);
+            cardTotal.Controls.Add(lblTotalCount);
             cardTotal.CustomizableEdges = customizableEdges17;
             cardTotal.Location = new Point(0, 0);
             cardTotal.Name = "cardTotal";
@@ -245,8 +266,28 @@
             cardTotal.Size = new Size(200, 100);
             cardTotal.TabIndex = 0;
             // 
+            // lblTotalTitle
+            // 
+            lblTotalTitle.BackColor = Color.Transparent;
+            lblTotalTitle.Location = new Point(0, 0);
+            lblTotalTitle.Name = "lblTotalTitle";
+            lblTotalTitle.Size = new Size(3, 2);
+            lblTotalTitle.TabIndex = 0;
+            lblTotalTitle.Text = null;
+            // 
+            // lblTotalCount
+            // 
+            lblTotalCount.BackColor = Color.Transparent;
+            lblTotalCount.Location = new Point(0, 0);
+            lblTotalCount.Name = "lblTotalCount";
+            lblTotalCount.Size = new Size(3, 2);
+            lblTotalCount.TabIndex = 1;
+            lblTotalCount.Text = null;
+            // 
             // cardAvailable
             // 
+            cardAvailable.Controls.Add(lblAvailTitle);
+            cardAvailable.Controls.Add(lblAvailCount);
             cardAvailable.CustomizableEdges = customizableEdges19;
             cardAvailable.Location = new Point(0, 0);
             cardAvailable.Name = "cardAvailable";
@@ -254,8 +295,28 @@
             cardAvailable.Size = new Size(200, 100);
             cardAvailable.TabIndex = 1;
             // 
+            // lblAvailTitle
+            // 
+            lblAvailTitle.BackColor = Color.Transparent;
+            lblAvailTitle.Location = new Point(0, 0);
+            lblAvailTitle.Name = "lblAvailTitle";
+            lblAvailTitle.Size = new Size(3, 2);
+            lblAvailTitle.TabIndex = 0;
+            lblAvailTitle.Text = null;
+            // 
+            // lblAvailCount
+            // 
+            lblAvailCount.BackColor = Color.Transparent;
+            lblAvailCount.Location = new Point(0, 0);
+            lblAvailCount.Name = "lblAvailCount";
+            lblAvailCount.Size = new Size(3, 2);
+            lblAvailCount.TabIndex = 1;
+            lblAvailCount.Text = null;
+            // 
             // cardPending
             // 
+            cardPending.Controls.Add(lblPendingTitle);
+            cardPending.Controls.Add(lblPendingCount);
             cardPending.CustomizableEdges = customizableEdges21;
             cardPending.Location = new Point(0, 0);
             cardPending.Name = "cardPending";
@@ -263,16 +324,63 @@
             cardPending.Size = new Size(200, 100);
             cardPending.TabIndex = 2;
             // 
+            // lblPendingTitle
+            // 
+            lblPendingTitle.BackColor = Color.Transparent;
+            lblPendingTitle.Location = new Point(0, 0);
+            lblPendingTitle.Name = "lblPendingTitle";
+            lblPendingTitle.Size = new Size(3, 2);
+            lblPendingTitle.TabIndex = 0;
+            lblPendingTitle.Text = null;
+            // 
+            // lblPendingCount
+            // 
+            lblPendingCount.BackColor = Color.Transparent;
+            lblPendingCount.Location = new Point(0, 0);
+            lblPendingCount.Name = "lblPendingCount";
+            lblPendingCount.Size = new Size(3, 2);
+            lblPendingCount.TabIndex = 1;
+            lblPendingCount.Text = null;
+            // 
+            // cardBorrowers
+            // 
+            cardBorrowers.Controls.Add(lblBorrowersTitle);
+            cardBorrowers.Controls.Add(lblBorrowersCount);
+            cardBorrowers.CustomizableEdges = customizableEdges23;
+            cardBorrowers.Location = new Point(0, 0);
+            cardBorrowers.Name = "cardBorrowers";
+            cardBorrowers.ShadowDecoration.CustomizableEdges = customizableEdges24;
+            cardBorrowers.Size = new Size(200, 100);
+            cardBorrowers.TabIndex = 4;
+            // 
+            // lblBorrowersTitle
+            // 
+            lblBorrowersTitle.BackColor = Color.Transparent;
+            lblBorrowersTitle.Location = new Point(0, 0);
+            lblBorrowersTitle.Name = "lblBorrowersTitle";
+            lblBorrowersTitle.Size = new Size(3, 2);
+            lblBorrowersTitle.TabIndex = 0;
+            lblBorrowersTitle.Text = null;
+            // 
+            // lblBorrowersCount
+            // 
+            lblBorrowersCount.BackColor = Color.Transparent;
+            lblBorrowersCount.Location = new Point(0, 0);
+            lblBorrowersCount.Name = "lblBorrowersCount";
+            lblBorrowersCount.Size = new Size(3, 2);
+            lblBorrowersCount.TabIndex = 1;
+            lblBorrowersCount.Text = null;
+            // 
             // pnlGridContainer
             // 
             pnlGridContainer.BackColor = Color.Transparent;
             pnlGridContainer.BorderRadius = 15;
             pnlGridContainer.Controls.Add(dgvInventory);
-            pnlGridContainer.CustomizableEdges = customizableEdges23;
+            pnlGridContainer.CustomizableEdges = customizableEdges25;
             pnlGridContainer.FillColor = Color.White;
             pnlGridContainer.Location = new Point(0, 0);
             pnlGridContainer.Name = "pnlGridContainer";
-            pnlGridContainer.ShadowDecoration.CustomizableEdges = customizableEdges24;
+            pnlGridContainer.ShadowDecoration.CustomizableEdges = customizableEdges26;
             pnlGridContainer.ShadowDecoration.Enabled = true;
             pnlGridContainer.Size = new Size(200, 100);
             pnlGridContainer.TabIndex = 3;
@@ -329,60 +437,6 @@
             dgvInventory.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvInventory.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
             // 
-            // lblTotalTitle
-            // 
-            lblTotalTitle.BackColor = Color.Transparent;
-            lblTotalTitle.Location = new Point(0, 0);
-            lblTotalTitle.Name = "lblTotalTitle";
-            lblTotalTitle.Size = new Size(3, 2);
-            lblTotalTitle.TabIndex = 0;
-            lblTotalTitle.Text = null;
-            // 
-            // lblTotalCount
-            // 
-            lblTotalCount.BackColor = Color.Transparent;
-            lblTotalCount.Location = new Point(0, 0);
-            lblTotalCount.Name = "lblTotalCount";
-            lblTotalCount.Size = new Size(3, 2);
-            lblTotalCount.TabIndex = 0;
-            lblTotalCount.Text = null;
-            // 
-            // lblAvailTitle
-            // 
-            lblAvailTitle.BackColor = Color.Transparent;
-            lblAvailTitle.Location = new Point(0, 0);
-            lblAvailTitle.Name = "lblAvailTitle";
-            lblAvailTitle.Size = new Size(3, 2);
-            lblAvailTitle.TabIndex = 0;
-            lblAvailTitle.Text = null;
-            // 
-            // lblAvailCount
-            // 
-            lblAvailCount.BackColor = Color.Transparent;
-            lblAvailCount.Location = new Point(0, 0);
-            lblAvailCount.Name = "lblAvailCount";
-            lblAvailCount.Size = new Size(3, 2);
-            lblAvailCount.TabIndex = 0;
-            lblAvailCount.Text = null;
-            // 
-            // lblPendingTitle
-            // 
-            lblPendingTitle.BackColor = Color.Transparent;
-            lblPendingTitle.Location = new Point(0, 0);
-            lblPendingTitle.Name = "lblPendingTitle";
-            lblPendingTitle.Size = new Size(3, 2);
-            lblPendingTitle.TabIndex = 0;
-            lblPendingTitle.Text = null;
-            // 
-            // lblPendingCount
-            // 
-            lblPendingCount.BackColor = Color.Transparent;
-            lblPendingCount.Location = new Point(0, 0);
-            lblPendingCount.Name = "lblPendingCount";
-            lblPendingCount.Size = new Size(3, 2);
-            lblPendingCount.TabIndex = 0;
-            lblPendingCount.Text = null;
-            // 
             // Form3
             // 
             ClientSize = new Size(1280, 850);
@@ -396,13 +450,21 @@
             pnlTopBar.ResumeLayout(false);
             pnlTopBar.PerformLayout();
             pnlMainContent.ResumeLayout(false);
+            cardTotal.ResumeLayout(false);
+            cardTotal.PerformLayout();
+            cardAvailable.ResumeLayout(false);
+            cardAvailable.PerformLayout();
+            cardPending.ResumeLayout(false);
+            cardPending.PerformLayout();
+            cardBorrowers.ResumeLayout(false);
+            cardBorrowers.PerformLayout();
             pnlGridContainer.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvInventory).EndInit();
             ResumeLayout(false);
         }
 
-        private Guna.UI2.WinForms.Guna2Panel pnlSidebar, pnlTopBar, pnlMainContent, pnlGridContainer, cardTotal, cardAvailable, cardPending;
-        private Guna.UI2.WinForms.Guna2HtmlLabel lblDashboardHeader, lblTotalTitle, lblTotalCount, lblAvailTitle, lblAvailCount, lblPendingTitle, lblPendingCount;
+        private Guna.UI2.WinForms.Guna2Panel pnlSidebar, pnlTopBar, pnlMainContent, pnlGridContainer, cardTotal, cardAvailable, cardPending, cardBorrowers;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblDashboardHeader, lblTotalTitle, lblTotalCount, lblAvailTitle, lblAvailCount, lblPendingTitle, lblPendingCount, lblBorrowersTitle, lblBorrowersCount;
         private Guna.UI2.WinForms.Guna2TextBox txtSearch;
         private Guna.UI2.WinForms.Guna2DataGridView dgvInventory;
         private Guna.UI2.WinForms.Guna2Button btnCreate, btnEdit, btnDelete;
