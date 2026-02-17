@@ -12,8 +12,8 @@
 
         private void InitializeComponent()
         {
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -34,6 +34,8 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             mainTableLayout = new TableLayoutPanel();
             pnlLoginCard = new Guna.UI2.WinForms.Guna2Panel();
             txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
@@ -51,6 +53,7 @@
             btnReturn = new Guna.UI2.WinForms.Guna2Button();
             btnBorrow = new Guna.UI2.WinForms.Guna2Button();
             btnLogin = new Guna.UI2.WinForms.Guna2Button();
+            cmbGradeLevel = new Guna.UI2.WinForms.Guna2ComboBox();
             mainTableLayout.SuspendLayout();
             pnlLoginCard.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numQuantity).BeginInit();
@@ -95,12 +98,13 @@
             pnlLoginCard.Controls.Add(btnReturn);
             pnlLoginCard.Controls.Add(btnBorrow);
             pnlLoginCard.Controls.Add(btnLogin);
-            pnlLoginCard.CustomizableEdges = customizableEdges21;
+            pnlLoginCard.Controls.Add(cmbGradeLevel);
+            pnlLoginCard.CustomizableEdges = customizableEdges23;
             pnlLoginCard.Dock = DockStyle.Fill;
             pnlLoginCard.FillColor = Color.White;
             pnlLoginCard.Location = new Point(375, 59);
             pnlLoginCard.Name = "pnlLoginCard";
-            pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges22;
+            pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges24;
             pnlLoginCard.ShadowDecoration.Enabled = true;
             pnlLoginCard.Size = new Size(444, 614);
             pnlLoginCard.TabIndex = 0;
@@ -218,7 +222,7 @@
             // 
             lblQuantity.BackColor = Color.Transparent;
             lblQuantity.Font = new Font("Sitka Text", 11F);
-            lblQuantity.Location = new Point(50, 305);
+            lblQuantity.Location = new Point(50, 289);
             lblQuantity.Name = "lblQuantity";
             lblQuantity.Size = new Size(38, 28);
             lblQuantity.TabIndex = 14;
@@ -230,7 +234,7 @@
             numQuantity.BorderRadius = 10;
             numQuantity.CustomizableEdges = customizableEdges11;
             numQuantity.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            numQuantity.Location = new Point(50, 332);
+            numQuantity.Location = new Point(50, 316);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
             numQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQuantity.Name = "numQuantity";
@@ -243,7 +247,7 @@
             // 
             lblSubject.BackColor = Color.Transparent;
             lblSubject.Font = new Font("Sitka Text", 11F);
-            lblSubject.Location = new Point(165, 305);
+            lblSubject.Location = new Point(165, 289);
             lblSubject.Name = "lblSubject";
             lblSubject.Size = new Size(174, 28);
             lblSubject.TabIndex = 15;
@@ -255,7 +259,7 @@
             txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
             txtSubject.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtSubject.Location = new Point(165, 332);
+            txtSubject.Location = new Point(165, 316);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
             txtSubject.PlaceholderText = "e.g., IT 211";
@@ -306,6 +310,25 @@
             btnLogin.Text = "LOGIN";
             btnLogin.Visible = false;
             // 
+            // cmbGradeLevel
+            // 
+            cmbGradeLevel.BackColor = Color.Transparent;
+            cmbGradeLevel.BorderRadius = 10;
+            cmbGradeLevel.CustomizableEdges = customizableEdges21;
+            cmbGradeLevel.DrawMode = DrawMode.OwnerDrawFixed;
+            cmbGradeLevel.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbGradeLevel.FocusedColor = Color.Empty;
+            cmbGradeLevel.Font = new Font("Sitka Text", 11F);
+            cmbGradeLevel.ForeColor = Color.FromArgb(68, 88, 112);
+            cmbGradeLevel.ItemHeight = 30;
+            cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Staff" });
+            cmbGradeLevel.Location = new Point(165, 368);
+            cmbGradeLevel.Name = "cmbGradeLevel";
+            cmbGradeLevel.ShadowDecoration.CustomizableEdges = customizableEdges22;
+            cmbGradeLevel.Size = new Size(235, 36);
+            cmbGradeLevel.StartIndex = 0;
+            cmbGradeLevel.TabIndex = 17;
+            // 
             // Form1
             // 
             ClientSize = new Size(1200, 800);
@@ -337,5 +360,6 @@
         private Guna.UI2.WinForms.Guna2Button btnLogin;
         private Guna.UI2.WinForms.Guna2TextBox txtPassword;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblEquipmentList;
+        private Guna.UI2.WinForms.Guna2ComboBox cmbGradeLevel;
     }
 }

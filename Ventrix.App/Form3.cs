@@ -107,45 +107,61 @@ namespace Ventrix.App
             dgvInventory.Rows.Clear();
             dgvInventory.Columns.Clear();
 
-            if (status == "Borrowers")
-            {
-                // UI Columns for Borrowers View
-                dgvInventory.Columns.Add("ID", "ID");
-                dgvInventory.Columns.Add("Borrower", "Borrower Name");
-                dgvInventory.Columns.Add("Material", "Material");
-                dgvInventory.Columns.Add("Qty", "Qty");
-                dgvInventory.Columns.Add("Purpose", "Subject/Purpose");
-                dgvInventory.Columns.Add("Borrowed", "Date Borrowed");
-                dgvInventory.Columns.Add("Return", "Return Date");
-                dgvInventory.Columns.Add("Remarks", "Remarks");
-
-                // Sample Data for Borrowers
-                dgvInventory.Rows.Add("1", "John Doe", "Projector A", "1", "CS101 - Lecture", "2026-02-14", "2026-02-17", "Good Condition");
-                dgvInventory.Rows.Add("2", "Jane Smith", "Laptop #4", "1", "Thesis Defense", "2026-02-15", "2026-02-16", "For Repair");
-            }
-            else
-            {
-                // Standard UI Columns for Inventory Views
-                dgvInventory.Columns.Add("ID", "ID");
-                dgvInventory.Columns.Add("Name", "Material Name");
-                dgvInventory.Columns.Add("Status", "Status");
-                dgvInventory.Columns.Add("Borrowed", "Date Borrowed");
-                dgvInventory.Columns.Add("Return", "Return Date");
-
-                if (status == "All" || status == "Available")
-                {
-                    dgvInventory.Rows.Add("101", "Projector A", "Available", "-", "-");
-                    dgvInventory.Rows.Add("102", "HDMI Cable", "Available", "-", "-");
-                }
-                if (status == "All" || status == "Borrowed")
-                {
-                    dgvInventory.Rows.Add("201", "Laptop Dell #4", "Borrowed", "2026-02-14", "2026-02-17");
-                    dgvInventory.Rows.Add("205", "Digital Camera", "Borrowed", "2026-02-15", "2026-02-16");
-                }
-            }
-
             dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             lblDashboardHeader.Text = $"INVENTORY: {status.ToUpper()}";
+
+            switch (status)
+            {
+                case "All":
+                    // Overview View: High-level summary of everything
+                    dgvInventory.Columns.Add("ID", "ID");
+                    dgvInventory.Columns.Add("Name", "Material Name");
+                    dgvInventory.Columns.Add("Category", "Category");
+                    dgvInventory.Columns.Add("Status", "Status");
+                    dgvInventory.Columns.Add("Condition", "Condition");
+
+                    // Sample Data
+                    dgvInventory.Rows.Add("101", "Projector A", "Hardware", "Available", "Good");
+                    dgvInventory.Rows.Add("201", "Laptop Dell #4", "Device", "Borrowed", "Under Repair");
+                    break;
+
+                case "Available":
+                    // Ready-to-Borrow View: Focused on stock on hand
+                    dgvInventory.Columns.Add("ID", "ID");
+                    dgvInventory.Columns.Add("Name", "Material Name");
+                    dgvInventory.Columns.Add("Condition", "Condition");
+
+                    // Sample Data
+                    dgvInventory.Rows.Add("101", "Projector A", "Good", "2026-02-10");
+                    dgvInventory.Rows.Add("102", "HDMI Cable", "New", "2026-02-15");
+                    break;
+
+                case "Borrowed":
+                    // Active Transactions View: Tracking accountability
+                    dgvInventory.Columns.Add("Name", "Material Name");
+                    dgvInventory.Columns.Add("Borrower", "Borrower Name");
+                    dgvInventory.Columns.Add("DateBorrowed", "Date Borrowed");
+                    dgvInventory.Columns.Add("DueDate", "Return Due Date");
+                    dgvInventory.Columns.Add("Overdue", "Status");
+
+                    // Sample Data
+                    dgvInventory.Rows.Add("Laptop Dell #4", "John Doe", "2026-02-14", "2026-02-17", "On Time");
+                    dgvInventory.Rows.Add("Digital Camera", "Jane Smith", "2026-02-10", "2026-02-13", "OVERDUE");
+                    break;
+
+                case "Borrowers":
+                    // People-Centric View: Managing accountabilities
+                    dgvInventory.Columns.Add("BorrowerID", "ID Number");
+                    dgvInventory.Columns.Add("Name", "Full Name");
+                    dgvInventory.Columns.Add("Quantity", "Quantity");
+                    dgvInventory.Columns.Add("Grade Level", "Grade Level");
+                    dgvInventory.Columns.Add("Subject/Purpose", "Subject/Purpose");
+
+                    // Sample Data
+                    dgvInventory.Rows.Add("2024-0012", "John Doe", "1", "10", "ICT");
+                    dgvInventory.Rows.Add("2024-0543", "Jane Smith", "2", "8", "PE");
+                    break;
+            }
         }
 
         private void StyleNavButton(Guna.UI2.WinForms.Guna2Button btn, string text, Color hover)
