@@ -1,8 +1,8 @@
 ﻿using MaterialSkin.Controls;
 using System;
 using System.Windows.Forms;
-using Ventrix.Domain;         // Reference Domain
-using Ventrix.Infrastructure; // Reference DB
+using Ventrix.Domain.Models ;       
+using Ventrix.Infrastructure;
 
 namespace Ventrix.App
 {

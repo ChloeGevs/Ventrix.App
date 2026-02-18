@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Ventrix.Domain
+namespace Ventrix.Domain.Models
 {
     public class InventoryItem
     {

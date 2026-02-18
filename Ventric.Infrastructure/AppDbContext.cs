@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Ventrix.Domain;
+using Ventrix.Domain.Models;
 
 namespace Ventrix.Infrastructure
 {

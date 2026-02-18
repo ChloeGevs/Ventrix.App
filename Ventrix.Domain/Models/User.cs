@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ventrix.Domain
+namespace Ventrix.Domain.Models
 {
     public class User
     {

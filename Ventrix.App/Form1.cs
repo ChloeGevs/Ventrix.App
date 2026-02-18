@@ -1,7 +1,7 @@
 using System;
 using System.Linq; // Needed for database queries
 using System.Windows.Forms;
-using Ventrix.Domain;
+using Ventrix.Domain.Models;
 using Ventrix.Infrastructure;
 
 namespace Ventrix.App

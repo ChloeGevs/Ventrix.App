@@ -4,8 +4,8 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using Ventrix.Infrastructure; // CRITICAL: Connects to your Database
-using Ventrix.Domain;         // CRITICAL: Connects to your Inventory Item Model
+using Ventrix.Infrastructure; 
+using Ventrix.Domain.Models;         
 
 namespace Ventrix.App
 {
