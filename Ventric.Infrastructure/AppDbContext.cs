@@ -15,3 +15,6 @@ namespace Ventrix.Infrastructure
         }
     }
 }
+git commit -m "fixed conflicts from stash"
+git config --global user.email "i.gulen.561080@umindanao.edu.ph"
+git config --global user.name "Irish Gulen"
