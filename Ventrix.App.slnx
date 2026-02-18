@@ -1,3 +1,6 @@
 <Solution>
   <Project Path="Ventrix.App/Ventrix.App.csproj" />
+  <Project Path="Ventrix.Domain/Ventrix.Domain.csproj" Id="3824f09d-df7b-407d-b896-58c6f44932d0" />
+  <Project Path="Ventrix.Infrastructure/Ventrix.Infrastructure.csproj" Id="319d904b-e18e-49a8-b3be-d601b8b17fda" />
+  <Project Path="Ventrix.Services/Ventrix.Services.csproj" Id="902828f2-e155-4384-816c-d9308274cdcb" />
 </Solution>

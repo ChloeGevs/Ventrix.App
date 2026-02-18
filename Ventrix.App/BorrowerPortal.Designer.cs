@@ -1,6 +1,6 @@
 ﻿namespace Ventrix.App
 {
-    partial class Form1
+    partial class BorrowerPortal
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -106,6 +106,7 @@
             pnlLoginCard.Name = "pnlLoginCard";
             pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges24;
             pnlLoginCard.ShadowDecoration.Enabled = true;
+            pnlLoginCard.ShadowDecoration.BorderRadius = 20;
             pnlLoginCard.Size = new Size(444, 614);
             pnlLoginCard.TabIndex = 0;
             // 
@@ -133,6 +134,7 @@
             lblEquipmentList.BackColor = Color.Transparent;
             lblEquipmentList.Location = new Point(64, 235);
             lblEquipmentList.Name = "lblEquipmentList";
+            lblEquipmentList.Font = new Font("Sitka Text", 10F, FontStyle.Regular);
             lblEquipmentList.Size = new Size(125, 22);
             lblEquipmentList.TabIndex = 16;
             lblEquipmentList.Text = "List of Equipments";
@@ -151,7 +153,7 @@
             // 
             btnStaffToggle.BorderRadius = 10;
             btnStaffToggle.CustomizableEdges = customizableEdges3;
-            btnStaffToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnStaffToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Bold);
             btnStaffToggle.ForeColor = Color.White;
             btnStaffToggle.Location = new Point(50, 80);
             btnStaffToggle.Name = "btnStaffToggle";
@@ -164,7 +166,7 @@
             // 
             btnStudentToggle.BorderRadius = 10;
             btnStudentToggle.CustomizableEdges = customizableEdges5;
-            btnStudentToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnStudentToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Bold);
             btnStudentToggle.ForeColor = Color.White;
             btnStudentToggle.Location = new Point(230, 80);
             btnStudentToggle.Name = "btnStudentToggle";
@@ -191,7 +193,7 @@
             txtStudentId.BorderRadius = 10;
             txtStudentId.CustomizableEdges = customizableEdges7;
             txtStudentId.DefaultText = "";
-            txtStudentId.Font = new Font("Sitka Text", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.Font = new Font("Segoe UI Regular", 8F);
             txtStudentId.Location = new Point(50, 156);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
@@ -209,7 +211,7 @@
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbListEquipments.FocusedColor = Color.Empty;
-            cmbListEquipments.Font = new Font("Sitka Banner", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cmbListEquipments.Font = new Font("Sitka Banner", 12F, FontStyle.Bold);
             cmbListEquipments.ForeColor = Color.FromArgb(68, 88, 112);
             cmbListEquipments.ItemHeight = 30;
             cmbListEquipments.Location = new Point(50, 228);
@@ -221,7 +223,7 @@
             // lblQuantity
             // 
             lblQuantity.BackColor = Color.Transparent;
-            lblQuantity.Font = new Font("Sitka Text", 11F);
+            lblQuantity.Font = new Font("Sitka Display", 10F, FontStyle.Bold);
             lblQuantity.Location = new Point(50, 289);
             lblQuantity.Name = "lblQuantity";
             lblQuantity.Size = new Size(38, 28);
@@ -246,7 +248,7 @@
             // lblSubject
             // 
             lblSubject.BackColor = Color.Transparent;
-            lblSubject.Font = new Font("Sitka Text", 11F);
+            lblSubject.Font = new Font("Sitka Display", 10F, FontStyle.Bold);
             lblSubject.Location = new Point(165, 289);
             lblSubject.Name = "lblSubject";
             lblSubject.Size = new Size(174, 28);
@@ -258,7 +260,7 @@
             txtSubject.BorderRadius = 10;
             txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
-            txtSubject.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtSubject.Font = new Font("Segoe UI Regular", 8F);
             txtSubject.Location = new Point(165, 316);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
@@ -272,7 +274,7 @@
             // 
             btnReturn.BorderRadius = 12;
             btnReturn.CustomizableEdges = customizableEdges15;
-            btnReturn.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnReturn.Font = new Font("Sitka Banner", 12F, FontStyle.Bold);
             btnReturn.ForeColor = Color.White;
             btnReturn.Location = new Point(50, 448);
             btnReturn.Name = "btnReturn";
@@ -286,7 +288,7 @@
             btnBorrow.BorderRadius = 12;
             btnBorrow.CustomizableEdges = customizableEdges17;
             btnBorrow.FillColor = Color.Teal;
-            btnBorrow.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnBorrow.Font = new Font("Sitka Banner", 12F, FontStyle.Bold);
             btnBorrow.ForeColor = Color.White;
             btnBorrow.Location = new Point(235, 448);
             btnBorrow.Name = "btnBorrow";
@@ -300,7 +302,7 @@
             btnLogin.BorderRadius = 12;
             btnLogin.CustomizableEdges = customizableEdges19;
             btnLogin.FillColor = Color.FromArgb(13, 71, 161);
-            btnLogin.Font = new Font("Sitka Display", 12F, FontStyle.Bold);
+            btnLogin.Font = new Font("Sitka Banner", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
             btnLogin.Location = new Point(50, 443);
             btnLogin.Name = "btnLogin";
@@ -328,6 +330,11 @@
             cmbGradeLevel.Size = new Size(235, 36);
             cmbGradeLevel.StartIndex = 0;
             cmbGradeLevel.TabIndex = 17;
+            //
+            // Double Buffering for Smooth TableLayout UI
+            //
+            var method = typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method.SetValue(mainTableLayout, true, null);
             // 
             // Form1
             // 

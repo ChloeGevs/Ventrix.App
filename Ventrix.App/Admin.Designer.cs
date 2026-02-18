@@ -1,6 +1,6 @@
 ﻿namespace Ventrix.App
 {
-    partial class Form3
+    partial class Admin
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -16,6 +16,7 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Admin));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -105,8 +106,11 @@
             btnCreate.BackColor = Color.Transparent;
             btnCreate.BorderRadius = 10;
             btnCreate.CustomizableEdges = customizableEdges1;
-            btnCreate.Font = new Font("Segoe UI", 9F);
+            btnCreate.Font = new System.Drawing.Font("Sitka Banner", 11F, System.Drawing.FontStyle.Bold);
             btnCreate.ForeColor = Color.White;
+            btnCreate.Image = (Image)resources.GetObject("btnCreate.Image");
+            btnCreate.ImageAlign = HorizontalAlignment.Left;
+            btnCreate.ImageSize = new Size(25, 25);
             btnCreate.Location = new Point(3, 0);
             btnCreate.Name = "btnCreate";
             btnCreate.ShadowDecoration.BorderRadius = 10;
@@ -119,8 +123,11 @@
             btnEdit.BackColor = Color.Transparent;
             btnEdit.BorderRadius = 10;
             btnEdit.CustomizableEdges = customizableEdges3;
-            btnEdit.Font = new Font("Segoe UI", 9F);
+            btnEdit.Font = new System.Drawing.Font("Sitka Banner", 11F, System.Drawing.FontStyle.Bold);
             btnEdit.ForeColor = Color.White;
+            btnEdit.Image = (Image)resources.GetObject("btnEdit.Image");
+            btnEdit.ImageAlign = HorizontalAlignment.Left;
+            btnEdit.ImageSize = new Size(25, 25);
             btnEdit.Location = new Point(0, 0);
             btnEdit.Name = "btnEdit";
             btnEdit.ShadowDecoration.BorderRadius = 10;
@@ -133,8 +140,11 @@
             btnDelete.BackColor = Color.Transparent;
             btnDelete.BorderRadius = 10;
             btnDelete.CustomizableEdges = customizableEdges5;
-            btnDelete.Font = new Font("Segoe UI", 9F);
+            btnDelete.Font = new System.Drawing.Font("Sitka Banner", 11F, System.Drawing.FontStyle.Bold);
             btnDelete.ForeColor = Color.White;
+            btnDelete.Image = (Image)resources.GetObject("btnDelete.Image");
+            btnDelete.ImageAlign = HorizontalAlignment.Left;
+            btnDelete.ImageSize = new Size(25, 25);
             btnDelete.Location = new Point(0, 0);
             btnDelete.Name = "btnDelete";
             btnDelete.ShadowDecoration.BorderRadius = 10;
@@ -160,8 +170,8 @@
             // lblOwnerRole
             // 
             lblOwnerRole.BackColor = Color.Transparent;
-            lblOwnerRole.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            lblOwnerRole.ForeColor = Color.White;
+            lblOwnerRole.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            lblOwnerRole.ForeColor = System.Drawing.Color.White;
             lblOwnerRole.Location = new Point(66, 11);
             lblOwnerRole.Name = "lblOwnerRole";
             lblOwnerRole.Size = new Size(53, 25);
@@ -175,10 +185,10 @@
             cmbAccountActions.CustomizableEdges = customizableEdges8;
             cmbAccountActions.DrawMode = DrawMode.OwnerDrawFixed;
             cmbAccountActions.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbAccountActions.FillColor = Color.FromArgb(13, 71, 161);
+            cmbAccountActions.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
             cmbAccountActions.FocusedColor = Color.Empty;
             cmbAccountActions.Font = new Font("Segoe UI", 8F);
-            cmbAccountActions.ForeColor = Color.White;
+            cmbAccountActions.ForeColor = System.Drawing.Color.White;
             cmbAccountActions.ItemHeight = 30;
             cmbAccountActions.Items.AddRange(new object[] { "Account", "Sign out" });
             cmbAccountActions.Location = new Point(0, 0);
@@ -217,6 +227,9 @@
             // lblDashboardHeader
             // 
             lblDashboardHeader.BackColor = Color.Transparent;
+            lblDashboardHeader.AutoSize = false;
+            lblDashboardHeader.Font = new System.Drawing.Font("Sitka Heading", 22F, System.Drawing.FontStyle.Bold);
+            lblDashboardHeader.ForeColor = System.Drawing.Color.FromArgb(13, 71, 161);
             lblDashboardHeader.Location = new Point(0, 0);
             lblDashboardHeader.Name = "lblDashboardHeader";
             lblDashboardHeader.Size = new Size(3, 2);
@@ -228,7 +241,7 @@
             txtSearch.BorderRadius = 20;
             txtSearch.CustomizableEdges = customizableEdges13;
             txtSearch.DefaultText = "";
-            txtSearch.Font = new Font("Segoe UI", 9F);
+            txtSearch.Font = new System.Drawing.Font("Segoe UI", 9F);
             txtSearch.IconRight = Properties.Resources.loupe;
             txtSearch.Location = new Point(0, 0);
             txtSearch.Margin = new Padding(3, 4, 3, 4);
@@ -260,10 +273,13 @@
             cardTotal.Controls.Add(lblTotalTitle);
             cardTotal.Controls.Add(lblTotalCount);
             cardTotal.CustomizableEdges = customizableEdges17;
+            cardTotal.FillColor = System.Drawing.Color.White;
             cardTotal.Location = new Point(0, 0);
             cardTotal.Name = "cardTotal";
             cardTotal.ShadowDecoration.CustomizableEdges = customizableEdges18;
+            cardTotal.ShadowDecoration.Enabled = true;
             cardTotal.Size = new Size(200, 100);
+            cardTotal.BorderRadius = 15;
             cardTotal.TabIndex = 0;
             // 
             // lblTotalTitle
@@ -290,9 +306,12 @@
             cardAvailable.Controls.Add(lblAvailCount);
             cardAvailable.CustomizableEdges = customizableEdges19;
             cardAvailable.Location = new Point(0, 0);
+            cardAvailable.FillColor = System.Drawing.Color.White;
             cardAvailable.Name = "cardAvailable";
             cardAvailable.ShadowDecoration.CustomizableEdges = customizableEdges20;
+            cardAvailable.ShadowDecoration.Enabled = true;
             cardAvailable.Size = new Size(200, 100);
+            cardAvailable.BorderRadius = 15;
             cardAvailable.TabIndex = 1;
             // 
             // lblAvailTitle
@@ -319,9 +338,12 @@
             cardPending.Controls.Add(lblPendingCount);
             cardPending.CustomizableEdges = customizableEdges21;
             cardPending.Location = new Point(0, 0);
+            cardPending.FillColor = System.Drawing.Color.White;
             cardPending.Name = "cardPending";
             cardPending.ShadowDecoration.CustomizableEdges = customizableEdges22;
+            cardPending.ShadowDecoration.Enabled = true;
             cardPending.Size = new Size(200, 100);
+            cardPending.BorderRadius = 15;
             cardPending.TabIndex = 2;
             // 
             // lblPendingTitle
@@ -348,8 +370,10 @@
             cardBorrowers.Controls.Add(lblBorrowersCount);
             cardBorrowers.CustomizableEdges = customizableEdges23;
             cardBorrowers.Location = new Point(0, 0);
+            cardBorrowers.FillColor = System.Drawing.Color.White;
             cardBorrowers.Name = "cardBorrowers";
             cardBorrowers.ShadowDecoration.CustomizableEdges = customizableEdges24;
+            cardBorrowers.ShadowDecoration.Enabled = true;
             cardBorrowers.Size = new Size(200, 100);
             cardBorrowers.TabIndex = 4;
             // 
@@ -377,7 +401,7 @@
             pnlGridContainer.BorderRadius = 15;
             pnlGridContainer.Controls.Add(dgvInventory);
             pnlGridContainer.CustomizableEdges = customizableEdges25;
-            pnlGridContainer.FillColor = Color.White;
+            pnlGridContainer.FillColor = System.Drawing.Color.White;
             pnlGridContainer.Location = new Point(0, 0);
             pnlGridContainer.Name = "pnlGridContainer";
             pnlGridContainer.ShadowDecoration.CustomizableEdges = customizableEdges26;
@@ -436,6 +460,11 @@
             dgvInventory.ThemeStyle.RowsStyle.Height = 35;
             dgvInventory.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvInventory.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
+            //
+            // Double Buffering for Smooth Layout Performance
+            //
+            var method = typeof(System.Windows.Forms.Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method.SetValue(pnlMainContent, true, null);
             // 
             // Form3
             // 
@@ -443,7 +472,7 @@
             Controls.Add(pnlMainContent);
             Controls.Add(pnlSidebar);
             Controls.Add(pnlTopBar);
-            Name = "Form3";
+            Name = "Admin";
             pnlSidebar.ResumeLayout(false);
             pnlSidebar.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picUser).EndInit();

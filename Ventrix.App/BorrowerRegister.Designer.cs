@@ -1,6 +1,6 @@
 ﻿namespace Ventrix.App
 {
-    partial class Form2
+    partial class BorrowerRegister
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -63,7 +63,7 @@
             // pnlRegCard
             // 
             pnlRegCard.BackColor = Color.Transparent;
-            pnlRegCard.BorderRadius = 15;
+            pnlRegCard.BorderRadius = 20;
             pnlRegCard.Controls.Add(lblHeader);
             pnlRegCard.Controls.Add(cmbRole);
             pnlRegCard.Controls.Add(txtFirstName);
@@ -86,14 +86,14 @@
             // 
             lblHeader.AutoSize = false;
             lblHeader.BackColor = Color.Transparent;
-            lblHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
-            lblHeader.ForeColor = Color.FromArgb(13, 71, 161);
+            lblHeader.Font = new System.Drawing.Font("Sitka Heading", 22F, System.Drawing.FontStyle.Bold);
+            lblHeader.ForeColor = System.Drawing.Color.FromArgb(13, 71, 161);
             lblHeader.Location = new Point(0, 20);
             lblHeader.Name = "lblHeader";
             lblHeader.Size = new Size(494, 70);
             lblHeader.TabIndex = 0;
             lblHeader.Text = "STUDENT REGISTRATION";
-            lblHeader.TextAlignment = ContentAlignment.MiddleCenter;
+            lblHeader.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // cmbRole
             // 
@@ -103,7 +103,7 @@
             cmbRole.DrawMode = DrawMode.OwnerDrawFixed;
             cmbRole.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRole.FocusedColor = Color.Empty;
-            cmbRole.Font = new Font("Segoe UI", 10F);
+            cmbRole.Font = new System.Drawing.Font("Sitka Banner", 12F, System.Drawing.FontStyle.Bold);
             cmbRole.ForeColor = Color.FromArgb(68, 88, 112);
             cmbRole.ItemHeight = 30;
             cmbRole.Items.AddRange(new object[] { "Student", "Staff" });
@@ -119,7 +119,7 @@
             txtFirstName.BorderRadius = 10;
             txtFirstName.CustomizableEdges = customizableEdges3;
             txtFirstName.DefaultText = "";
-            txtFirstName.Font = new Font("Segoe UI Variable Text", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtFirstName.Font = new System.Drawing.Font("Segoe UI", 9F);
             txtFirstName.Location = new Point(57, 197);
             txtFirstName.Margin = new Padding(3, 4, 3, 4);
             txtFirstName.Name = "txtFirstName";
@@ -134,7 +134,7 @@
             txtLastName.BorderRadius = 10;
             txtLastName.CustomizableEdges = customizableEdges5;
             txtLastName.DefaultText = "";
-            txtLastName.Font = new Font("Segoe UI Variable Text", 10F);
+            txtLastName.Font = new System.Drawing.Font("Segoe UI", 9F);
             txtLastName.Location = new Point(57, 273);
             txtLastName.Margin = new Padding(3, 4, 3, 4);
             txtLastName.Name = "txtLastName";
@@ -164,7 +164,7 @@
             btnRegister.BorderRadius = 10;
             btnRegister.CustomizableEdges = customizableEdges9;
             btnRegister.FillColor = Color.FromArgb(13, 71, 161);
-            btnRegister.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnRegister.Font = new System.Drawing.Font("Sitka Banner", 12F, System.Drawing.FontStyle.Bold);
             btnRegister.ForeColor = Color.White;
             btnRegister.Location = new Point(57, 544);
             btnRegister.Name = "btnRegister";
@@ -175,6 +175,7 @@
             // 
             // lblLoginLink
             // 
+            lblLoginLink.Font = new System.Drawing.Font("Sitka Banner", 11F, System.Drawing.FontStyle.Regular);
             lblLoginLink.BackColor = Color.Transparent;
             lblLoginLink.Location = new Point(170, 605);
             lblLoginLink.Name = "lblLoginLink";
@@ -216,7 +217,7 @@
             // 
             ClientSize = new Size(1200, 850);
             Controls.Add(regTableLayout);
-            Name = "Form2";
+            Name = "BorrowerRegister";
             Text = "Ventrix | Registration Portal";
             regTableLayout.ResumeLayout(false);
             pnlRegCard.ResumeLayout(false);
