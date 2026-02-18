@@ -1,120 +1,141 @@
-using MaterialSkin;
-using MaterialSkin.Controls;
 using System;
-using System.Drawing;
+using System.Linq; // Needed for database queries
 using System.Windows.Forms;
+using Ventrix.Domain;
+using Ventrix.Infrastructure;
 
 namespace Ventrix.App
 {
-    public partial class Form1 : MaterialForm
+    public partial class Form1 : Form
     {
         public Form1()
         {
             InitializeComponent();
-
-            var materialSkinManager = MaterialSkinManager.Instance;
-            materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT;
-
-            materialSkinManager.ColorScheme = new ColorScheme(
-                Color.FromArgb(13, 71, 161),
-                Color.FromArgb(10, 50, 120),
-                Color.FromArgb(33, 150, 243),
-                Color.FromArgb(30, 136, 229),
-                TextShade.WHITE
-            );
-
-            pnlLoginCard.BorderRadius = 20;
-            pnlLoginCard.ShadowDecoration.BorderRadius = 20;
-            pnlLoginCard.BackColor = Color.Transparent;
-
-            // Toggle Events
-            btnStaffToggle.Click += (s, e) => SetLoginMode("Staff");
-            btnStudentToggle.Click += (s, e) => SetLoginMode("Student");
-            var method = typeof(Control).GetProperty("DoubleBuffered",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            method.SetValue(mainTableLayout, true, null);
-
-            // Navigation to Registration
-            lblCreateAccount.Click += (s, e) => {
-                Form2 regForm = new Form2();
-                regForm.ShowDialog();
-            };
-            
-            btnLogin.Click += (s, e) => {
-                // Navigate to Admin Dashboard
-                Form3 dashboard = new Form3();
-                dashboard.Show();
-                this.Hide();
-            };
-
-            SetLoginMode("Student"); // Default to Borrower view for quick access
+            SetupEvents();
         }
 
-        private void SetLoginMode(string mode)
+        private void SetupEvents()
         {
-            bool isAdminLogin = (mode == "Staff");
+            // Toggles
+            btnStaffToggle.Click += (s, e) => ToggleMode("Staff");
+            btnStudentToggle.Click += (s, e) => ToggleMode("Student");
 
-            // Update Headers and Placeholders
-            lblLoginHeader.Text = isAdminLogin ? "ADMIN LOGIN" : "BORROWING PORTAL";
-            txtStudentId.PlaceholderText = isAdminLogin ? "Admin ID" : "Student or Staff ID Number";
-            lblLoginHeader.AutoSize = false;
-            lblLoginHeader.Width = pnlLoginCard.Width;
-            lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
-            lblLoginHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+            // Actions
+            btnLogin.Click += BtnLogin_Click;
+            btnBorrow.Click += BtnBorrow_Click;
 
-            //Define your Sitka Fonts
-            Font sitkaBanner = new Font("Sitka Banner", 12F, FontStyle.Bold);
-            Font sitkaText = new Font("Sitka Text", 10F, FontStyle.Regular);
-            Font sitkaDisplay = new Font("Sitka Display", 10F, FontStyle.Bold);
+            // Initial State
+            ToggleMode("Student");
+            LoadEquipmentList();
+        }
 
-            //Force apply to Buttons
-            btnStaffToggle.Font = sitkaBanner;
-            btnStudentToggle.Font = sitkaBanner;
-            btnBorrow.Font = sitkaBanner;
-            btnReturn.Font = sitkaBanner;
-            btnLogin.Font = sitkaBanner;
-
-            //Force apply to TextBoxes & ComboBox
-            txtStudentId.Font = new Font("Segoe UI Regular", 8F);
-            txtSubject.Font = new Font("Segoe UI Regular", 8F);
-            cmbListEquipments.Font = sitkaBanner;
-
-            //Force apply to Labels 
-            lblQuantity.Font = sitkaDisplay;
-            lblSubject.Font = sitkaDisplay;
-            lblEquipmentList.Font = sitkaText;
-
-            // Visibility Toggles
-            lblCreateAccount.Visible = !isAdminLogin;
-            btnLogin.Visible = isAdminLogin;
-            txtPassword.Visible = isAdminLogin;
-
-            // Toggle Visibility of Borrower-specific fields
-            cmbListEquipments.Visible = !isAdminLogin;
-            numQuantity.Visible = !isAdminLogin;
-            txtSubject.Visible = !isAdminLogin;
-            lblQuantity.Visible = !isAdminLogin;
-            lblSubject.Visible = !isAdminLogin;
-            btnBorrow.Visible = !isAdminLogin;
-            btnReturn.Visible = !isAdminLogin;
-
-            pnlLoginCard.Invalidate();
-
-            if (isAdminLogin)
+        private void LoadEquipmentList()
+        {
+            // Load items from DB into ComboBox
+            using (var db = new AppDbContext())
             {
-                txtPassword.Location = new Point(50, 220);
-                txtPassword.BringToFront();
-                btnLogin.BringToFront(); // Ensures the button isn't hidden behind the panel
+                var items = db.InventoryItems
+                              .Where(i => i.Status == "Available")
+                              .Select(i => i.Name)
+                              .Distinct() // remove duplicates
+                              .ToArray();
+                cmbListEquipments.Items.AddRange(items);
+            }
+        }
+
+        private void ToggleMode(string mode)
+        {
+            if (mode == "Staff")
+            {
+                // Show Login UI, Hide Borrow UI
+                txtPassword.Visible = true;
+                btnLogin.Visible = true;
+
+                txtStudentId.PlaceholderText = "Username / Admin ID";
+                cmbListEquipments.Visible = false;
+                numQuantity.Visible = false;
+                txtSubject.Visible = false;
+                cmbGradeLevel.Visible = false;
+                btnBorrow.Visible = false;
+                btnReturn.Visible = false;
+
+                // Colors
+                btnStaffToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
+                btnStudentToggle.FillColor = System.Drawing.Color.Gray;
+            }
+            else
+            {
+                // Show Borrow UI, Hide Login UI
+                txtPassword.Visible = false;
+                btnLogin.Visible = false;
+
+                txtStudentId.PlaceholderText = "Student ID Number";
+                cmbListEquipments.Visible = true;
+                numQuantity.Visible = true;
+                txtSubject.Visible = true;
+                cmbGradeLevel.Visible = true;
+                btnBorrow.Visible = true;
+                btnReturn.Visible = true;
+
+                // Colors
+                btnStudentToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
+                btnStaffToggle.FillColor = System.Drawing.Color.Gray;
+            }
+        }
+
+        private void BtnLogin_Click(object sender, EventArgs e)
+        {
+            using (var db = new AppDbContext())
+            {
+                var admin = db.Users.FirstOrDefault(u => u.UserId == txtStudentId.Text && u.Password == txtPassword.Text);
+
+                if (admin != null)
+                {
+                    // Open Dashboard
+                    Form3 dashboard = new Form3();
+                    dashboard.Show();
+                    this.Hide();
+                }
+                else
+                {
+                    MessageBox.Show("Invalid Admin Credentials.");
+                }
+            }
+        }
+
+        private void BtnBorrow_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(txtStudentId.Text) || cmbListEquipments.SelectedIndex == -1)
+            {
+                MessageBox.Show("Please enter Student ID and select an item.");
+                return;
             }
 
-            // Force the custom font to stay active
-            lblLoginHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+            using (var db = new AppDbContext())
+            {
+                // 1. Create Record
+                var record = new BorrowRecord
+                {
+                    BorrowerId = txtStudentId.Text,
+                    ItemName = cmbListEquipments.Text,
+                    Quantity = (int)numQuantity.Value,
+                    Purpose = txtSubject.Text,
+                    GradeLevel = cmbGradeLevel.Text,
+                    Status = "Active"
+                };
 
-            // Visual feedback for toggles
-            btnStaffToggle.FillColor = isAdminLogin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(224, 224, 224);
-            btnStudentToggle.FillColor = !isAdminLogin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(224, 224, 224);
+                db.BorrowRecords.Add(record);
+
+                // 2. Update Inventory Item status (Simplified logic)
+                var item = db.InventoryItems.FirstOrDefault(i => i.Name == record.ItemName && i.Status == "Available");
+                if (item != null)
+                {
+                    item.Status = "Borrowed";
+                }
+
+                db.SaveChanges();
+                MessageBox.Show("Item Borrowed Successfully!");
+            }
         }
-
     }
 }

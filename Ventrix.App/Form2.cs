@@ -1,112 +1,65 @@
-﻿using MaterialSkin;
-using MaterialSkin.Controls;
+﻿using MaterialSkin.Controls;
 using System;
-using System.Drawing;
 using System.Windows.Forms;
+using Ventrix.Domain;         // Reference Domain
+using Ventrix.Infrastructure; // Reference DB
 
 namespace Ventrix.App
 {
     public partial class Form2 : MaterialForm
     {
-        public Form2()
+        // ... (Keep your existing Constructor and UI setup code) ...
+
+        // Find this section in your existing code and UPDATE the click event:
+        private void InitializeEventHandlers()
         {
-            InitializeComponent();
-            var materialSkinManager = MaterialSkinManager.Instance;
-            materialSkinManager.AddFormToManage(this);
+            btnRegister.Click += BtnRegister_Click;
+        }
 
-            // Apply the custom font immediately after MaterialSkin takes control
-            ApplyHeaderStyle();
-            ApplyCustomFonts();
-
-            // Handle switching between Student and Staff UI
-            cmbRole.SelectedIndexChanged += (s, e) =>
+        private void BtnRegister_Click(object sender, EventArgs e)
+        {
+            // 1. Validation
+            if (string.IsNullOrWhiteSpace(txtFirstName.Text) || string.IsNullOrWhiteSpace(txtLastName.Text))
             {
-                bool isStudent = cmbRole.Text == "Student";
-                lblHeader.Text = isStudent ? "STUDENT REGISTRATION" : "STAFF REGISTRATION";
-                btnRegister.Text = "REGISTER";
-                lblHeader.AutoSize = false;
-                lblHeader.Width = pnlRegCard.Width;
-                lblHeader.TextAlignment = ContentAlignment.MiddleCenter;
-                lblHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+                MessageBox.Show("Please fill in all required fields.");
+                return;
+            }
 
-                // Re-apply style to override theme defaults
-                ApplyHeaderStyle();
-                ApplyCustomFonts();
+            // 2. Prepare Data
+            var newUser = new User
+            {
+                // We'll generate a random ID for now, or you can add a textbox for it
+                UserId = new Random().Next(20240000, 20249999).ToString(),
+                FirstName = txtFirstName.Text,
+                LastName = txtLastName.Text,
+                MiddleName = txtMiddleName.Text,
+                Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text,
+                Role = cmbRole.Text,
+                Password = "123" // Default password for now
             };
 
-            // Disable/Enable Suffix box based on checkbox
-            chkNoSuffix.CheckedChanged += (s, e) => {
-                if (chkNoSuffix.Checked)
-                {
-                    txtSuffix.Text = "";
-                    txtSuffix.Enabled = false;
-                    txtSuffix.FillColor = Color.FromArgb(240, 240, 240); // Visual cue for disabled
-                }
-                else
-                {
-                    txtSuffix.Enabled = true;
-                    txtSuffix.FillColor = Color.White;
-                }
-            };
-
-            pnlRegCard.BorderRadius = 20;
-            pnlRegCard.ShadowDecoration.BorderRadius = 20;
-            pnlRegCard.BackColor = Color.Transparent;
-
-            // Registration Action with Modern Popup
-            btnRegister.Click += (s, e) =>
+            // 3. Save to Database
+            try
             {
-                string role = cmbRole.Text;
-                string suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text.Trim();
+                using (var db = new AppDbContext())
+                {
+                    db.Users.Add(newUser);
+                    db.SaveChanges();
+                }
 
-                // Format full name including suffix if it exists
-                string fullName = string.IsNullOrEmpty(suffix)
-                    ? $"{txtFirstName.Text} {txtLastName.Text}"
-                    : $"{txtFirstName.Text} {txtLastName.Text}, {suffix}";
-
-                // Launch custom Modern Popup
-                using (FormRegistrationSuccess successPopup = new FormRegistrationSuccess(role, fullName))
+                // 4. Show Success
+                using (FormRegistrationSuccess successPopup = new FormRegistrationSuccess(newUser.Role, newUser.FullName))
                 {
                     if (successPopup.ShowDialog() == DialogResult.OK)
                     {
-                        this.Close(); // Return to Form1
+                        this.Close(); // Close registration, go back to login
                     }
                 }
-            };
-
-            pnlRegCard.Invalidate();
-
-            // Link to return to Login
-            lblLoginLink.Click += (s, e) => this.Close();
-        }
-
-        private void ApplyHeaderStyle()
-        {
-            // Explicitly set font and color to bypass MaterialSkin default typography
-            lblHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
-            lblHeader.ForeColor = Color.FromArgb(13, 71, 161);
-        }
-        private void ApplyCustomFonts()
-        {
-            // Define your Sitka Fonts
-            Font sitkaBanner = new Font("Sitka Banner", 12F, FontStyle.Bold);
-            Font sitkaText = new Font("Sitka Text", 11F, FontStyle.Regular);
-
-            // Force apply to the ComboBox
-            cmbRole.Font = sitkaBanner;
-
-            // Force apply to all TextBoxes
-            txtFirstName.Font = new Font("Segoe UI Regular", 9F);
-            txtLastName.Font = new Font("Segoe UI Regular", 9F);
-            txtMiddleName.Font = new Font("Segoe UI Regular", 9F);
-            txtSuffix.Font = new Font("Segoe UI Regular", 9F);
-            chkNoSuffix.Font = new Font("Sitka Banner", 11F, FontStyle.Regular);
-
-            // Force apply to the Register Button
-            btnRegister.Font = sitkaBanner;
-
-            // Force apply to the Login Link
-            lblLoginLink.Font = new Font("Sitka Banner", 11F, FontStyle.Regular);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving to database: " + ex.Message);
+            }
         }
     }
 }

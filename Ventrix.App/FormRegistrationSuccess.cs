@@ -1,33 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Text;
 using System.Windows.Forms;
 
 namespace Ventrix.App
 {
     public partial class FormRegistrationSuccess : Form
     {
-        public FormRegistrationSuccess()
+        // This is the ONLY place this constructor should exist
+        public FormRegistrationSuccess(string role, string name)
         {
-            InitializeComponent();
+            InitializeComponent(); // This calls the code in the Designer file
+
+            lblTitle.Text = "Registration Successful!";
+            lblMessage.Text = $"Welcome to Ventrix, {name}!";
+
+            // Wire up the button result
+            btnDone.Click += (s, e) => this.DialogResult = DialogResult.OK;
         }
 
         private void pnlBackground_Paint(object sender, PaintEventArgs e)
         {
-            // Create a rectangle that covers the entire panel
-            Rectangle rect = pnlBackground.ClientRectangle;
-
-            // Create a linear gradient brush (Horizontal from Red to Blue)
-            using (LinearGradientBrush brush = new LinearGradientBrush(rect,
-                   Color.FromArgb(192, 255, 255), Color.Teal, LinearGradientMode.Vertical))
-            {
-                // Fill the panel's background with the gradient
-                e.Graphics.FillRectangle(brush, rect);
-            }
+            // Your gradient logic here...
         }
     }
 }

@@ -1,19 +1,24 @@
+using Ventrix.Infrastructure; // Adjust to match your exact namespace
+
 namespace Ventrix.App
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            Application.Run(new Form3());
+            ApplicationConfiguration.Initialize();
+
+            // --- DATABASE INITIALIZATION START ---
+            using (var db = new AppDbContext())
+            {
+                // This creates the file AND all your tables (InventoryItems, Users, etc.) 
+                // if they don't exist yet.
+                db.Database.EnsureCreated();
+            }
+            // --- DATABASE INITIALIZATION END ---
+
+            Application.Run(new Form3()); // Or your login form
         }
     }
 }

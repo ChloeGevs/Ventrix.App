@@ -7,15 +7,6 @@ namespace Ventrix.App
 {
     public partial class FormRegistrationSuccess : Form
     {
-        public FormRegistrationSuccess(string role, string name)
-        {
-            InitializeComponent();
-            lblTitle.Text = "Registration Successful!";
-            lblMessage.Text = $"Welcome to Ventrix, {name}!";
-
-            // Auto-close or click button to return
-            btnDone.Click += (s, e) => this.DialogResult = DialogResult.OK;
-        }
 
         // Setup the UI components manually for speed or use Designer
         private void InitializeComponent()

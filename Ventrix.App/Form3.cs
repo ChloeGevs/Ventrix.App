@@ -1,268 +1,136 @@
-﻿using MaterialSkin;
-using MaterialSkin.Controls;
-using System;
+﻿using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
+using MaterialSkin.Controls;
+using Ventrix.Infrastructure;
 
 namespace Ventrix.App
 {
     public partial class Form3 : MaterialForm
     {
-        private bool isSidebarExpanded = true;
-        private const int sidebarMaxWidth = 240;
-        private const int sidebarMinWidth = 70;
-
         public Form3()
         {
+            // Connects to the Designer partial class
             InitializeComponent();
-            var materialSkinManager = MaterialSkinManager.Instance;
-            materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT;
 
-            materialSkinManager.ColorScheme = new ColorScheme(
-                Color.FromArgb(13, 71, 161), Color.FromArgb(10, 50, 120),
-                Color.FromArgb(33, 150, 243), Color.FromArgb(30, 136, 229),
-                TextShade.WHITE
-            );
+<<<<<<< Updated upstream
+            // Ensures the lab database file is created safely
+            using (var db = new AppDbContext()) { db.Database.EnsureCreated(); }
 
-            btnCreate.BorderRadius = 10;
-            btnEdit.BorderRadius = 10;
-            btnDelete.BorderRadius = 10;
+            this.Load += (s, e) => {
+                RefreshLayout();
+                UpdateDashboardStats();
+=======
+            // Ensures the lab database file exists
+            using (var db = new AppDbContext())
+            {
+                db.Database.EnsureCreated();
+            }
 
-            // Card Click Events
-            cardTotal.Click += (s, e) => LoadFilteredData("All");
-            cardAvailable.Click += (s, e) => LoadFilteredData("Available");
-            cardPending.Click += (s, e) => LoadFilteredData("Borrowed");
-            cardBorrowers.Click += (s, e) => LoadFilteredData("Borrowers");
-
-            // Sidebar Events
-            sidebarTimer.Interval = 1;
-            btnHamburger.Click += (s, e) => sidebarTimer.Start();
-            sidebarTimer.Tick += SidebarTimer_Tick;
-
-            this.Load += (s, e) => { ApplyModernBranding(); RefreshLayout(); LoadFilteredData("All"); };
+            // Wait for the UI to be ready before running math
+            this.Load += (s, e) => {
+                RefreshLayout();
+                UpdateDashboardStats();
+                LoadFilteredData("All");
+>>>>>>> Stashed changes
+            };
             this.Resize += (s, e) => RefreshLayout();
         }
 
-        private void ApplyModernBranding()
+        private void UpdateDashboardStats()
         {
-            lblDashboardHeader.Text = "INVENTORY OVERVIEW";
-            lblDashboardHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
-            lblDashboardHeader.ForeColor = Color.FromArgb(13, 71, 161);
-
-            SetupCard(cardTotal, lblTotalTitle, lblTotalCount, "TOTAL ITEMS", "1,240", Color.FromArgb(13, 71, 161));
-            SetupCard(cardAvailable, lblAvailTitle, lblAvailCount, "AVAILABLE", "856", Color.Teal);
-            SetupCard(cardPending, lblPendingTitle, lblPendingCount, "BORROWED", "384", Color.FromArgb(192, 0, 0));
-            SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "BORROWERS LIST", "12", Color.Orange);
-
-            StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
-            StyleNavButton(btnEdit, "EDIT RECORD", Color.FromArgb(33, 150, 243));
-            StyleNavButton(btnDelete, "DELETE ITEM", Color.FromArgb(192, 0, 0));
-        }
-
-        private void SetupCard(Guna.UI2.WinForms.Guna2Panel card, Guna.UI2.WinForms.Guna2HtmlLabel title, Guna.UI2.WinForms.Guna2HtmlLabel count, string titleText, string countText, Color accentColor)
-        {
-            title.Parent = card;
-            count.Parent = card;
-
-            card.FillColor = Color.White;
-            card.BorderRadius = 15;
-            card.ShadowDecoration.Enabled = true;
-            card.ShadowDecoration.Shadow = new Padding(10);
-            card.Cursor = Cursors.Hand;
-
-            title.Text = titleText;
-            title.Font = new Font("Segoe UI Semibold", 9F);
-            title.ForeColor = Color.Gray;
-            title.BackColor = Color.Transparent;
-
-            count.Text = countText;
-            count.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
-            count.ForeColor = accentColor;
-            count.BackColor = Color.Transparent;
-
-            title.BringToFront();
-            count.BringToFront();
-
-            card.MouseDown += (s, e) => {
-                card.ShadowDecoration.Color = accentColor;
-                card.ShadowDecoration.Shadow = new Padding(15);
-                card.BorderThickness = 2;
-                card.BorderColor = accentColor;
-            };
-
-            Action resetGlow = () => {
-                card.ShadowDecoration.Color = Color.FromArgb(50, Color.Black);
-                card.ShadowDecoration.Shadow = new Padding(8);
-                card.BorderThickness = 0;
-            };
-
-            card.MouseUp += (s, e) => resetGlow();
-            card.MouseLeave += (s, e) => resetGlow();
-        }
-
-        private void LoadFilteredData(string status)
-        {
-            // Clear everything to allow different column structures
-            dgvInventory.Rows.Clear();
-            dgvInventory.Columns.Clear();
-
-            dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            lblDashboardHeader.Text = $"INVENTORY: {status.ToUpper()}";
-
-            switch (status)
+            using (var db = new AppDbContext())
             {
-                case "All":
-                    // Overview View: High-level summary of everything
-                    dgvInventory.Columns.Add("ID", "ID");
-                    dgvInventory.Columns.Add("Name", "Material Name");
-                    dgvInventory.Columns.Add("Category", "Category");
-                    dgvInventory.Columns.Add("Status", "Status");
-                    dgvInventory.Columns.Add("Condition", "Condition");
-
-                    // Sample Data
-                    dgvInventory.Rows.Add("101", "Projector A", "Hardware", "Available", "Good");
-                    dgvInventory.Rows.Add("201", "Laptop Dell #4", "Device", "Borrowed", "Under Repair");
-                    break;
-
-                case "Available":
-                    // Ready-to-Borrow View: Focused on stock on hand
-                    dgvInventory.Columns.Add("ID", "ID");
-                    dgvInventory.Columns.Add("Name", "Material Name");
-                    dgvInventory.Columns.Add("Condition", "Condition");
-
-                    // Sample Data
-                    dgvInventory.Rows.Add("101", "Projector A", "Good", "2026-02-10");
-                    dgvInventory.Rows.Add("102", "HDMI Cable", "New", "2026-02-15");
-                    break;
-
-                case "Borrowed":
-                    // Active Transactions View: Tracking accountability
-                    dgvInventory.Columns.Add("Name", "Material Name");
-                    dgvInventory.Columns.Add("Borrower", "Borrower Name");
-                    dgvInventory.Columns.Add("DateBorrowed", "Date Borrowed");
-                    dgvInventory.Columns.Add("DueDate", "Return Due Date");
-                    dgvInventory.Columns.Add("Overdue", "Status");
-
-                    // Sample Data
-                    dgvInventory.Rows.Add("Laptop Dell #4", "John Doe", "2026-02-14", "2026-02-17", "On Time");
-                    dgvInventory.Rows.Add("Digital Camera", "Jane Smith", "2026-02-10", "2026-02-13", "OVERDUE");
-                    break;
-
-                case "Borrowers":
-                    // People-Centric View: Managing accountabilities
-                    dgvInventory.Columns.Add("BorrowerID", "ID Number");
-                    dgvInventory.Columns.Add("Name", "Full Name");
-                    dgvInventory.Columns.Add("Quantity", "Quantity");
-                    dgvInventory.Columns.Add("Grade Level", "Grade Level");
-                    dgvInventory.Columns.Add("Subject/Purpose", "Subject/Purpose");
-
-                    // Sample Data
-                    dgvInventory.Rows.Add("2024-0012", "John Doe", "1", "10", "ICT");
-                    dgvInventory.Rows.Add("2024-0543", "Jane Smith", "2", "8", "PE");
-                    break;
+<<<<<<< Updated upstream
+                // Update the dashboard with real laboratory stats
+                int total = db.InventoryItems.Count();
+                lblTotalCount.Text = total.ToString("N0");
+                lblTotalCount.ForeColor = Color.FromArgb(13, 71, 161);
+=======
+                // Pulls real hardware stats
+                lblTotalCount.Text = db.InventoryItems.Count().ToString("N0");
+                lblAvailCount.Text = db.InventoryItems.Count(i => i.Status == "Available").ToString("N0");
+                lblPendingCount.Text = db.BorrowRecords.Count(r => r.ReturnDate == null).ToString("N0");
+                lblBorrowersCount.Text = db.BorrowRecords.Where(r => r.ReturnDate == null)
+                                           .Select(r => r.BorrowerId).Distinct().Count().ToString("N0");
+>>>>>>> Stashed changes
             }
         }
 
-        private void StyleNavButton(Guna.UI2.WinForms.Guna2Button btn, string text, Color hover)
-        {
-            btn.Text = text;
-            btn.Font = new Font("Sitka Banner", 11F, FontStyle.Bold);
-            btn.FillColor = Color.Transparent;
-            btn.HoverState.FillColor = hover;
-            btn.TextAlign = HorizontalAlignment.Left;
-            btn.TextOffset = new Point(10, 0);
-            btn.BorderRadius = 10;
-        }
-
-        private void SidebarTimer_Tick(object sender, EventArgs e)
-        {
-            int animationSpeed = 40;
-            if (isSidebarExpanded)
-            {
-                pnlSidebar.Width -= animationSpeed;
-                if (pnlSidebar.Width <= sidebarMinWidth)
-                {
-                    pnlSidebar.Width = sidebarMinWidth;
-                    isSidebarExpanded = false;
-                    sidebarTimer.Stop();
-                    ToggleSidebarText(false);
-                }
-            }
-            else
-            {
-                pnlSidebar.Width += animationSpeed;
-                if (pnlSidebar.Width >= sidebarMaxWidth)
-                {
-                    pnlSidebar.Width = sidebarMaxWidth;
-                    isSidebarExpanded = true;
-                    sidebarTimer.Stop();
-                    ToggleSidebarText(true);
-                }
-            }
-            RefreshLayout();
-        }
-
-        private void ToggleSidebarText(bool show)
-        {
-            btnCreate.Text = show ? "ADD ITEM" : "";
-            btnEdit.Text = show ? "EDIT RECORD" : "";
-            btnDelete.Text = show ? "DELETE ITEM" : "";
-        }
-
-        private void RefreshLayout()
+        public void RefreshLayout()
         {
             if (pnlMainContent == null) return;
 
-            lblDashboardHeader.Location = new Point(70, 20);
-            txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20);
+<<<<<<< Updated upstream
+            // Positioning the Sidebar Button (Matches image_5c7a5e.png)
+            btnCreate.Size = new Size(pnlSidebar.Width - 30, 45);
+            btnCreate.Location = new Point(15, 180);
+            btnCreate.Text = "ADD ITEM";
 
-            cmbAccountActions.FillColor = Color.FromArgb(13, 71, 161);
-            cmbAccountActions.BackColor = Color.Transparent;
-            cmbAccountActions.ForeColor = Color.White;
+            // Positioning the Card and Labels
+            cardTotal.Size = new Size(250, 150);
+            cardTotal.Location = new Point(30, 30);
 
-            lblOwnerRole.BackColor = Color.Transparent;
-            lblOwnerRole.ForeColor = Color.White;
-            picUser.BackColor = Color.Transparent;
+            lblTotalTitle.Text = "TOTAL ITEMS";
+            lblTotalTitle.Location = new Point(15, 15);
 
-            // Updated Layout for 4 Cards
+            lblTotalCount.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
+            lblTotalCount.Location = new Point(15, 50);
+
+            // Positioning the DataGrid
+            dgvInventory.Location = new Point(30, 200);
+            dgvInventory.Size = new Size(pnlMainContent.Width - 60, pnlMainContent.Height - 250);
+=======
+            // 1. Sidebar Buttons Positioning (Fixes image_5c1828.png)
+            int btnWidth = pnlSidebar.Width - 40;
+            int startY = 150;
+            btnCreate.Size = new Size(btnWidth, 45);
+            btnCreate.Location = new Point(20, startY);
+            btnEdit.Size = new Size(btnWidth, 45);
+            btnEdit.Location = new Point(20, btnCreate.Bottom + 10);
+            btnDelete.Size = new Size(btnWidth, 45);
+            btnDelete.Location = new Point(20, btnEdit.Bottom + 10);
+
+            // 2. Card Math Floor (Prevents 'slivers' in image_5c0582.png)
+            int currentWidth = Math.Max(pnlMainContent.Width, 1000);
             int spacing = 20;
-            int totalSpacing = spacing * 5; // Left, Right, and 3 gaps between 4 cards
-            int cardWidth = (pnlMainContent.Width - totalSpacing) / 4;
-
+            int cardWidth = (currentWidth - (spacing * 5)) / 4;
             Size cardSize = new Size(cardWidth, 130);
-            cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSize;
 
-            cardTotal.Location = new Point(20, 30);
+            cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSize;
+            cardTotal.Location = new Point(spacing, 30);
             cardAvailable.Location = new Point(cardTotal.Right + spacing, 30);
             cardPending.Location = new Point(cardAvailable.Right + spacing, 30);
             cardBorrowers.Location = new Point(cardPending.Right + spacing, 30);
 
-            lblTotalTitle.Location = lblAvailTitle.Location = lblPendingTitle.Location = lblBorrowersTitle.Location = new Point(15, 15);
-            lblTotalCount.Location = lblAvailCount.Location = lblPendingCount.Location = lblBorrowersCount.Location = new Point(15, 45);
+            // 3. Label Parenting (Relative to the card)
+            Point labelPos = new Point(15, 45);
+            lblTotalCount.Location = lblAvailCount.Location = labelPos;
 
-            pnlGridContainer.Location = new Point(20, 180);
-            pnlGridContainer.Width = pnlMainContent.Width - 40;
+            pnlGridContainer.Location = new Point(spacing, 180);
+            pnlGridContainer.Width = pnlMainContent.Width - (spacing * 2);
             pnlGridContainer.Height = pnlMainContent.Height - 210;
+        }
 
-            int btnWidth = pnlSidebar.Width - 20;
-            btnCreate.Size = btnEdit.Size = btnDelete.Size = new Size(btnWidth, 50);
-            btnCreate.Location = new Point(10, 120);
-            btnEdit.Location = new Point(10, 180);
-            btnDelete.Location = new Point(10, 240);
+        private void LoadFilteredData(string status)
+        {
+            dgvInventory.Rows.Clear();
+            dgvInventory.Columns.Clear();
+            dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-            picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25);
-            picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40);
-
-            lblOwnerRole.Visible = isSidebarExpanded;
-            cmbAccountActions.Visible = isSidebarExpanded;
-
-            if (isSidebarExpanded)
+            using (var db = new AppDbContext())
             {
-                lblOwnerRole.Location = new Point(70, 25);
-                cmbAccountActions.Location = new Point(65, 42);
-                cmbAccountActions.Size = new Size(160, 30);
+                if (status == "All")
+                {
+                    dgvInventory.Columns.Add("Id", "ID");
+                    dgvInventory.Columns.Add("Name", "Item Name");
+                    dgvInventory.Columns.Add("Status", "Status");
+                    foreach (var item in db.InventoryItems.ToList())
+                        dgvInventory.Rows.Add(item.Id, item.Name, item.Status);
+                }
             }
+>>>>>>> Stashed changes
         }
     }
 }
