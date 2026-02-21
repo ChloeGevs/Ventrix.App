@@ -6,7 +6,7 @@ using Ventrix.Infrastructure;
 
 namespace Ventrix.App
 {
-    public partial class Form2 : MaterialForm
+    public partial class BorrowerRegistration : MaterialForm
     {
         // ... (Keep your existing Constructor and UI setup code) ...
 

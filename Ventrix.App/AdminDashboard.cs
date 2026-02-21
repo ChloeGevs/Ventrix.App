@@ -9,13 +9,13 @@ using Ventrix.Domain.Models;
 
 namespace Ventrix.App
 {
-    public partial class Form3 : MaterialForm
+    public partial class AdminDashboard : MaterialForm
     {
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
         private const int sidebarMinWidth = 70;
 
-        public Form3()
+        public AdminDashboard()
         {
             InitializeComponent();
             InitializeMaterialSkin();

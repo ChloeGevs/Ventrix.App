@@ -18,7 +18,7 @@ namespace Ventrix.App
             }
             // --- DATABASE INITIALIZATION END ---
 
-            Application.Run(new Form3()); // Or your login form
+            Application.Run(new AdminDashboard()); // Or your login form
         }
     }
 }

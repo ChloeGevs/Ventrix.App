@@ -1,6 +1,6 @@
 ﻿namespace Ventrix.App
 {
-    partial class Form1
+    partial class BorrowerPortal
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -66,17 +66,17 @@
             mainTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
             mainTableLayout.ColumnCount = 3;
             mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 450F));
+            mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 600F));
             mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             mainTableLayout.Controls.Add(pnlLoginCard, 1, 1);
             mainTableLayout.Dock = DockStyle.Fill;
-            mainTableLayout.Location = new Point(3, 64);
+            mainTableLayout.Location = new Point(0, 0);
             mainTableLayout.Name = "mainTableLayout";
             mainTableLayout.RowCount = 3;
             mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 620F));
+            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 750F));
             mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            mainTableLayout.Size = new Size(1194, 733);
+            mainTableLayout.Size = new Size(1200, 800);
             mainTableLayout.TabIndex = 0;
             // 
             // pnlLoginCard
@@ -102,11 +102,12 @@
             pnlLoginCard.CustomizableEdges = customizableEdges23;
             pnlLoginCard.Dock = DockStyle.Fill;
             pnlLoginCard.FillColor = Color.White;
-            pnlLoginCard.Location = new Point(375, 59);
+            pnlLoginCard.Location = new Point(303, 28);
             pnlLoginCard.Name = "pnlLoginCard";
+            pnlLoginCard.ShadowDecoration.BorderRadius = 20;
             pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges24;
             pnlLoginCard.ShadowDecoration.Enabled = true;
-            pnlLoginCard.Size = new Size(444, 614);
+            pnlLoginCard.Size = new Size(594, 744);
             pnlLoginCard.TabIndex = 0;
             // 
             // txtPassword
@@ -116,14 +117,14 @@
             txtPassword.DefaultText = "";
             txtPassword.Font = new Font("Sitka Text", 11F);
             txtPassword.IconRight = Properties.Resources.eye;
-            txtPassword.Location = new Point(50, 220);
+            txtPassword.Location = new Point(58, 285);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '●';
             txtPassword.PlaceholderText = "Password";
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            txtPassword.Size = new Size(350, 50);
+            txtPassword.Size = new Size(479, 50);
             txtPassword.TabIndex = 4;
             txtPassword.UseSystemPasswordChar = true;
             txtPassword.Visible = false;
@@ -131,7 +132,7 @@
             // lblEquipmentList
             // 
             lblEquipmentList.BackColor = Color.Transparent;
-            lblEquipmentList.Location = new Point(64, 235);
+            lblEquipmentList.Location = new Point(75, 285);
             lblEquipmentList.Name = "lblEquipmentList";
             lblEquipmentList.Size = new Size(125, 22);
             lblEquipmentList.TabIndex = 16;
@@ -141,7 +142,7 @@
             // 
             lblCreateAccount.BackColor = Color.Transparent;
             lblCreateAccount.Font = new Font("Sitka Banner", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCreateAccount.Location = new Point(141, 504);
+            lblCreateAccount.Location = new Point(209, 623);
             lblCreateAccount.Name = "lblCreateAccount";
             lblCreateAccount.Size = new Size(180, 28);
             lblCreateAccount.TabIndex = 12;
@@ -153,10 +154,10 @@
             btnStaffToggle.CustomizableEdges = customizableEdges3;
             btnStaffToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnStaffToggle.ForeColor = Color.White;
-            btnStaffToggle.Location = new Point(50, 80);
+            btnStaffToggle.Location = new Point(75, 116);
             btnStaffToggle.Name = "btnStaffToggle";
             btnStaffToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnStaffToggle.Size = new Size(170, 45);
+            btnStaffToggle.Size = new Size(186, 61);
             btnStaffToggle.TabIndex = 0;
             btnStaffToggle.Text = "ADMIN LOGIN";
             // 
@@ -166,10 +167,10 @@
             btnStudentToggle.CustomizableEdges = customizableEdges5;
             btnStudentToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnStudentToggle.ForeColor = Color.White;
-            btnStudentToggle.Location = new Point(230, 80);
+            btnStudentToggle.Location = new Point(327, 116);
             btnStudentToggle.Name = "btnStudentToggle";
             btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            btnStudentToggle.Size = new Size(170, 45);
+            btnStudentToggle.Size = new Size(195, 61);
             btnStudentToggle.TabIndex = 1;
             btnStudentToggle.Text = "BORROWER";
             // 
@@ -179,9 +180,9 @@
             lblLoginHeader.BackColor = Color.Transparent;
             lblLoginHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
             lblLoginHeader.ForeColor = Color.FromArgb(13, 71, 161);
-            lblLoginHeader.Location = new Point(0, 15);
+            lblLoginHeader.Location = new Point(0, 20);
             lblLoginHeader.Name = "lblLoginHeader";
-            lblLoginHeader.Size = new Size(444, 60);
+            lblLoginHeader.Size = new Size(594, 90);
             lblLoginHeader.TabIndex = 13;
             lblLoginHeader.Text = "BORROWING PORTAL";
             lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
@@ -192,13 +193,13 @@
             txtStudentId.CustomizableEdges = customizableEdges7;
             txtStudentId.DefaultText = "";
             txtStudentId.Font = new Font("Sitka Text", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtStudentId.Location = new Point(50, 156);
+            txtStudentId.Location = new Point(58, 212);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
             txtStudentId.PlaceholderText = "";
             txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            txtStudentId.Size = new Size(350, 50);
+            txtStudentId.Size = new Size(479, 50);
             txtStudentId.TabIndex = 3;
             // 
             // cmbListEquipments
@@ -212,19 +213,19 @@
             cmbListEquipments.Font = new Font("Sitka Banner", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cmbListEquipments.ForeColor = Color.FromArgb(68, 88, 112);
             cmbListEquipments.ItemHeight = 30;
-            cmbListEquipments.Location = new Point(50, 228);
+            cmbListEquipments.Location = new Point(61, 278);
             cmbListEquipments.Name = "cmbListEquipments";
             cmbListEquipments.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            cmbListEquipments.Size = new Size(350, 36);
+            cmbListEquipments.Size = new Size(477, 36);
             cmbListEquipments.TabIndex = 4;
             // 
             // lblQuantity
             // 
             lblQuantity.BackColor = Color.Transparent;
-            lblQuantity.Font = new Font("Sitka Text", 11F);
-            lblQuantity.Location = new Point(50, 289);
+            lblQuantity.Font = new Font("Sitka Text", 12F);
+            lblQuantity.Location = new Point(59, 351);
             lblQuantity.Name = "lblQuantity";
-            lblQuantity.Size = new Size(38, 28);
+            lblQuantity.Size = new Size(42, 31);
             lblQuantity.TabIndex = 14;
             lblQuantity.Text = "QTY";
             // 
@@ -234,22 +235,22 @@
             numQuantity.BorderRadius = 10;
             numQuantity.CustomizableEdges = customizableEdges11;
             numQuantity.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            numQuantity.Location = new Point(50, 316);
+            numQuantity.Location = new Point(59, 389);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
             numQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQuantity.Name = "numQuantity";
             numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            numQuantity.Size = new Size(100, 45);
+            numQuantity.Size = new Size(117, 56);
             numQuantity.TabIndex = 6;
             numQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // lblSubject
             // 
             lblSubject.BackColor = Color.Transparent;
-            lblSubject.Font = new Font("Sitka Text", 11F);
-            lblSubject.Location = new Point(165, 289);
+            lblSubject.Font = new Font("Sitka Text", 12F);
+            lblSubject.Location = new Point(221, 351);
             lblSubject.Name = "lblSubject";
-            lblSubject.Size = new Size(174, 28);
+            lblSubject.Size = new Size(199, 31);
             lblSubject.TabIndex = 15;
             lblSubject.Text = "SUBJECT / PURPOSE";
             // 
@@ -259,13 +260,13 @@
             txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
             txtSubject.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtSubject.Location = new Point(165, 316);
+            txtSubject.Location = new Point(221, 389);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
             txtSubject.PlaceholderText = "e.g., IT 211";
             txtSubject.SelectedText = "";
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            txtSubject.Size = new Size(235, 45);
+            txtSubject.Size = new Size(317, 56);
             txtSubject.TabIndex = 8;
             // 
             // btnReturn
@@ -274,10 +275,10 @@
             btnReturn.CustomizableEdges = customizableEdges15;
             btnReturn.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnReturn.ForeColor = Color.White;
-            btnReturn.Location = new Point(50, 448);
+            btnReturn.Location = new Point(101, 555);
             btnReturn.Name = "btnReturn";
             btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            btnReturn.Size = new Size(165, 50);
+            btnReturn.Size = new Size(182, 62);
             btnReturn.TabIndex = 9;
             btnReturn.Text = "RETURN";
             // 
@@ -288,10 +289,10 @@
             btnBorrow.FillColor = Color.Teal;
             btnBorrow.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnBorrow.ForeColor = Color.White;
-            btnBorrow.Location = new Point(235, 448);
+            btnBorrow.Location = new Point(303, 555);
             btnBorrow.Name = "btnBorrow";
             btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            btnBorrow.Size = new Size(165, 50);
+            btnBorrow.Size = new Size(180, 62);
             btnBorrow.TabIndex = 10;
             btnBorrow.Text = "BORROW";
             // 
@@ -302,7 +303,7 @@
             btnLogin.FillColor = Color.FromArgb(13, 71, 161);
             btnLogin.Font = new Font("Sitka Display", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
-            btnLogin.Location = new Point(50, 443);
+            btnLogin.Location = new Point(118, 562);
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges20;
             btnLogin.Size = new Size(350, 55);
@@ -322,10 +323,10 @@
             cmbGradeLevel.ForeColor = Color.FromArgb(68, 88, 112);
             cmbGradeLevel.ItemHeight = 30;
             cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Staff" });
-            cmbGradeLevel.Location = new Point(165, 368);
+            cmbGradeLevel.Location = new Point(221, 452);
             cmbGradeLevel.Name = "cmbGradeLevel";
             cmbGradeLevel.ShadowDecoration.CustomizableEdges = customizableEdges22;
-            cmbGradeLevel.Size = new Size(235, 36);
+            cmbGradeLevel.Size = new Size(317, 36);
             cmbGradeLevel.StartIndex = 0;
             cmbGradeLevel.TabIndex = 17;
             // 

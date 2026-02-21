@@ -6,9 +6,9 @@ using Ventrix.Infrastructure;
 
 namespace Ventrix.App
 {
-    public partial class Form1 : Form
+    public partial class BorrowerPortal : Form
     {
-        public Form1()
+        public BorrowerPortal()
         {
             InitializeComponent();
             SetupEvents();
@@ -58,6 +58,9 @@ namespace Ventrix.App
                 cmbGradeLevel.Visible = false;
                 btnBorrow.Visible = false;
                 btnReturn.Visible = false;
+                lblQuantity.Visible = false;
+                lblSubject.Visible = false;
+                lblCreateAccount.Visible = false;
 
                 // Colors
                 btnStaffToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
@@ -76,6 +79,9 @@ namespace Ventrix.App
                 cmbGradeLevel.Visible = true;
                 btnBorrow.Visible = true;
                 btnReturn.Visible = true;
+                lblCreateAccount.Visible = true;
+                lblQuantity.Visible = true;
+                lblSubject.Visible = true;
 
                 // Colors
                 btnStudentToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
@@ -92,7 +98,7 @@ namespace Ventrix.App
                 if (admin != null)
                 {
                     // Open Dashboard
-                    Form3 dashboard = new Form3();
+                    AdminDashboard dashboard = new AdminDashboard();
                     dashboard.Show();
                     this.Hide();
                 }
@@ -137,5 +143,6 @@ namespace Ventrix.App
                 MessageBox.Show("Item Borrowed Successfully!");
             }
         }
+
     }
 }

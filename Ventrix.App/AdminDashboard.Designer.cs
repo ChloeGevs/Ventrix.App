@@ -1,6 +1,6 @@
 ﻿namespace Ventrix.App
 {
-    partial class Form3
+    partial class AdminDashboard
     {
         private System.ComponentModel.IContainer components = null;
 
