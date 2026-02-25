@@ -38,8 +38,8 @@ namespace Ventrix.App
             pnlBackground.Controls.Add(btnDone);
             pnlBackground.CustomizableEdges = customizableEdges4;
             pnlBackground.Dock = DockStyle.Fill;
-            pnlBackground.FillColor = Color.FromArgb(192, 255, 255);
-            pnlBackground.FillColor2 = Color.Teal;
+            pnlBackground.FillColor = Color.Teal;
+            pnlBackground.FillColor2 = Color.Turquoise;
             pnlBackground.GradientMode = System.Drawing.Drawing2D.LinearGradientMode.Vertical;
             pnlBackground.Location = new Point(0, 0);
             pnlBackground.Name = "pnlBackground";

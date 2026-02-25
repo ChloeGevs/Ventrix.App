@@ -195,7 +195,7 @@
             txtStudentId.Font = new Font("Sitka Text", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtStudentId.Location = new Point(58, 212);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
-            txtStudentId.Name = "txtStudentId";
+            txtStudentId.Name = "txtStudentId/FacultyId";
             txtStudentId.PlaceholderText = "";
             txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges8;
@@ -322,7 +322,7 @@
             cmbGradeLevel.Font = new Font("Sitka Text", 11F);
             cmbGradeLevel.ForeColor = Color.FromArgb(68, 88, 112);
             cmbGradeLevel.ItemHeight = 30;
-            cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Staff" });
+            cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Faculty" });
             cmbGradeLevel.Location = new Point(221, 452);
             cmbGradeLevel.Name = "cmbGradeLevel";
             cmbGradeLevel.ShadowDecoration.CustomizableEdges = customizableEdges22;

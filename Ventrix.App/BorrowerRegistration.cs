@@ -1,6 +1,4 @@
 ﻿using MaterialSkin.Controls;
-using System;
-using System.Windows.Forms;
 using Ventrix.Domain.Models ;       
 using Ventrix.Infrastructure;
 
@@ -8,9 +6,11 @@ namespace Ventrix.App
 {
     public partial class BorrowerRegistration : MaterialForm
     {
-        // ... (Keep your existing Constructor and UI setup code) ...
-
-        // Find this section in your existing code and UPDATE the click event:
+        public BorrowerRegistration()
+        {
+            InitializeComponent(); // If this line is missing, the form will be blank.
+            InitializeEventHandlers();
+        }
         private void InitializeEventHandlers()
         {
             btnRegister.Click += BtnRegister_Click;

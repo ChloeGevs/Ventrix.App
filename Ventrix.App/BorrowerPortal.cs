@@ -72,7 +72,7 @@ namespace Ventrix.App
                 txtPassword.Visible = false;
                 btnLogin.Visible = false;
 
-                txtStudentId.PlaceholderText = "Student ID Number";
+                txtStudentId.PlaceholderText = "Student/Faculty ID Number";
                 cmbListEquipments.Visible = true;
                 numQuantity.Visible = true;
                 txtSubject.Visible = true;

@@ -20,6 +20,11 @@ namespace Ventrix.App
             InitializeComponent();
             InitializeMaterialSkin();
 
+            typeof(Panel).InvokeMember("DoubleBuffered",
+        System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+        null, pnlMainContent, new object[] { true });
+
+
             // --- WIRE UP EVENTS ---
             // 1. CRUD Buttons
             btnCreate.Click += BtnCreate_Click;
@@ -207,8 +212,10 @@ namespace Ventrix.App
             SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "BORROWERS LIST", "0", Color.Orange);
 
             StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
-            StyleNavButton(btnEdit, "EDIT RECORD", Color.FromArgb(33, 150, 243));
-            StyleNavButton(btnDelete, "DELETE ITEM", Color.FromArgb(192, 0, 0));
+            StyleNavButton(btnEdit, "EDIT RECORD ", Color.FromArgb(33, 150, 243));
+            StyleNavButton(btnDelete, "DELETE ITEM ", Color.FromArgb(192, 0, 0));
+
+            btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = true;
 
             UpdateDashboardCounts();
         }
@@ -220,8 +227,6 @@ namespace Ventrix.App
             count.Parent = card;
             card.FillColor = Color.White;
             card.BorderRadius = 15;
-            card.ShadowDecoration.Enabled = true;
-            card.ShadowDecoration.Shadow = new Padding(10);
             card.Cursor = Cursors.Hand;
 
             title.Text = titleText;
@@ -232,7 +237,7 @@ namespace Ventrix.App
             title.Location = new Point(20, 15);
 
             count.Text = countText;
-            count.Font = new Font("Segoe UI", 26F, FontStyle.Bold);
+            count.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
             count.ForeColor = accentColor;
             count.BackColor = Color.Transparent;
             // FIXED LOCATION:
@@ -248,66 +253,107 @@ namespace Ventrix.App
             btn.Font = new Font("Sitka Banner", 11F, FontStyle.Bold);
             btn.FillColor = Color.Transparent;
             btn.HoverState.FillColor = hover;
-            btn.TextAlign = HorizontalAlignment.Left;
-            btn.TextOffset = new Point(10, 0);
+            btn.TextAlign = HorizontalAlignment.Center;
+            btn.TextOffset = new Point(15, 0);
             btn.BorderRadius = 10;
         }
 
         private void SidebarTimer_Tick(object sender, EventArgs e)
         {
+            pnlMainContent.SuspendLayout();
+            pnlSidebar.SuspendLayout();
+
             int animationSpeed = 40;
             if (isSidebarExpanded)
             {
                 pnlSidebar.Width -= animationSpeed;
-                if (pnlSidebar.Width <= sidebarMinWidth) { pnlSidebar.Width = sidebarMinWidth; isSidebarExpanded = false; sidebarTimer.Stop(); ToggleSidebarText(false); }
+                if (pnlSidebar.Width <= sidebarMinWidth)
+                {
+                    pnlSidebar.Width = sidebarMinWidth;
+                    isSidebarExpanded = false;
+                    sidebarTimer.Stop();
+                    ToggleSidebarText(false);
+                }
             }
             else
             {
                 pnlSidebar.Width += animationSpeed;
-                if (pnlSidebar.Width >= sidebarMaxWidth) { pnlSidebar.Width = sidebarMaxWidth; isSidebarExpanded = true; sidebarTimer.Stop(); ToggleSidebarText(true); }
+                if (pnlSidebar.Width >= sidebarMaxWidth)
+                {
+                    pnlSidebar.Width = sidebarMaxWidth;
+                    isSidebarExpanded = true;
+                    sidebarTimer.Stop();
+                    ToggleSidebarText(true);
+                }
             }
-            RefreshLayout();
+            RefreshLayout(); // This will maintain the buttons on the right of pnlMainContent
+
+            pnlSidebar.ResumeLayout();
+            pnlMainContent.ResumeLayout();
         }
 
         private void ToggleSidebarText(bool show)
         {
-            btnCreate.Text = show ? "ADD ITEM" : "";
-            btnEdit.Text = show ? "EDIT RECORD" : "";
-            btnDelete.Text = show ? "DELETE ITEM" : "";
         }
 
         private void RefreshLayout()
         {
             if (pnlMainContent == null) return;
-            lblDashboardHeader.Location = new Point(70, 20);
-            txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20);
 
-            int spacing = 20;
-            int totalSpacing = spacing * 5;
-            int cardWidth = (pnlMainContent.Width - totalSpacing) / 4;
-            Size cardSize = new Size(cardWidth, 130);
-            cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSize;
+            // 1. Header and Search Positioning
+            lblDashboardHeader.Location = new Point(70, 20); //
+            txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20); //
 
-            cardTotal.Location = new Point(20, 30);
-            cardAvailable.Location = new Point(cardTotal.Right + spacing, 30);
-            cardPending.Location = new Point(cardAvailable.Right + spacing, 30);
-            cardBorrowers.Location = new Point(cardPending.Right + spacing, 30);
+            // 2. Button Positioning (Aligned to the Right Side of Main Content)
+            int btnWidth = 160;
+            int btnHeight = 45;
+            int btnSpacing = 15;
+            int rightMargin = pnlMainContent.Width - 20;
 
-            pnlGridContainer.Location = new Point(20, 180);
+            btnCreate.Parent = btnEdit.Parent = btnDelete.Parent = pnlMainContent;
+            btnCreate.Size = btnEdit.Size = btnDelete.Size = new Size(btnWidth, btnHeight);
+
+            // Positioned from right to left
+            btnDelete.Location = new Point(rightMargin - btnWidth, 30);
+            btnEdit.Location = new Point(btnDelete.Left - btnWidth - btnSpacing, 30);
+            btnCreate.Location = new Point(btnEdit.Left - btnWidth - btnSpacing, 30);
+
+            // 3. Card Positioning (Moved to the Sidebar)
+            int sidebarContentWidth = pnlSidebar.Width - 20;
+            Size cardSidebarSize = new Size(sidebarContentWidth, 110);
+
+            cardTotal.Parent = cardAvailable.Parent = cardPending.Parent = cardBorrowers.Parent = pnlSidebar;
+            cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSidebarSize;
+
+            // Vertical stack starting below the user profile section
+            cardTotal.Location = new Point(10, 120);
+            cardAvailable.Location = new Point(10, 240);
+            cardPending.Location = new Point(10, 360);
+            cardBorrowers.Location = new Point(10, 480);
+
+            // Sync card text visibility with sidebar state
+            lblTotalTitle.Visible = lblTotalCount.Visible = isSidebarExpanded; //
+            lblAvailTitle.Visible = lblAvailCount.Visible = isSidebarExpanded; //
+            lblPendingTitle.Visible = lblPendingCount.Visible = isSidebarExpanded; //
+            lblBorrowersTitle.Visible = lblBorrowersCount.Visible = isSidebarExpanded; //
+
+            // 4. Adjust Inventory Grid Container
+            pnlGridContainer.Location = new Point(20, 100);
             pnlGridContainer.Width = pnlMainContent.Width - 40;
-            pnlGridContainer.Height = pnlMainContent.Height - 210;
+            pnlGridContainer.Height = pnlMainContent.Height - 130;
 
-            int btnWidth = pnlSidebar.Width - 20;
-            btnCreate.Size = btnEdit.Size = btnDelete.Size = new Size(btnWidth, 50);
-            btnCreate.Location = new Point(10, 120);
-            btnEdit.Location = new Point(10, 180);
-            btnDelete.Location = new Point(10, 240);
+            // 5. User Profile Section
+            picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25); //
+            picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40); //
+            lblOwnerRole.Visible = isSidebarExpanded; //
+            cmbAccountActions.Visible = isSidebarExpanded; //
 
-            picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25);
-            picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40);
-            lblOwnerRole.Visible = isSidebarExpanded;
-            cmbAccountActions.Visible = isSidebarExpanded;
-            if (isSidebarExpanded) { lblOwnerRole.Location = new Point(70, 25); cmbAccountActions.Location = new Point(65, 42); cmbAccountActions.Size = new Size(160, 30); }
+            if (isSidebarExpanded)
+            {
+                lblOwnerRole.Location = new Point(70, 25); //
+                cmbAccountActions.Location = new Point(65, 42); //
+                cmbAccountActions.Size = new Size(160, 30); //
+            }
         }
     }
 
