@@ -34,12 +34,43 @@ namespace Ventrix.App
             // 2. Search & Filters
             txtSearch.TextChanged += (s, e) => LoadFromDatabase("All");
 
-            // 3. Card Clicks (Filter the grid)
-            cardTotal.Click += (s, e) => LoadFromDatabase("All");
-            cardAvailable.Click += (s, e) => LoadFromDatabase("Available");
-            cardPending.Click += (s, e) => LoadFromDatabase("Borrowed");
-            cardBorrowers.Click += (s, e) => LoadFromDatabase("Borrowers");
+            // Home Button Logic
+            btnHome.Click += (s, e) => SwitchView("Home");
 
+            dgvInventory.CellDoubleClick += (s, e) =>
+            {
+                if (e.RowIndex < 0) return;
+
+                // Get the ID and Name from the selected row
+                int id = Convert.ToInt32(dgvInventory.Rows[e.RowIndex].Cells[0].Value);
+                string name = dgvInventory.Rows[e.RowIndex].Cells[1].Value.ToString();
+                string status = dgvInventory.Rows[e.RowIndex].Cells[3].Value.ToString();
+
+                if (status == "Available")
+                {
+                    using (var popup = new BorrowPopup(id, name))
+                    {
+                        if (popup.ShowDialog() == DialogResult.OK)
+                        {
+                            LoadFromDatabase("All");
+                            UpdateDashboardCounts();
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("This item is already borrowed or unavailable.");
+                }
+            };
+
+            btnHistoryNav.Click += (s, e) => SwitchView("History");
+
+            // Card Clicks - Now they hide the Summary and show the Grid
+            cardTotal.Click += (s, e) => SwitchView("Inventory","All");
+            cardAvailable.Click += (s, e) => SwitchView("Inventory", "Available");
+            cardPending.Click += (s, e) => SwitchView("Inventory", "Borrowed");
+            cardBorrowers.Click += (s, e) => SwitchView("Inventory", "Borrowers");
+   
             // 4. Sidebar Animation
             sidebarTimer.Interval = 1;
             btnHamburger.Click += (s, e) => sidebarTimer.Start();
@@ -55,10 +86,246 @@ namespace Ventrix.App
         }
 
         // ==========================================
-        //        PART 1: CRUD LOGIC (DATABASE)
+        //         PART 1: NAVIGATION & VIEW LOGIC
         // ==========================================
 
-        // --- CREATE: Opens the Popup to Add a New Item ---
+        private void SwitchToGridView(string filter)
+        {
+            SwitchView("Inventory", filter);
+        }
+
+        private void SwitchView(string viewName, string filter = "All")
+        {
+            // Reset visibility
+            pnlHomeSummary.Visible = false;
+            pnlGridContainer.Visible = false;
+            pnlHistory.Visible = false;
+
+            if (viewName == "Inventory")
+            {
+                pnlGridContainer.Visible = true;
+                pnlGridContainer.BringToFront(); // Force it to the top layer
+                                                 // Update the header based on the card clicked
+                lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
+
+                LoadFromDatabase(filter);
+            }
+            else if (viewName == "Home")
+            {
+                pnlHomeSummary.Visible = true;
+                ShowHomeDashboard();
+            }
+
+            // Show CRUD buttons only in Inventory view
+            bool isInventoryView = (viewName == "Inventory");
+            btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = (viewName == "Inventory");
+
+            switch (viewName)
+            {
+                case "Home":
+                    pnlHomeSummary.Visible = true;
+                    pnlHomeSummary.BringToFront();
+                    ShowHomeDashboard();
+                    break;
+                case "Inventory":
+                    pnlGridContainer.Visible = true;
+                    LoadFromDatabase(filter);
+                    break;
+                case "History":
+                    pnlHistory.Visible = true;
+                    LoadHistoryData();
+                    break;
+            }
+        }
+
+        private void ShowHomeDashboard()
+        {
+            // Hide the standard inventory grid to make room for the dashboard
+            pnlGridContainer.Visible = false;
+            pnlHomeSummary.Visible = true;
+            pnlHomeSummary.BringToFront();
+
+            // Reset branding and headers
+            lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
+            lblDashboardHeader.ForeColor = Color.FromArgb(13, 71, 161);
+
+            // Clear search bar for a clean state
+            txtSearch.Clear();
+            LoadHomeContent();
+
+            // Update Sidebar Metrics
+            UpdateDashboardCounts();
+        }
+
+        // ==========================================
+        //         PART 2: DASHBOARD & RETURN LOGIC
+        // ==========================================
+
+        private void LoadHomeContent()
+        {
+            flowHomeContent.Controls.Clear();
+            AddSectionHeader("URGENT SYSTEM ALERTS");
+
+            using (var db = new AppDbContext())
+            {
+                // Alerts
+                var damaged = db.InventoryItems.Where(i => i.Condition == "Damaged").ToList();
+                if (!damaged.Any()) AddDashboardAlert("All systems operational. No items need repair.", Color.Teal);
+                else foreach (var item in damaged) AddDashboardAlert($"REPAIR NEEDED: {item.Name} (#{item.Id})", Color.FromArgb(192, 0, 0));
+
+                AddSectionHeader("RECENT TRANSACTIONS");
+
+                // Transactions
+                var activeLoans = db.BorrowRecords.Where(b => b.Status == "Active").OrderByDescending(b => b.BorrowDate).Take(5).ToList();
+                foreach (var loan in activeLoans)
+                {
+                    AddDashboardAlert($"BORROWED: {loan.ItemName} by Student {loan.BorrowerId}", Color.Gray, loan.Id);
+                }
+            }
+        }
+
+        private void AddDashboardAlert(string message, Color textColor, int? recordId = null)
+        {
+            Guna.UI2.WinForms.Guna2Panel alertTile = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Size = new Size(flowHomeContent.Width - 50, 70),
+                FillColor = Color.White,
+                BorderRadius = 10,
+                Margin = new Padding(0, 0, 0, 15),
+                Padding = new Padding(15)
+            };
+
+            Label lbl = new Label
+            {
+                Text = message,
+                ForeColor = textColor,
+                AutoSize = true,
+                Font = new Font("Segoe UI Semibold", 10.5F),
+                Location = new Point(15, 22)
+            };
+            alertTile.Controls.Add(lbl);
+
+            if (recordId.HasValue)
+            {
+                Guna.UI2.WinForms.Guna2Button btnReturn = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "RETURN",
+                    Size = new Size(90, 35),
+                    Location = new Point(alertTile.Width - 110, 17),
+                    FillColor = Color.FromArgb(13, 71, 161),
+                    BorderRadius = 5,
+                    Anchor = AnchorStyles.Right
+                };
+                btnReturn.Click += (s, e) => ProcessReturn(recordId.Value);
+                alertTile.Controls.Add(btnReturn);
+            }
+            flowHomeContent.Controls.Add(alertTile);
+        }
+
+        private void ProcessReturn(int recordId)
+        {
+            if (MessageBox.Show("Confirm return?", "Process", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
+
+            using (var db = new AppDbContext())
+            {
+                var record = db.BorrowRecords.Find(recordId);
+                if (record == null) return;
+
+                var item = db.InventoryItems.FirstOrDefault(i => i.Name == record.ItemName);
+                if (item != null) item.Status = "Available";
+
+                record.Status = "Returned";
+                record.ReturnDate = DateTime.Now;
+                db.SaveChanges();
+            }
+            LoadHomeContent();
+            UpdateDashboardCounts();
+        }
+
+        private void LoadHistoryData()
+        {
+            dgvHistory.Rows.Clear();
+            dgvHistory.Columns.Clear();
+            dgvHistory.Columns.Add("ID", "ID");
+            dgvHistory.Columns.Add("Item", "Item Name");
+            dgvHistory.Columns.Add("Borrower", "Borrower");
+            dgvHistory.Columns.Add("BDate", "Borrowed");
+            dgvHistory.Columns.Add("RDate", "Returned");
+
+            using (var db = new AppDbContext())
+            {
+                var logs = db.BorrowRecords.Where(b => b.Status == "Returned").OrderByDescending(b => b.ReturnDate).ToList();
+                foreach (var log in logs) dgvHistory.Rows.Add(log.Id, log.ItemName, log.BorrowerId, log.BorrowDate.ToShortDateString(), log.ReturnDate?.ToShortDateString());
+            }
+            lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
+        }
+        // ==========================================
+        //         PART 3: EXISTING CRUD & UI
+        // ==========================================
+
+        private void LoadFromDatabase(string statusFilter)
+        {
+            dgvInventory.Rows.Clear();
+            dgvInventory.Columns.Clear(); // Clear old columns first
+
+            using (var db = new AppDbContext())
+            {
+                var query = db.InventoryItems.AsQueryable();
+
+                // Apply Search
+                if (!string.IsNullOrEmpty(txtSearch.Text))
+                {
+                    string search = txtSearch.Text.ToLower();
+                    query = query.Where(i => i.Name.ToLower().Contains(search));
+                }
+
+                switch (statusFilter)
+                {
+                    case "Available":
+                        // Specific columns for Available items
+                        SetupColumns("ID", "Item Name", "Category", "Condition");
+                        foreach (var item in query.Where(i => i.Status == "Available").ToList())
+                        {
+                            dgvInventory.Rows.Add(item.Id, item.Name, item.Category, item.Condition);
+                        }
+                        break;
+
+                    case "Borrowed":
+                        // Specific columns for Borrowed items (Showing who has it)
+                        SetupColumns("ID", "Item Name", "Quantity", "Borrower", "Due Date");
+
+                        // We join with BorrowRecords to get the BorrowerId
+                        var borrowedList = db.BorrowRecords
+                            .Where(b => b.Status == "Active")
+                            .ToList();
+
+                        foreach (var record in borrowedList)
+                        {
+                            dgvInventory.Rows.Add(record.Id, record.ItemName, record.BorrowerId, record.BorrowDate.ToShortDateString());
+                        }
+                        break;
+                    case "Borrower List":
+                        // Show a list of borrowers and their borrowed items
+                        SetupColumns("Borrower", "Item Name", "Quantity","Borrow Date", "Grade Level", "Subject/Purpose");
+                        var borrowerList = db.BorrowRecords
+                            .Where(b => b.Status == "Active")
+                            .ToList();
+                        foreach (var record in borrowerList)
+                        {
+                            dgvInventory.Rows.Add(record.BorrowerId, record.ItemName, record.BorrowDate.ToShortDateString(), record.GradeLevel);
+                        }
+                        break;
+
+                    default: // "All"
+                        SetupColumns("ID", "Item Name", "Category", "Status", "Condition");
+                        foreach (var item in query.ToList())
+                        {
+                            dgvInventory.Rows.Add(item.Id, item.Name, item.Category, item.Status, item.Condition);
+                        }
+                        break;
+                }
+            }
+        }
         private void BtnCreate_Click(object sender, EventArgs e)
         {
             using (var popup = new InventoryPopup()) // No ID passed = Add Mode
@@ -71,58 +338,6 @@ namespace Ventrix.App
                 }
             }
         }
-
-        // --- READ: Loads Data from SQLite into Grid ---
-        private void LoadFromDatabase(string statusFilter)
-        {
-            dgvInventory.Rows.Clear();
-            dgvInventory.Columns.Clear();
-            dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            lblDashboardHeader.Text = $"INVENTORY: {statusFilter.ToUpper()}";
-
-            using (var db = new AppDbContext())
-            {
-                var query = db.InventoryItems.AsQueryable();
-
-                // Apply Search if text exists
-                if (!string.IsNullOrEmpty(txtSearch.Text))
-                {
-                    string search = txtSearch.Text.ToLower();
-                    query = query.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToLower().Contains(search));
-                }
-
-                // Apply Status Filter
-                switch (statusFilter)
-                {
-                    case "All":
-                        SetupColumns("ID", "Name", "Category", "Status", "Condition");
-                        foreach (var item in query.ToList())
-                        {
-                            dgvInventory.Rows.Add(item.Id, item.Name, item.Category, item.Status, item.Condition);
-                        }
-                        break;
-
-                    case "Available":
-                        SetupColumns("ID", "Name", "Category", "Condition");
-                        foreach (var item in query.Where(i => i.Status == "Available").ToList())
-                        {
-                            dgvInventory.Rows.Add(item.Id, item.Name, item.Category, item.Condition);
-                        }
-                        break;
-
-                    case "Borrowed":
-                        SetupColumns("ID", "Name", "Borrower", "Due Date");
-                        // Note: If you don't have Borrower columns in DB yet, this is just a placeholder
-                        foreach (var item in query.Where(i => i.Status == "Borrowed").ToList())
-                        {
-                            dgvInventory.Rows.Add(item.Id, item.Name, "Student #" + item.Id, DateTime.Now.AddDays(3).ToShortDateString());
-                        }
-                        break;
-                }
-            }
-        }
-
-        // --- UPDATE: Opens the Popup to Edit Selected Item ---
         private void BtnEdit_Click(object sender, EventArgs e)
         {
             if (dgvInventory.SelectedRows.Count == 0)
@@ -144,7 +359,6 @@ namespace Ventrix.App
             }
         }
 
-        // --- DELETE: Removes Item from SQLite ---
         private void BtnDelete_Click(object sender, EventArgs e)
         {
             if (dgvInventory.SelectedRows.Count == 0) return;
@@ -168,18 +382,38 @@ namespace Ventrix.App
                 }
             }
         }
-
         private void UpdateDashboardCounts()
         {
             using (var db = new AppDbContext())
             {
-                // Real-time counts from database
-                lblTotalCount.Text = db.InventoryItems.Count().ToString("N0");
+                int total = db.InventoryItems.Count();
+                int damaged = db.InventoryItems.Count(x => x.Condition == "Damaged");
+                int borrowed = db.InventoryItems.Count(x => x.Status == "Borrowed");
+
+                lblTotalCount.Text = total.ToString("N0");
                 lblAvailCount.Text = db.InventoryItems.Count(x => x.Status == "Available").ToString("N0");
-                lblPendingCount.Text = db.InventoryItems.Count(x => x.Status == "Borrowed").ToString("N0");
-                // Placeholder for borrowers count until you have a Users/Borrowers table
-                lblBorrowersCount.Text = "...";
+                lblPendingCount.Text = borrowed.ToString("N0");
+
+                // PROACTIVE ALERT: Change color if something is damaged or overdue
+                if (damaged > 0)
+                {
+                    lblDashboardHeader.Text = $"SYSTEM ALERT: {damaged} ITEMS NEED REPAIR";
+                    lblDashboardHeader.ForeColor = Color.FromArgb(192, 0, 0); // Warning Red
+                }
             }
+        }
+
+        private void AddSectionHeader(string title)
+        {
+            Label lblHeader = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(13, 71, 161),
+                AutoSize = true,
+                Margin = new Padding(0, 20, 0, 10)
+            };
+            flowHomeContent.Controls.Add(lblHeader);
         }
 
         // ==========================================
@@ -211,6 +445,8 @@ namespace Ventrix.App
             SetupCard(cardPending, lblPendingTitle, lblPendingCount, "BORROWED", "0", Color.FromArgb(192, 0, 0));
             SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "BORROWERS LIST", "0", Color.Orange);
 
+            StyleNavButton(btnHistoryNav, "HISTORY", Color.Orange);
+            StyleNavButton(btnHome, "HOME PAGE", Color.FromArgb(33, 150, 243));
             StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
             StyleNavButton(btnEdit, "EDIT RECORD ", Color.FromArgb(33, 150, 243));
             StyleNavButton(btnDelete, "DELETE ITEM ", Color.FromArgb(192, 0, 0));
@@ -302,7 +538,11 @@ namespace Ventrix.App
 
             // 1. Header and Search Positioning
             lblDashboardHeader.Location = new Point(70, 20); //
-            txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20); //
+            txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20);
+            // Positioning Panels
+            pnlHomeSummary.Location = pnlGridContainer.Location = pnlHistory.Location = new Point(20, 100);
+            Size contentSize = new Size(pnlMainContent.Width - 40, pnlMainContent.Height - 130);
+            pnlHomeSummary.Size = pnlGridContainer.Size = pnlHistory.Size = contentSize;
 
             // 2. Button Positioning (Aligned to the Right Side of Main Content)
             int btnWidth = 160;
@@ -318,31 +558,52 @@ namespace Ventrix.App
             btnEdit.Location = new Point(btnDelete.Left - btnWidth - btnSpacing, 30);
             btnCreate.Location = new Point(btnEdit.Left - btnWidth - btnSpacing, 30);
 
-            // 3. Card Positioning (Moved to the Sidebar)
+            //Card Positioning (Moved to the Sidebar)
             int sidebarContentWidth = pnlSidebar.Width - 20;
-            Size cardSidebarSize = new Size(sidebarContentWidth, 110);
 
+            // Position Home Button above cards
+            btnHome.Parent = pnlSidebar;
+            btnHome.Size = new Size(sidebarContentWidth, 45);
+            btnHome.Location = new Point(10, 90); // Positioned between profile and first card
+            btnHome.Visible = isSidebarExpanded;
+
+            // POSITION HISTORY BUTTON UNDER HOME PAGE
+            btnHistoryNav.Parent = pnlSidebar;
+            btnHistoryNav.Size = new Size(sidebarContentWidth, 45);
+            btnHistoryNav.Location = new Point(10, 140); // 50 pixels below btnHome (45 height + 5 gap)
+            btnHistoryNav.Visible = isSidebarExpanded;
+            dgvHistory.Dock = DockStyle.Fill;
+
+            Size cardSidebarSize = new Size(sidebarContentWidth, 110);
             cardTotal.Parent = cardAvailable.Parent = cardPending.Parent = cardBorrowers.Parent = pnlSidebar;
+
+            // Offset cards further down to make room for btnHome
+
+            cardTotal.Location = new Point(10, 150);
+            cardAvailable.Location = new Point(10, 270);
+            cardPending.Location = new Point(10, 390);
+            cardBorrowers.Location = new Point(10, 510);
+
             cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSidebarSize;
 
-            // Vertical stack starting below the user profile section
-            cardTotal.Location = new Point(10, 120);
-            cardAvailable.Location = new Point(10, 240);
-            cardPending.Location = new Point(10, 360);
-            cardBorrowers.Location = new Point(10, 480);
+            // Transition the Metric Cards (cardTotal, cardAvailable, etc.)
+            int cardYOffset = 200; // Start cards below btnHome
+            cardTotal.Location = new Point(10, cardYOffset);
+            cardAvailable.Location = new Point(10, cardYOffset + 120);
+            cardPending.Location = new Point(10, cardYOffset + 240);
+            cardBorrowers.Location = new Point(10, cardYOffset + 360);
 
-            // Sync card text visibility with sidebar state
-            lblTotalTitle.Visible = lblTotalCount.Visible = isSidebarExpanded; //
-            lblAvailTitle.Visible = lblAvailCount.Visible = isSidebarExpanded; //
-            lblPendingTitle.Visible = lblPendingCount.Visible = isSidebarExpanded; //
-            lblBorrowersTitle.Visible = lblBorrowersCount.Visible = isSidebarExpanded; //
+            // Sync labels visibility with the sidebar animation state
+            bool showLabels = isSidebarExpanded;
+            lblTotalTitle.Visible = lblTotalCount.Visible = showLabels;
+            lblAvailTitle.Visible = lblAvailCount.Visible = showLabels;
+            lblPendingTitle.Visible = lblPendingCount.Visible = showLabels;
+            lblBorrowersTitle.Visible = lblBorrowersCount.Visible = showLabels;
 
-            // 4. Adjust Inventory Grid Container
-            pnlGridContainer.Location = new Point(20, 100);
-            pnlGridContainer.Width = pnlMainContent.Width - 40;
-            pnlGridContainer.Height = pnlMainContent.Height - 130;
+            pnlHomeSummary.Width = pnlMainContent.Width - 40;
+            pnlHomeSummary.Height = pnlMainContent.Height - 130;
 
-            // 5. User Profile Section
+            //User Profile Section
             picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25); //
             picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40); //
             lblOwnerRole.Visible = isSidebarExpanded; //
@@ -358,7 +619,7 @@ namespace Ventrix.App
     }
 
     // ==========================================
-    //    PART 3: POPUP FORM CLASS (Add/Edit)
+    //    PART 4: POPUP FORM CLASS (Add/Edit)
     // ==========================================
     public class InventoryPopup : Form
     {
@@ -432,6 +693,25 @@ namespace Ventrix.App
             }
         }
 
+        private void LoadRecentActivity()
+        {
+            using (var db = new AppDbContext())
+            {
+                // Pull the 5 most recent borrow transactions from the database
+                var recentActions = db.BorrowRecords
+                    .OrderByDescending(b => b.BorrowDate)
+                    .Take(5)
+                    .ToList();
+
+                if (recentActions.Any())
+                {
+                    // In a real app, you would populate a small ListBox or FlowLayoutPanel
+                    // showing "Student A borrowed Laptop X".
+                    Console.WriteLine("Recent Activity Loaded");
+                }
+            }
+        }
+
         private void BtnSave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtName.Text)) { MessageBox.Show("Name is required!"); return; }
@@ -463,6 +743,97 @@ namespace Ventrix.App
                 }
                 db.SaveChanges();
             }
+            this.DialogResult = DialogResult.OK;
+        }
+    }
+
+    public class BorrowPopup : Form
+    {
+        private Label lblItemName = new Label();
+        private TextBox txtBorrowerId = new TextBox();
+        private TextBox txtPurpose = new TextBox();
+        private ComboBox cmbGrade = new ComboBox();
+        private Button btnConfirm = new Button();
+        private int _itemId;
+        private string _itemName;
+
+        public BorrowPopup(int itemId, string itemName)
+        {
+            _itemId = itemId;
+            _itemName = itemName;
+            InitializeBorrowPopup();
+        }
+
+        private void InitializeBorrowPopup()
+        {
+            this.Size = new Size(400, 400);
+            this.Text = "Borrow Item Transaction";
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+
+            int y = 20;
+            lblItemName.Text = $"Item: {_itemName}";
+            lblItemName.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            lblItemName.Location = new Point(20, y);
+            lblItemName.AutoSize = true;
+            this.Controls.Add(lblItemName);
+
+            y += 50;
+            AddField("Student ID / Borrower ID:", txtBorrowerId, ref y);
+            AddField("Grade/Section:", cmbGrade, ref y);
+            AddField("Purpose (Subject/Project):", txtPurpose, ref y);
+
+            cmbGrade.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "College" });
+            cmbGrade.SelectedIndex = 0;
+
+            btnConfirm.Text = "CONFIRM BORROW";
+            btnConfirm.BackColor = Color.FromArgb(13, 71, 161);
+            btnConfirm.ForeColor = Color.White;
+            btnConfirm.FlatStyle = FlatStyle.Flat;
+            btnConfirm.Size = new Size(340, 45);
+            btnConfirm.Location = new Point(20, y + 20);
+            btnConfirm.Click += BtnConfirm_Click;
+            this.Controls.Add(btnConfirm);
+        }
+
+        private void AddField(string label, Control input, ref int y)
+        {
+            Label l = new Label { Text = label, Location = new Point(20, y), AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
+            this.Controls.Add(l);
+            input.Location = new Point(20, y + 25);
+            input.Size = new Size(340, 30);
+            this.Controls.Add(input);
+            y += 70;
+        }
+
+        private void BtnConfirm_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtBorrowerId.Text)) { MessageBox.Show("Borrower ID is required!"); return; }
+
+            using (var db = new AppDbContext())
+            {
+                // 1. Update the Inventory Item Status
+                var item = db.InventoryItems.Find(_itemId);
+                if (item != null)
+                {
+                    item.Status = "Borrowed";
+                }
+
+                // 2. Create the Borrow Record
+                var record = new BorrowRecord
+                {
+                    BorrowerId = txtBorrowerId.Text,
+                    ItemName = _itemName,
+                    Purpose = txtPurpose.Text,
+                    GradeLevel = cmbGrade.Text,
+                    BorrowDate = DateTime.Now,
+                    Status = "Active"
+                };
+
+                db.BorrowRecords.Add(record);
+                db.SaveChanges();
+            }
+
             this.DialogResult = DialogResult.OK;
         }
     }

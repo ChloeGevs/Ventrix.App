@@ -10,7 +10,7 @@ namespace Ventrix.Domain.Models
         public string LastName { get; set; }
         public string MiddleName { get; set; }
         public string Suffix { get; set; }
-        public string Role { get; set; } // "Student" or "Staff"
+        public string Role { get; set; } // "Student" or "Faculty"
         public string Password { get; set; } // Only for Staff/Admin
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
