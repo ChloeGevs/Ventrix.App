@@ -1,6 +1,7 @@
 using System;
 using System.Linq; // Needed for database queries
 using System.Windows.Forms;
+using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using Ventrix.Infrastructure;
 
@@ -8,8 +9,15 @@ namespace Ventrix.App
 {
     public partial class BorrowerPortal : Form
     {
-        public BorrowerPortal()
+        private readonly InventoryService _inventoryService;
+        private readonly BorrowService _borrowService;
+        private readonly UserService _userService;
+
+        public BorrowerPortal(InventoryService invService, BorrowService borrowService, UserService userService)
         {
+            _inventoryService = invService;
+            _borrowService = borrowService;
+            _userService = userService;
             InitializeComponent();
             SetupEvents();
         }
@@ -31,16 +39,10 @@ namespace Ventrix.App
 
         private void LoadEquipmentList()
         {
-            // Load items from DB into ComboBox
-            using (var db = new AppDbContext())
-            {
-                var items = db.InventoryItems
-                              .Where(i => i.Status == "Available")
-                              .Select(i => i.Name)
-                              .Distinct() // remove duplicates
-                              .ToArray();
-                cmbListEquipments.Items.AddRange(items);
-            }
+            cmbListEquipments.Items.Clear();
+            var items = _inventoryService.GetFilteredInventory("", "Available")
+                                         .Select(i => i.Name).Distinct().ToArray();
+            cmbListEquipments.Items.AddRange(items);
         }
 
         private void ToggleMode(string mode)
@@ -91,21 +93,32 @@ namespace Ventrix.App
 
         private void BtnLogin_Click(object sender, EventArgs e)
         {
-            using (var db = new AppDbContext())
+            try
             {
-                var admin = db.Users.FirstOrDefault(u => u.UserId == txtStudentId.Text && u.Password == txtPassword.Text);
+                var user = _userService.Login(txtStudentId.Text, txtPassword.Text);
 
-                if (admin != null)
+                if (user != null)
                 {
-                    // Open Dashboard
-                    AdminDashboard dashboard = new AdminDashboard();
-                    dashboard.Show();
-                    this.Hide();
+                    if (user.Role == "Admin" || user.Role == "Faculty")
+                    {
+                        // Open Admin Dashboard and pass required services
+                        AdminDashboard dashboard = new AdminDashboard(_inventoryService, _borrowService);
+                        dashboard.Show();
+                        this.Hide();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Welcome, {user.FirstName}! Student portal features coming soon.");
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Invalid Admin Credentials.");
+                    MessageBox.Show("Invalid Credentials. Please try again.");
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Login error: {ex.Message}");
             }
         }
 
@@ -117,32 +130,40 @@ namespace Ventrix.App
                 return;
             }
 
-            using (var db = new AppDbContext())
+            // 1. Create the Domain Model
+            var record = new BorrowRecord
             {
-                // 1. Create Record
-                var record = new BorrowRecord
-                {
-                    BorrowerId = txtStudentId.Text,
-                    ItemName = cmbListEquipments.Text,
-                    Quantity = (int)numQuantity.Value,
-                    Purpose = txtSubject.Text,
-                    GradeLevel = cmbGradeLevel.Text,
-                    Status = "Active"
-                };
+                BorrowerId = txtStudentId.Text,
+                ItemName = cmbListEquipments.Text,
+                Quantity = (int)numQuantity.Value,
+                Purpose = txtSubject.Text,
+                GradeLevel = cmbGradeLevel.Text,
+                Status = "Active"
+            };
 
-                db.BorrowRecords.Add(record);
+            try
+            {
+                // 2. Use the Service instead of direct DB context
+                // You need to find the item ID first, or update your service 
+                // to accept the name. Assuming a helper method or search:
+                var items = _inventoryService.GetFilteredInventory(record.ItemName, "Available");
+                var itemToBorrow = items.FirstOrDefault();
 
-                // 2. Update Inventory Item status (Simplified logic)
-                var item = db.InventoryItems.FirstOrDefault(i => i.Name == record.ItemName && i.Status == "Available");
-                if (item != null)
+                if (itemToBorrow != null)
                 {
-                    item.Status = "Borrowed";
+                    _borrowService.ProcessBorrow(record, itemToBorrow.Id);
+                    MessageBox.Show("Item Borrowed Successfully!");
+                    LoadEquipmentList(); // Refresh the list
                 }
-
-                db.SaveChanges();
-                MessageBox.Show("Item Borrowed Successfully!");
+                else
+                {
+                    MessageBox.Show("Item is no longer available.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error borrowing item: {ex.Message}");
             }
         }
-
     }
-}
+   }

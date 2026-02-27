@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ventric.Infrastructure\Ventrix.Infrastructure.csproj" />
-    <ProjectReference Include="..\Ventrix.Domain\Ventrix.Domain.csproj" />
+    <ProjectReference Include="..\Ventrix.Services\Ventrix.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

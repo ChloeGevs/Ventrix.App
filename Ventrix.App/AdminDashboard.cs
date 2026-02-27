@@ -4,19 +4,27 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using Ventrix.Infrastructure; 
+using Ventrix.Application.Services;
 using Ventrix.Domain.Models;         
+using Ventrix.Infrastructure; 
 
 namespace Ventrix.App
 {
     public partial class AdminDashboard : MaterialForm
     {
+        // 1. Add private fields to store the services
+        private readonly InventoryService _inventoryService;
+        private readonly BorrowService _borrowService;
+
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
         private const int sidebarMinWidth = 70;
 
-        public AdminDashboard()
+        public AdminDashboard(InventoryService inventoryService, BorrowService borrowService)
         {
+            _inventoryService = inventoryService;
+            _borrowService = borrowService;
+
             InitializeComponent();
             InitializeMaterialSkin();
 

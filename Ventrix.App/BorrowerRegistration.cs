@@ -1,4 +1,5 @@
 ﻿using MaterialSkin.Controls;
+using Ventrix.Application.Services;
 using Ventrix.Domain.Models ;       
 using Ventrix.Infrastructure;
 
@@ -6,9 +7,12 @@ namespace Ventrix.App
 {
     public partial class BorrowerRegistration : MaterialForm
     {
-        public BorrowerRegistration()
+        private readonly UserService _userService;
+
+        public BorrowerRegistration(UserService userService)
         {
-            InitializeComponent(); // If this line is missing, the form will be blank.
+            _userService = userService;
+            InitializeComponent();
             InitializeEventHandlers();
         }
         private void InitializeEventHandlers()
@@ -25,40 +29,23 @@ namespace Ventrix.App
                 return;
             }
 
-            // 2. Prepare Data
             var newUser = new User
             {
-                // We'll generate a random ID for now, or you can add a textbox for it
                 UserId = new Random().Next(20240000, 20249999).ToString(),
                 FirstName = txtFirstName.Text,
                 LastName = txtLastName.Text,
-                MiddleName = txtMiddleName.Text,
-                Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text,
                 Role = cmbRole.Text,
-                Password = "123" // Default password for now
+                Password = "123"
             };
 
-            // 3. Save to Database
             try
             {
-                using (var db = new AppDbContext())
-                {
-                    db.Users.Add(newUser);
-                    db.SaveChanges();
-                }
-
-                // 4. Show Success
-                using (FormRegistrationSuccess successPopup = new FormRegistrationSuccess(newUser.Role, newUser.FullName))
-                {
-                    if (successPopup.ShowDialog() == DialogResult.OK)
-                    {
-                        this.Close(); // Close registration, go back to login
-                    }
-                }
+                _userService.RegisterNewBorrower(newUser);
+                this.DialogResult = DialogResult.OK;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error saving to database: " + ex.Message);
+                MessageBox.Show(ex.Message);
             }
         }
     }

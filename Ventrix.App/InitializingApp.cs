@@ -1,17 +1,39 @@
 ﻿using System;
 using System.Windows.Forms;
+using Ventrix.Application.Services;
 
 namespace Ventrix.App
 {
     public partial class InitializingApp : Form
     {
+        private readonly InventoryService _invService;
+        private readonly BorrowService _borrowService;
+        private readonly UserService _userService;
+
         private bool isFadingOut = false;
 
-        public InitializingApp()
+        // Inside InitializingApp.cs constructor
+        public InitializingApp(InventoryService invService, BorrowService borrowService, UserService userService)
         {
+            _invService = invService;
+            _borrowService = borrowService;
+            _userService = userService;
+
             InitializeComponent();
-            this.Opacity = 1; // Start at full visibility
-            fadeTimer.Interval = 10; // Keep the interval for smooth transitions
+
+            this.Opacity = 1;
+            fadeTimer.Interval = 10;
+            fadeTimer.Start();
+
+            // FIX: Use the full name System.Windows.Forms.Timer
+            System.Windows.Forms.Timer loadingDelay = new System.Windows.Forms.Timer();
+            loadingDelay.Interval = 5000;
+            loadingDelay.Tick += (s, e) =>
+            {
+                loadingDelay.Stop();
+                StartFadeOut();
+            };
+            loadingDelay.Start();
         }
 
         private void fadeTimer_Tick(object sender, EventArgs e)
@@ -20,17 +42,26 @@ namespace Ventrix.App
             {
                 if (this.Opacity > 0)
                 {
-                    this.Opacity -= 0.02; // Slowly decrease visibility
+                    this.Opacity -= 0.05;
                 }
                 else
                 {
                     fadeTimer.Stop();
-                    this.Close(); // Close the form once invisible
+                    StartApp(); // Transition to the portal
                 }
             }
         }
 
-        // Method to trigger the fade out from Program.cs
+        private void StartApp()
+        {
+            // Use the services passed from Program.cs
+            BorrowerPortal portal = new BorrowerPortal(_invService, _borrowService, _userService);
+            portal.Show();
+
+            // Use Hide instead of Close so the application doesn't terminate
+            this.Hide();
+        }
+
         public void StartFadeOut()
         {
             isFadingOut = true;
