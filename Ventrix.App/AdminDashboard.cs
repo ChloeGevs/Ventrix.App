@@ -69,36 +69,46 @@ namespace Ventrix.App
             {
                 ApplyModernBranding();
                 RefreshLayout();
-                SwitchView("Home");
             };
             this.Resize += (s, e) => RefreshLayout();
         }
-        
+
         #region Navigation Logic
 
         private void SwitchView(string viewName, string filter = "All")
         {
+            // 1. Reset all panel visibilities
             pnlHomeSummary.Visible = false;
             pnlGridContainer.Visible = false;
             pnlHistory.Visible = false;
 
+            // 2. Handle CRUD button visibility
             btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = (viewName == "Inventory");
 
             switch (viewName)
             {
                 case "Home":
                     pnlHomeSummary.Visible = true;
-                    pnlHomeSummary.BringToFront();
+                    pnlGridContainer.Visible = false; // Explicitly hide other main panels
+                    pnlHistory.Visible = false;
+
                     lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
+
+                    pnlHomeSummary.BringToFront();
                     LoadHomeContent();
+                    LoadRecentActivity();
                     break;
+
                 case "Inventory":
                     pnlGridContainer.Visible = true;
+                    pnlGridContainer.BringToFront();
                     lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
-                    LoadFromDatabase(filter);
+                    LoadFromDatabase(filter); // Load the grid data
                     break;
+
                 case "History":
                     pnlHistory.Visible = true;
+                    pnlHistory.BringToFront();
                     lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
                     LoadHistoryData();
                     break;
@@ -150,22 +160,13 @@ namespace Ventrix.App
 
             switch (statusFilter)
             {
-                case "Home":
-                    pnlHomeSummary.Visible = true;
-                    pnlHomeSummary.BringToFront();
-                    lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
-                    LoadHomeContent();
-                    LoadRecentActivity(); // <--- ADD THIS LINE
-                    break;
                 case "Available":
-                    // Only show location-relevant info
                     SetupColumns("ID", "Item Name", "Category", "Condition");
                     foreach (var i in items.Where(x => x.Status == "Available"))
                         dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Condition);
                     break;
 
                 case "Borrowed":
-                    // Show WHO has the item and WHEN they took it
                     SetupColumns("ID", "Item Name", "Borrower", "Status", "Date Borrowed");
                     var active = _borrowService.GetAllBorrowRecords().Where(b => b.Status == "Active");
                     foreach (var r in active)
@@ -173,8 +174,7 @@ namespace Ventrix.App
                     break;
 
                 case "Borrower List":
-                    // Focus on student tracking rather than item tracking
-                    SetupColumns("Borrower ID", "Grade Level", "Items Held", "Date Borrowed", "Return Date");
+                    SetupColumns("Borrower ID", "Grade Level", "Items Held");
                     var students = _borrowService.GetAllBorrowRecords()
                                                  .GroupBy(b => b.BorrowerId);
                     foreach (var group in students)
@@ -191,22 +191,30 @@ namespace Ventrix.App
 
         private void LoadHomeContent()
         {
+            // Clear the main display panel inside the Home Summary
             flowRecentActivity.Controls.Clear();
+
+            // --- SECTION 1: SYSTEM ALERTS ---
             AddSectionHeader("URGENT SYSTEM ALERTS");
 
-            var damaged = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
-            if (!damaged.Any())
-                AddDashboardAlert("All systems operational.", Color.Teal);
+            var damagedItems = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
+
+            if (!damagedItems.Any())
+            {
+                // Add a friendly "All Clear" message so the panel isn't empty
+                AddDashboardAlert("✓ All laboratory systems are operational.", Color.Teal);
+            }
             else
-                foreach (var i in damaged) AddDashboardAlert($"REPAIR NEEDED: {i.Name} (#{i.Id})", Color.DarkRed);
+            {
+                foreach (var item in damagedItems)
+                {
+                    AddDashboardAlert($"REPAIR NEEDED: {item.Name} (ID: {item.Id})", Color.DarkRed);
+                }
+            }
 
-            AddSectionHeader("RECENT ACTIVE LOANS");
-            var activeLoans = _borrowService.GetAllBorrowRecords()
-                .Where(b => b.Status == "Active")
-                .OrderByDescending(b => b.BorrowDate).Take(5);
-
-            foreach (var loan in activeLoans)
-                AddDashboardAlert($"{loan.ItemName} borrowed by {loan.BorrowerId}", Color.DimGray, loan.Id);
+            // --- SECTION 2: RECENT ACTIVITY ---
+            AddSectionHeader("RECENT ACTIVITY LOG");
+            LoadRecentActivity(); // This adds the activity cards
         }
 
         private void LoadHistoryData()
@@ -227,10 +235,11 @@ namespace Ventrix.App
         {
             if (MessageBox.Show("Confirm return of this item?", "Return Process", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                if (_borrowService.ReturnItem(recordId))
+                if (_borrowService.ReturnItem(recordId)) //
                 {
-                    LoadHomeContent();
-                    UpdateDashboardCounts();
+                    LoadHomeContent();    // Refresh alerts
+                    LoadRecentActivity(); // Refresh activity feed
+                    UpdateDashboardCounts(); // Refresh counters
                 }
             }
         }
@@ -450,9 +459,7 @@ namespace Ventrix.App
 
             int rightMargin = 70;
             int contentStartX = 110;
-            int contentWidth = pnlMainContent.Width;
 
-            btnClearActivity.Size = new Size(110, 30);
             // 1. TOP BAR & HEADER: Stays fixed, does not move when sidebar expands
             btnHamburger.Location = new Point(20, 30);
             lblDashboardHeader.Location = new Point (60, 22);
@@ -466,15 +473,13 @@ namespace Ventrix.App
             Size shiftedSize = new Size(availableWidth, pnlMainContent.Height - 160);
             Point shiftedLocation = new Point(contentStartX, 110);
 
+            Size contentSize = new Size(pnlMainContent.Width - 40, pnlMainContent.Height - 120);
+            Point contentLoc = new Point(20, 80);
+
             pnlHomeSummary.Bounds = pnlGridContainer.Bounds = pnlHistory.Bounds = new Rectangle(shiftedLocation, shiftedSize); ;
             dgvInventory.Anchor = dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             dgvInventory.Size = dgvHistory.Size = new Size(pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
             dgvInventory.Location = dgvHistory.Location = new Point(5, 5);
-
-            // 3. INNER PANELS: Ensure grids and summaries are centered in the content area
-            Size contentSize = new Size(pnlMainContent.Width - 40, pnlMainContent.Height - 120);
-            pnlHomeSummary.Location = pnlGridContainer.Location = pnlHistory.Location = new Point(20, 80);
-            pnlHomeSummary.Size = pnlGridContainer.Size = pnlHistory.Size = contentSize;
 
             // 4. FLOATING SIDEBAR: Positioned on top (Z-order)
             pnlSidebar.Location = new Point(0, 64);
@@ -487,18 +492,22 @@ namespace Ventrix.App
             btnEdit.Location = new Point(btnDelete.Left - btnWidth - 40, 30);
             btnCreate.Location = new Point(btnEdit.Left - btnWidth - 40, 30);
 
-            // Add this near the bottom of RefreshLayout()
-            // Inside RefreshLayout()
             if (pnlHomeSummary.Visible)
             {
-                lblUrgentHeader.Location = new Point(20, 20);
-                // Position the FlowPanel
-                flowRecentActivity.Size = new Size(pnlHomeSummary.Width / 3, pnlHomeSummary.Height - 100);
-                flowRecentActivity.Location = new Point(pnlHomeSummary.Width - flowRecentActivity.Width - 10, 80);
+                // Ensure standard sizing first
+                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize);
 
-                // Position the Clear Button directly above it
-                btnClearActivity.Size = new Size(100, 30);
+                lblUrgentHeader.Location = new Point(20, 20);
+
+                // Force a valid width calculation for the flow panel
+                int targetWidth = Math.Max(300, pnlHomeSummary.Width / 3);
+                flowRecentActivity.Size = new Size(targetWidth, pnlHomeSummary.Height - 100);
+                flowRecentActivity.Location = new Point(pnlHomeSummary.Width - flowRecentActivity.Width - 20, 80);
+
                 btnClearActivity.Location = new Point(flowRecentActivity.Right - btnClearActivity.Width, 45);
+
+                // CRITICAL: Force the Home panel to the top of the stack
+                pnlHomeSummary.BringToFront();
             }
             // 6. UPDATE COMPONENTS INSIDE SIDEBAR
             pnlSidebar.BringToFront();
@@ -578,19 +587,23 @@ namespace Ventrix.App
 
                 AddActivityCard(msg, log.BorrowDate, color);
             }
+
+            flowRecentActivity.ResumeLayout(true);
+            flowRecentActivity.PerformLayout();
         }
 
         private void AddActivityCard(string message, DateTime time, Color statusColor)
         {
-            // Create a small 'Activity Tile'
+            // Ensure the width is at least 200 so the card is visible during initialization
+            int calculatedWidth = Math.Max(200, flowRecentActivity.Width - 25);
+
             Panel card = new Panel
             {
-                Size = new Size(flowRecentActivity.Width - 25, 70),
+                Size = new Size(calculatedWidth, 70),
                 BackColor = Color.White,
                 Margin = new Padding(5, 0, 5, 10)
             };
 
-            // Colored indicator bar on the left
             Panel indicator = new Panel { Size = new Size(5, 70), BackColor = statusColor, Dock = DockStyle.Left };
 
             Label lblMsg = new Label
@@ -625,11 +638,6 @@ namespace Ventrix.App
             {
                 // 1. Clear the UI controls
                 flowRecentActivity.Controls.Clear();
-
-                // 2. Optional: If you want to delete them from the database/service:
-                // _borrowService.ClearAllLogs(); 
-
-                // 3. Refresh to show the "All systems operational" state
                 LoadRecentActivity();
             }
         }
