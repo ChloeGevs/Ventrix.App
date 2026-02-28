@@ -1,4 +1,7 @@
-﻿using Ventrix.Domain.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Ventrix.Domain.Interfaces;
 using Ventrix.Domain.Models;
 
 namespace Ventrix.Application.Services
@@ -14,6 +17,7 @@ namespace Ventrix.Application.Services
             _inventoryRepo = inventoryRepo;
         }
 
+        // --- CREATE ---
         public void ProcessBorrow(BorrowRecord record, int itemId)
         {
             var item = _inventoryRepo.GetById(itemId);
@@ -25,20 +29,34 @@ namespace Ventrix.Application.Services
             }
         }
 
-        public void ProcessReturn(int recordId)
+        // --- READ ---
+        public IEnumerable<BorrowRecord> GetAllBorrowRecords()
+        {
+            return _borrowRepo.GetAll();
+        }
+
+        // --- UPDATE (RETURN) ---
+        // Consolidating ProcessReturn and ReturnItem into one robust method
+        public bool ReturnItem(int recordId)
         {
             var record = _borrowRepo.GetRecordById(recordId);
-            if (record != null)
+            if (record == null) return false;
+
+            // Find the item associated with this record
+            var item = _inventoryRepo.GetAll().FirstOrDefault(i => i.Name == record.ItemName);
+
+            if (item != null)
             {
-                var item = _inventoryRepo.GetAll().FirstOrDefault(i => i.Name == record.ItemName);
-                if (item != null) item.Status = "Available";
-
-                record.Status = "Returned";
-                record.ReturnDate = DateTime.Now;
-
+                item.Status = "Available";
                 _inventoryRepo.Update(item);
-                _borrowRepo.UpdateRecord(record);
             }
+
+            // Update the record status
+            record.Status = "Returned";
+            record.ReturnDate = DateTime.Now;
+            _borrowRepo.UpdateRecord(record);
+
+            return true;
         }
     }
 }

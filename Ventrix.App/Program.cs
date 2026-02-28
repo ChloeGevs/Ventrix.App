@@ -1,6 +1,11 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using System.IO;
 using Ventrix.Infrastructure;
 using Ventrix.Infrastructure.Repositories;
 using Ventrix.Application.Services;
+using Ventrix.Domain.Interfaces;
 
 namespace Ventrix.App
 {
@@ -9,28 +14,43 @@ namespace Ventrix.App
         [STAThread]
         static void Main()
         {
-            // Manual initialization to bypass the 'Ventrix.Application' naming conflict
-            global::System.Windows.Forms.Application.EnableVisualStyles();
-            global::System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
-            global::System.Windows.Forms.Application.SetHighDpiMode(global::System.Windows.Forms.HighDpiMode.SystemAware);
+            // 1. FIX BLURRY UI: Enable High DPI awareness before any UI is initialized
+            System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
-            // 1. Initialize DB Context (Infrastructure)
-            var dbContext = new AppDbContext();
+            System.Windows.Forms.Application.EnableVisualStyles();
+            System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
-            // 2. Initialize Repositories (Infrastructure)
-            var invRepo = new InventoryRepository(dbContext);
-            var borrowRepo = new BorrowRepository(dbContext);
-            var userRepo = new UserRepository(dbContext);
+            // 2. Setup Configuration
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
 
-            // 3. Initialize Services (Application Layer)
-            var invService = new InventoryService(invRepo);
-            var borrowService = new BorrowService(borrowRepo, invRepo);
-            var userService = new UserService(userRepo);
-            userService.InitializeDefaultAdmin();
+            // 3. Setup DI Container
+            var services = new ServiceCollection();
 
-            // 4. Start the Application
-            // Ensure BorrowerPortal is updated to accept these 3 services in its constructor
-            global::System.Windows.Forms.Application.Run(new InitializingApp(invService, borrowService, userService));
+            // Infrastructure (Database & Repositories)
+            string connectionString = config.GetConnectionString("DefaultConnection");
+            services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IInventoryRepository, InventoryRepository>();
+            services.AddScoped<IBorrowRepository, BorrowRepository>();
+
+            // Application Services (Business Logic)
+            services.AddScoped<UserService>();
+            services.AddScoped<InventoryService>();
+            services.AddScoped<BorrowService>();
+
+            // UI Forms
+            services.AddTransient<InitializingApp>();
+            services.AddTransient<AdminDashboard>();
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            // 4. Start App
+            var startForm = serviceProvider.GetRequiredService<InitializingApp>();
+            System.Windows.Forms.Application.Run(startForm);
         }
     }
 }

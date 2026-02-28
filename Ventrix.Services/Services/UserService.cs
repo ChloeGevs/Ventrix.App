@@ -1,5 +1,5 @@
 ﻿using Ventrix.Domain.Interfaces;
-using Ventrix.Domain.Models;
+using User = Ventrix.Domain.Models.User;
 
 namespace Ventrix.Application.Services
 {

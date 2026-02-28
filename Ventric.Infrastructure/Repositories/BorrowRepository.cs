@@ -24,6 +24,10 @@ namespace Ventrix.Infrastructure.Repositories
             return _context.BorrowRecords.Find(id);
         }
 
+        public IEnumerable<BorrowRecord> GetAll()
+        {
+            return _context.BorrowRecords.ToList(); 
+        }
         public IEnumerable<BorrowRecord> GetActiveRecords()
         {
             return _context.BorrowRecords

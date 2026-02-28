@@ -1,18 +1,18 @@
 ﻿using MaterialSkin;
 using MaterialSkin.Controls;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Ventrix.Application.Services;
-using Ventrix.Domain.Models;         
-using Ventrix.Infrastructure; 
+using Ventrix.Domain.Models;
+using Ventrix.Infrastructure;
 
 namespace Ventrix.App
 {
     public partial class AdminDashboard : MaterialForm
     {
-        // 1. Add private fields to store the services
         private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
 
@@ -27,105 +27,61 @@ namespace Ventrix.App
 
             InitializeComponent();
             InitializeMaterialSkin();
+            ConfigureRuntimeUI();
+            ApplyModernBranding();  // Apply colors and fonts
+            RefreshLayout();
+        }
 
+        private void ConfigureRuntimeUI()
+        { 
+
+            // Enable Double Buffering for smooth UI
             typeof(Panel).InvokeMember("DoubleBuffered",
-        System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-        null, pnlMainContent, new object[] { true });
+                System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, pnlMainContent, new object[] { true });
 
+            pnlSidebar.BringToFront();
 
             // --- WIRE UP EVENTS ---
-            // 1. CRUD Buttons
             btnCreate.Click += BtnCreate_Click;
             btnEdit.Click += BtnEdit_Click;
             btnDelete.Click += BtnDelete_Click;
-
-            // 2. Search & Filters
-            txtSearch.TextChanged += (s, e) => LoadFromDatabase("All");
-
-            // Home Button Logic
             btnHome.Click += (s, e) => SwitchView("Home");
-
-            dgvInventory.CellDoubleClick += (s, e) =>
-            {
-                if (e.RowIndex < 0) return;
-
-                // Get the ID and Name from the selected row
-                int id = Convert.ToInt32(dgvInventory.Rows[e.RowIndex].Cells[0].Value);
-                string name = dgvInventory.Rows[e.RowIndex].Cells[1].Value.ToString();
-                string status = dgvInventory.Rows[e.RowIndex].Cells[3].Value.ToString();
-
-                if (status == "Available")
-                {
-                    using (var popup = new BorrowPopup(id, name))
-                    {
-                        if (popup.ShowDialog() == DialogResult.OK)
-                        {
-                            LoadFromDatabase("All");
-                            UpdateDashboardCounts();
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("This item is already borrowed or unavailable.");
-                }
-            };
-
             btnHistoryNav.Click += (s, e) => SwitchView("History");
+            txtSearch.TextChanged += (s, e) => LoadFromDatabase("All");
+            btnClearActivity.Click += (s, e) => ClearRecentActivity();
 
-            // Card Clicks - Now they hide the Summary and show the Grid
-            cardTotal.Click += (s, e) => SwitchView("Inventory","All");
+            // Double-click to Borrow
+            dgvInventory.CellDoubleClick += DgvInventory_CellDoubleClick;
+
+            // Sidebar Card Navigation
+            cardTotal.Click += (s, e) => SwitchView("Inventory", "All");
             cardAvailable.Click += (s, e) => SwitchView("Inventory", "Available");
             cardPending.Click += (s, e) => SwitchView("Inventory", "Borrowed");
-            cardBorrowers.Click += (s, e) => SwitchView("Inventory", "Borrowers");
-   
-            // 4. Sidebar Animation
+            cardBorrowers.Click += (s, e) => SwitchView("Inventory", "Borrower List");
+
+            // Sidebar Animation
             sidebarTimer.Interval = 1;
             btnHamburger.Click += (s, e) => sidebarTimer.Start();
             sidebarTimer.Tick += SidebarTimer_Tick;
 
-            // 5. Initial Load
-            this.Load += (s, e) => {
+            this.Load += (s, e) =>
+            {
                 ApplyModernBranding();
                 RefreshLayout();
-                LoadFromDatabase("All");
+                SwitchView("Home");
             };
             this.Resize += (s, e) => RefreshLayout();
         }
-
-        // ==========================================
-        //         PART 1: NAVIGATION & VIEW LOGIC
-        // ==========================================
-
-        private void SwitchToGridView(string filter)
-        {
-            SwitchView("Inventory", filter);
-        }
+        
+        #region Navigation Logic
 
         private void SwitchView(string viewName, string filter = "All")
         {
-            // Reset visibility
             pnlHomeSummary.Visible = false;
             pnlGridContainer.Visible = false;
             pnlHistory.Visible = false;
 
-            if (viewName == "Inventory")
-            {
-                pnlGridContainer.Visible = true;
-                pnlGridContainer.BringToFront(); // Force it to the top layer
-                                                 // Update the header based on the card clicked
-                lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
-
-                LoadFromDatabase(filter);
-            }
-            else if (viewName == "Home")
-            {
-                pnlHomeSummary.Visible = true;
-                ShowHomeDashboard();
-            }
-
-            // Show CRUD buttons only in Inventory view
-            bool isInventoryView = (viewName == "Inventory");
             btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = (viewName == "Inventory");
 
             switch (viewName)
@@ -133,230 +89,34 @@ namespace Ventrix.App
                 case "Home":
                     pnlHomeSummary.Visible = true;
                     pnlHomeSummary.BringToFront();
-                    ShowHomeDashboard();
+                    lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
+                    LoadHomeContent();
                     break;
                 case "Inventory":
                     pnlGridContainer.Visible = true;
+                    lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
                     LoadFromDatabase(filter);
                     break;
                 case "History":
                     pnlHistory.Visible = true;
+                    lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
                     LoadHistoryData();
                     break;
             }
-        }
-
-        private void ShowHomeDashboard()
-        {
-            // Hide the standard inventory grid to make room for the dashboard
-            pnlGridContainer.Visible = false;
-            pnlHomeSummary.Visible = true;
-            pnlHomeSummary.BringToFront();
-
-            // Reset branding and headers
-            lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
-            lblDashboardHeader.ForeColor = Color.FromArgb(13, 71, 161);
-
-            // Clear search bar for a clean state
-            txtSearch.Clear();
-            LoadHomeContent();
-
-            // Update Sidebar Metrics
             UpdateDashboardCounts();
         }
 
-        // ==========================================
-        //         PART 2: DASHBOARD & RETURN LOGIC
-        // ==========================================
-
-        private void LoadHomeContent()
+        private void DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            flowHomeContent.Controls.Clear();
-            AddSectionHeader("URGENT SYSTEM ALERTS");
+            if (e.RowIndex < 0) return;
 
-            using (var db = new AppDbContext())
+            int id = Convert.ToInt32(dgvInventory.Rows[e.RowIndex].Cells[0].Value);
+            string name = dgvInventory.Rows[e.RowIndex].Cells[1].Value.ToString();
+            string status = dgvInventory.Rows[e.RowIndex].Cells[3].Value.ToString();
+
+            if (status == "Available")
             {
-                // Alerts
-                var damaged = db.InventoryItems.Where(i => i.Condition == "Damaged").ToList();
-                if (!damaged.Any()) AddDashboardAlert("All systems operational. No items need repair.", Color.Teal);
-                else foreach (var item in damaged) AddDashboardAlert($"REPAIR NEEDED: {item.Name} (#{item.Id})", Color.FromArgb(192, 0, 0));
-
-                AddSectionHeader("RECENT TRANSACTIONS");
-
-                // Transactions
-                var activeLoans = db.BorrowRecords.Where(b => b.Status == "Active").OrderByDescending(b => b.BorrowDate).Take(5).ToList();
-                foreach (var loan in activeLoans)
-                {
-                    AddDashboardAlert($"BORROWED: {loan.ItemName} by Student {loan.BorrowerId}", Color.Gray, loan.Id);
-                }
-            }
-        }
-
-        private void AddDashboardAlert(string message, Color textColor, int? recordId = null)
-        {
-            Guna.UI2.WinForms.Guna2Panel alertTile = new Guna.UI2.WinForms.Guna2Panel
-            {
-                Size = new Size(flowHomeContent.Width - 50, 70),
-                FillColor = Color.White,
-                BorderRadius = 10,
-                Margin = new Padding(0, 0, 0, 15),
-                Padding = new Padding(15)
-            };
-
-            Label lbl = new Label
-            {
-                Text = message,
-                ForeColor = textColor,
-                AutoSize = true,
-                Font = new Font("Segoe UI Semibold", 10.5F),
-                Location = new Point(15, 22)
-            };
-            alertTile.Controls.Add(lbl);
-
-            if (recordId.HasValue)
-            {
-                Guna.UI2.WinForms.Guna2Button btnReturn = new Guna.UI2.WinForms.Guna2Button
-                {
-                    Text = "RETURN",
-                    Size = new Size(90, 35),
-                    Location = new Point(alertTile.Width - 110, 17),
-                    FillColor = Color.FromArgb(13, 71, 161),
-                    BorderRadius = 5,
-                    Anchor = AnchorStyles.Right
-                };
-                btnReturn.Click += (s, e) => ProcessReturn(recordId.Value);
-                alertTile.Controls.Add(btnReturn);
-            }
-            flowHomeContent.Controls.Add(alertTile);
-        }
-
-        private void ProcessReturn(int recordId)
-        {
-            if (MessageBox.Show("Confirm return?", "Process", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
-
-            using (var db = new AppDbContext())
-            {
-                var record = db.BorrowRecords.Find(recordId);
-                if (record == null) return;
-
-                var item = db.InventoryItems.FirstOrDefault(i => i.Name == record.ItemName);
-                if (item != null) item.Status = "Available";
-
-                record.Status = "Returned";
-                record.ReturnDate = DateTime.Now;
-                db.SaveChanges();
-            }
-            LoadHomeContent();
-            UpdateDashboardCounts();
-        }
-
-        private void LoadHistoryData()
-        {
-            dgvHistory.Rows.Clear();
-            dgvHistory.Columns.Clear();
-            dgvHistory.Columns.Add("ID", "ID");
-            dgvHistory.Columns.Add("Item", "Item Name");
-            dgvHistory.Columns.Add("Borrower", "Borrower");
-            dgvHistory.Columns.Add("BDate", "Borrowed");
-            dgvHistory.Columns.Add("RDate", "Returned");
-
-            using (var db = new AppDbContext())
-            {
-                var logs = db.BorrowRecords.Where(b => b.Status == "Returned").OrderByDescending(b => b.ReturnDate).ToList();
-                foreach (var log in logs) dgvHistory.Rows.Add(log.Id, log.ItemName, log.BorrowerId, log.BorrowDate.ToShortDateString(), log.ReturnDate?.ToShortDateString());
-            }
-            lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
-        }
-        // ==========================================
-        //         PART 3: EXISTING CRUD & UI
-        // ==========================================
-
-        private void LoadFromDatabase(string statusFilter)
-        {
-            dgvInventory.Rows.Clear();
-            dgvInventory.Columns.Clear(); // Clear old columns first
-
-            using (var db = new AppDbContext())
-            {
-                var query = db.InventoryItems.AsQueryable();
-
-                // Apply Search
-                if (!string.IsNullOrEmpty(txtSearch.Text))
-                {
-                    string search = txtSearch.Text.ToLower();
-                    query = query.Where(i => i.Name.ToLower().Contains(search));
-                }
-
-                switch (statusFilter)
-                {
-                    case "Available":
-                        // Specific columns for Available items
-                        SetupColumns("ID", "Item Name", "Category", "Condition");
-                        foreach (var item in query.Where(i => i.Status == "Available").ToList())
-                        {
-                            dgvInventory.Rows.Add(item.Id, item.Name, item.Category, item.Condition);
-                        }
-                        break;
-
-                    case "Borrowed":
-                        // Specific columns for Borrowed items (Showing who has it)
-                        SetupColumns("ID", "Item Name", "Quantity", "Borrower", "Due Date");
-
-                        // We join with BorrowRecords to get the BorrowerId
-                        var borrowedList = db.BorrowRecords
-                            .Where(b => b.Status == "Active")
-                            .ToList();
-
-                        foreach (var record in borrowedList)
-                        {
-                            dgvInventory.Rows.Add(record.Id, record.ItemName, record.BorrowerId, record.BorrowDate.ToShortDateString());
-                        }
-                        break;
-                    case "Borrower List":
-                        // Show a list of borrowers and their borrowed items
-                        SetupColumns("Borrower", "Item Name", "Quantity","Borrow Date", "Grade Level", "Subject/Purpose");
-                        var borrowerList = db.BorrowRecords
-                            .Where(b => b.Status == "Active")
-                            .ToList();
-                        foreach (var record in borrowerList)
-                        {
-                            dgvInventory.Rows.Add(record.BorrowerId, record.ItemName, record.BorrowDate.ToShortDateString(), record.GradeLevel);
-                        }
-                        break;
-
-                    default: // "All"
-                        SetupColumns("ID", "Item Name", "Category", "Status", "Condition");
-                        foreach (var item in query.ToList())
-                        {
-                            dgvInventory.Rows.Add(item.Id, item.Name, item.Category, item.Status, item.Condition);
-                        }
-                        break;
-                }
-            }
-        }
-        private void BtnCreate_Click(object sender, EventArgs e)
-        {
-            using (var popup = new InventoryPopup()) // No ID passed = Add Mode
-            {
-                if (popup.ShowDialog() == DialogResult.OK)
-                {
-                    LoadFromDatabase("All");
-                    UpdateDashboardCounts();
-                    MessageBox.Show("Item added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-        }
-        private void BtnEdit_Click(object sender, EventArgs e)
-        {
-            if (dgvInventory.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Please select an item to edit.");
-                return;
-            }
-
-            if (int.TryParse(dgvInventory.SelectedRows[0].Cells[0].Value.ToString(), out int selectedId))
-            {
-                using (var popup = new InventoryPopup(selectedId)) // ID passed = Edit Mode
+                using (var popup = new BorrowPopup(_borrowService, id, name))
                 {
                     if (popup.ShowDialog() == DialogResult.OK)
                     {
@@ -365,106 +125,238 @@ namespace Ventrix.App
                     }
                 }
             }
+            else
+            {
+                MessageBox.Show("This item is already borrowed or unavailable.", "Ventrix System");
+            }
+        }
+
+        #endregion
+
+        #region Data Loading
+
+        private void LoadFromDatabase(string statusFilter)
+        {
+            dgvInventory.Rows.Clear();
+            dgvInventory.Columns.Clear();
+
+            var items = _inventoryService.GetAllItems();
+
+            if (!string.IsNullOrEmpty(txtSearch.Text))
+            {
+                string search = txtSearch.Text.ToLower();
+                items = items.Where(i => i.Name.ToLower().Contains(search)).ToList();
+            }
+
+            switch (statusFilter)
+            {
+                case "Home":
+                    pnlHomeSummary.Visible = true;
+                    pnlHomeSummary.BringToFront();
+                    lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
+                    LoadHomeContent();
+                    LoadRecentActivity(); // <--- ADD THIS LINE
+                    break;
+                case "Available":
+                    // Only show location-relevant info
+                    SetupColumns("ID", "Item Name", "Category", "Condition");
+                    foreach (var i in items.Where(x => x.Status == "Available"))
+                        dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Condition);
+                    break;
+
+                case "Borrowed":
+                    // Show WHO has the item and WHEN they took it
+                    SetupColumns("ID", "Item Name", "Borrower", "Status", "Date Borrowed");
+                    var active = _borrowService.GetAllBorrowRecords().Where(b => b.Status == "Active");
+                    foreach (var r in active)
+                        dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
+                    break;
+
+                case "Borrower List":
+                    // Focus on student tracking rather than item tracking
+                    SetupColumns("Borrower ID", "Grade Level", "Items Held", "Date Borrowed", "Return Date");
+                    var students = _borrowService.GetAllBorrowRecords()
+                                                 .GroupBy(b => b.BorrowerId);
+                    foreach (var group in students)
+                        dgvInventory.Rows.Add(group.Key, group.First().GradeLevel, group.Count(x => x.Status == "Active"));
+                    break;
+
+                default: // "All"
+                    SetupColumns("ID", "Item Name", "Category", "Status", "Condition");
+                    foreach (var i in items)
+                        dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Status, i.Condition);
+                    break;
+            }
+        }
+
+        private void LoadHomeContent()
+        {
+            flowRecentActivity.Controls.Clear();
+            AddSectionHeader("URGENT SYSTEM ALERTS");
+
+            var damaged = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
+            if (!damaged.Any())
+                AddDashboardAlert("All systems operational.", Color.Teal);
+            else
+                foreach (var i in damaged) AddDashboardAlert($"REPAIR NEEDED: {i.Name} (#{i.Id})", Color.DarkRed);
+
+            AddSectionHeader("RECENT ACTIVE LOANS");
+            var activeLoans = _borrowService.GetAllBorrowRecords()
+                .Where(b => b.Status == "Active")
+                .OrderByDescending(b => b.BorrowDate).Take(5);
+
+            foreach (var loan in activeLoans)
+                AddDashboardAlert($"{loan.ItemName} borrowed by {loan.BorrowerId}", Color.DimGray, loan.Id);
+        }
+
+        private void LoadHistoryData()
+        {
+            dgvHistory.Rows.Clear();
+            dgvHistory.Columns.Clear();
+            SetupColumnsHistory();
+
+            var logs = _borrowService.GetAllBorrowRecords()
+                .Where(b => b.Status == "Returned")
+                .OrderByDescending(b => b.ReturnDate);
+
+            foreach (var log in logs)
+                dgvHistory.Rows.Add(log.Id, log.ItemName, log.BorrowerId, log.BorrowDate.ToShortDateString(), log.ReturnDate?.ToShortDateString());
+        }
+
+        private void ProcessReturn(int recordId)
+        {
+            if (MessageBox.Show("Confirm return of this item?", "Return Process", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                if (_borrowService.ReturnItem(recordId))
+                {
+                    LoadHomeContent();
+                    UpdateDashboardCounts();
+                }
+            }
+        }
+
+        #endregion
+
+        #region CRUD Actions
+
+        private void BtnCreate_Click(object sender, EventArgs e)
+        {
+            using (var popup = new InventoryPopup(_inventoryService, _borrowService))
+            {
+                if (popup.ShowDialog() == DialogResult.OK) SwitchView("Inventory", "All");
+            }
+        }
+
+        private void BtnEdit_Click(object sender, EventArgs e)
+        {
+            if (dgvInventory.SelectedRows.Count == 0) return;
+            int id = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value);
+
+            using (var popup = new InventoryPopup(_inventoryService, _borrowService, id))
+            {
+                if (popup.ShowDialog() == DialogResult.OK) LoadFromDatabase("All");
+            }
         }
 
         private void BtnDelete_Click(object sender, EventArgs e)
         {
             if (dgvInventory.SelectedRows.Count == 0) return;
+            int id = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value);
 
-            if (int.TryParse(dgvInventory.SelectedRows[0].Cells[0].Value.ToString(), out int selectedId))
+            if (MessageBox.Show($"Delete item #{id}?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                var confirm = MessageBox.Show($"Are you sure you want to delete Item #{selectedId}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                if (confirm == DialogResult.Yes)
-                {
-                    using (var db = new AppDbContext())
-                    {
-                        var item = db.InventoryItems.FirstOrDefault(i => i.Id == selectedId);
-                        if (item != null)
-                        {
-                            db.InventoryItems.Remove(item);
-                            db.SaveChanges();
-                            LoadFromDatabase("All");
-                            UpdateDashboardCounts();
-                        }
-                    }
-                }
+                if (_inventoryService.DeleteItem(id)) SwitchView("Inventory", "All");
             }
         }
+
+        #endregion
+
+        #region UI Styling & Helpers
+
         private void UpdateDashboardCounts()
         {
-            using (var db = new AppDbContext())
+            var items = _inventoryService.GetAllItems();
+            lblTotalCount.Text = items.Count().ToString("N0");
+            lblAvailCount.Text = items.Count(x => x.Status == "Available").ToString("N0");
+            lblPendingCount.Text = items.Count(x => x.Status == "Borrowed").ToString("N0");
+
+            // Check for damaged items
+            int damaged = items.Count(x => x.Condition == "Damaged");
+
+            // If there are damaged items, make the header Red and Bold
+            if (damaged > 0)
             {
-                int total = db.InventoryItems.Count();
-                int damaged = db.InventoryItems.Count(x => x.Condition == "Damaged");
-                int borrowed = db.InventoryItems.Count(x => x.Status == "Borrowed");
-
-                lblTotalCount.Text = total.ToString("N0");
-                lblAvailCount.Text = db.InventoryItems.Count(x => x.Status == "Available").ToString("N0");
-                lblPendingCount.Text = borrowed.ToString("N0");
-
-                // PROACTIVE ALERT: Change color if something is damaged or overdue
-                if (damaged > 0)
-                {
-                    lblDashboardHeader.Text = $"SYSTEM ALERT: {damaged} ITEMS NEED REPAIR";
-                    lblDashboardHeader.ForeColor = Color.FromArgb(192, 0, 0); // Warning Red
-                }
+                lblUrgentHeader.ForeColor = Color.DarkRed;
+                lblUrgentHeader.Text = $"URGENT SYSTEM ALERTS ({damaged} ISSUES)";
+            }
+            else
+            {
+                lblUrgentHeader.ForeColor = Color.Teal; // Professional green for "All Clear"
+                lblUrgentHeader.Text = "URGENT SYSTEM ALERTS";
             }
         }
 
-        private void AddSectionHeader(string title)
+        private void SetupColumnsHistory()
         {
-            Label lblHeader = new Label
+            dgvHistory.Columns.Add("ID", "ID");
+            dgvHistory.Columns.Add("Item", "Item Name");
+            dgvHistory.Columns.Add("Borrower", "Borrower");
+            dgvHistory.Columns.Add("BDate", "Borrowed");
+            dgvHistory.Columns.Add("RDate", "Returned");
+            dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+
+        private void AddDashboardAlert(string message, Color color, int? recordId = null)
+        {
+            Panel tile = new Panel { Size = new Size(flowRecentActivity.Width - 40, 60), BackColor = Color.White, Margin = new Padding(0, 0, 0, 10) };
+            Label msg = new Label { Text = message, ForeColor = color, Location = new Point(15, 20), AutoSize = true, Font = new Font("Segoe UI", 10) };
+            tile.Controls.Add(msg);
+
+            if (recordId.HasValue)
             {
-                Text = title,
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(13, 71, 161),
-                AutoSize = true,
-                Margin = new Padding(0, 20, 0, 10)
-            };
-            flowHomeContent.Controls.Add(lblHeader);
+                Button btn = new Button { Text = "RETURN", Location = new Point(tile.Width - 100, 15), Size = new Size(80, 30), BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                btn.Click += (s, e) => ProcessReturn(recordId.Value);
+                tile.Controls.Add(btn);
+            }
+            flowRecentActivity.Controls.Add(tile);
         }
 
-        // ==========================================
-        //        PART 2: UI & STYLING LOGIC
-        // ==========================================
-
-        private void SetupColumns(params string[] columnNames)
-        {
-            foreach (var name in columnNames) dgvInventory.Columns.Add(name.Replace(" ", ""), name);
-        }
 
         private void InitializeMaterialSkin()
         {
-            var materialSkinManager = MaterialSkinManager.Instance;
-            materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT;
-            materialSkinManager.ColorScheme = new ColorScheme(Color.FromArgb(13, 71, 161), Color.FromArgb(10, 50, 120), Color.FromArgb(33, 150, 243), Color.FromArgb(30, 136, 229), TextShade.WHITE);
+            var manager = MaterialSkinManager.Instance;
+            manager.AddFormToManage(this);
+            manager.Theme = MaterialSkinManager.Themes.LIGHT;
+            manager.ColorScheme = new ColorScheme(Color.FromArgb(13, 71, 161), Color.FromArgb(10, 50, 120), Color.FromArgb(33, 150, 243), Color.FromArgb(30, 136, 229), TextShade.WHITE);
         }
 
         private void ApplyModernBranding()
         {
             lblDashboardHeader.Text = "INVENTORY OVERVIEW";
-            lblDashboardHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+            lblDashboardHeader.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
             lblDashboardHeader.ForeColor = Color.FromArgb(13, 71, 161);
 
-            // Setup Cards with Placeholders (UpdateDashboardCounts will fill numbers)
-            SetupCard(cardTotal, lblTotalTitle, lblTotalCount, "TOTAL ITEMS", "0", Color.FromArgb(13, 71, 161));
-            SetupCard(cardAvailable, lblAvailTitle, lblAvailCount, "AVAILABLE", "0", Color.Teal);
-            SetupCard(cardPending, lblPendingTitle, lblPendingCount, "BORROWED", "0", Color.FromArgb(192, 0, 0));
-            SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "BORROWERS LIST", "0", Color.Orange);
-
+            // 2.APPLY STYLES TO NAVIGATION BUTTONS
+            // These ensure buttons look like modern Material links instead of gray boxes
             StyleNavButton(btnHistoryNav, "HISTORY", Color.Orange);
             StyleNavButton(btnHome, "HOME PAGE", Color.FromArgb(33, 150, 243));
             StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
-            StyleNavButton(btnEdit, "EDIT RECORD ", Color.FromArgb(33, 150, 243));
-            StyleNavButton(btnDelete, "DELETE ITEM ", Color.FromArgb(192, 0, 0));
+            StyleNavButton(btnEdit, "EDIT RECORD", Color.FromArgb(33, 150, 243));
+            StyleNavButton(btnDelete, "DELETE ITEM", Color.FromArgb(192, 0, 0));
+            StyleNavButton(btnClearActivity, "CLEAR ALL", Color.FromArgb(192, 0, 0));
+
+            // 3. APPLY STYLES TO METRIC CARDS
+            // This gives them the rounded white "Card" look
+            SetupCard(cardTotal, lblTotalTitle, lblTotalCount, "TOTAL ITEMS", "0", Color.FromArgb(13, 71, 161));
+            SetupCard(cardAvailable, lblAvailTitle, lblAvailCount, "AVAILABLE", "0", Color.Teal);
+            SetupCard(cardPending, lblPendingTitle, lblPendingCount, "BORROWED", "0", Color.FromArgb(192, 0, 0));
+            SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "RECORDS", "0", Color.Orange);
+            cardTotal.Parent = cardAvailable.Parent = cardPending.Parent = cardBorrowers.Parent = pnlSidebar;
 
             btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = true;
-
             UpdateDashboardCounts();
         }
 
-        // --- FIXED SETUP CARD (Prevents Text Overlap) ---
         private void SetupCard(Guna.UI2.WinForms.Guna2Panel card, Guna.UI2.WinForms.Guna2HtmlLabel title, Guna.UI2.WinForms.Guna2HtmlLabel count, string titleText, string countText, Color accentColor)
         {
             title.Parent = card;
@@ -502,347 +394,346 @@ namespace Ventrix.App
             btn.BorderRadius = 10;
         }
 
+
+        private void SetupColumns(params string[] names)
+        {
+            foreach (var n in names) dgvInventory.Columns.Add(n.Replace(" ", ""), n);
+            dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+
+        private void AddDashboardAlert(string message, Color color)
+        {
+            Label msg = new Label { Text = message, ForeColor = color, AutoSize = true, Margin = new Padding(10) };
+            flowRecentActivity.Controls.Add(msg);
+        }
+
+        private void AddSectionHeader(string title)
+        {
+            Label lbl = new Label { Text = title, Font = new Font("Segoe UI", 12, FontStyle.Bold), AutoSize = true };
+            flowRecentActivity.Controls.Add(lbl);
+        }
+
         private void SidebarTimer_Tick(object sender, EventArgs e)
         {
-            pnlMainContent.SuspendLayout();
-            pnlSidebar.SuspendLayout();
+            // Speed of the animation
+            int speed = 40;
 
-            int animationSpeed = 40;
             if (isSidebarExpanded)
             {
-                pnlSidebar.Width -= animationSpeed;
+                pnlSidebar.Width -= speed;
                 if (pnlSidebar.Width <= sidebarMinWidth)
                 {
                     pnlSidebar.Width = sidebarMinWidth;
                     isSidebarExpanded = false;
                     sidebarTimer.Stop();
-                    ToggleSidebarText(false);
                 }
             }
             else
             {
-                pnlSidebar.Width += animationSpeed;
+                pnlSidebar.Width += speed;
                 if (pnlSidebar.Width >= sidebarMaxWidth)
                 {
                     pnlSidebar.Width = sidebarMaxWidth;
                     isSidebarExpanded = true;
                     sidebarTimer.Stop();
-                    ToggleSidebarText(true);
                 }
             }
-            RefreshLayout(); // This will maintain the buttons on the right of pnlMainContent
 
-            pnlSidebar.ResumeLayout();
-            pnlMainContent.ResumeLayout();
-        }
-
-        private void ToggleSidebarText(bool show)
-        {
+            // CRITICAL: Only update the items INSIDE the sidebar during the timer
+            // Do NOT call RefreshLayout() here to prevent header/background glitching
+            UpdateSidebarInternalUI();
         }
 
         private void RefreshLayout()
         {
-            if (pnlMainContent == null) return;
+            if (pnlMainContent == null || pnlSidebar == null || lblDashboardHeader == null) return;
 
-            // 1. Header and Search Positioning
-            lblDashboardHeader.Location = new Point(70, 20); //
-            txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 30, 20);
-            // Positioning Panels
-            pnlHomeSummary.Location = pnlGridContainer.Location = pnlHistory.Location = new Point(20, 100);
-            Size contentSize = new Size(pnlMainContent.Width - 40, pnlMainContent.Height - 130);
+            int rightMargin = 70;
+            int contentStartX = 110;
+            int contentWidth = pnlMainContent.Width;
+
+            btnClearActivity.Size = new Size(110, 30);
+            // 1. TOP BAR & HEADER: Stays fixed, does not move when sidebar expands
+            btnHamburger.Location = new Point(20, 30);
+            lblDashboardHeader.Location = new Point (60, 22);
+            txtSearch.Location = new Point(this.Width - txtSearch.Width - rightMargin, 20);
+
+            // 2. MAIN CONTENT: Fills the whole form background behind the sidebar
+            pnlMainContent.Location = new Point(0, 64);
+            pnlMainContent.Size = new Size(this.Width, this.Height - 64);
+
+            int availableWidth = pnlMainContent.Width - contentStartX - rightMargin;
+            Size shiftedSize = new Size(availableWidth, pnlMainContent.Height - 160);
+            Point shiftedLocation = new Point(contentStartX, 110);
+
+            pnlHomeSummary.Bounds = pnlGridContainer.Bounds = pnlHistory.Bounds = new Rectangle(shiftedLocation, shiftedSize); ;
+            dgvInventory.Anchor = dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            dgvInventory.Size = dgvHistory.Size = new Size(pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
+            dgvInventory.Location = dgvHistory.Location = new Point(5, 5);
+
+            // 3. INNER PANELS: Ensure grids and summaries are centered in the content area
+            Size contentSize = new Size(pnlMainContent.Width - 40, pnlMainContent.Height - 120);
+            pnlHomeSummary.Location = pnlGridContainer.Location = pnlHistory.Location = new Point(20, 80);
             pnlHomeSummary.Size = pnlGridContainer.Size = pnlHistory.Size = contentSize;
 
-            // 2. Button Positioning (Aligned to the Right Side of Main Content)
-            int btnWidth = 160;
-            int btnHeight = 45;
-            int btnSpacing = 15;
-            int rightMargin = pnlMainContent.Width - 20;
+            // 4. FLOATING SIDEBAR: Positioned on top (Z-order)
+            pnlSidebar.Location = new Point(0, 64);
+            pnlSidebar.Height = this.Height - 64;
 
-            btnCreate.Parent = btnEdit.Parent = btnDelete.Parent = pnlMainContent;
-            btnCreate.Size = btnEdit.Size = btnDelete.Size = new Size(btnWidth, btnHeight);
+            // 5. CRUD BUTTONS: Fixed to the top-right of the form
+            int btnWidth = 150;
 
-            // Positioned from right to left
-            btnDelete.Location = new Point(rightMargin - btnWidth, 30);
-            btnEdit.Location = new Point(btnDelete.Left - btnWidth - btnSpacing, 30);
-            btnCreate.Location = new Point(btnEdit.Left - btnWidth - btnSpacing, 30);
+            btnDelete.Location = new Point(this.Width - btnWidth - rightMargin, 30);
+            btnEdit.Location = new Point(btnDelete.Left - btnWidth - 40, 30);
+            btnCreate.Location = new Point(btnEdit.Left - btnWidth - 40, 30);
 
-            //Card Positioning (Moved to the Sidebar)
-            int sidebarContentWidth = pnlSidebar.Width - 20;
-
-            // Position Home Button above cards
-            btnHome.Parent = pnlSidebar;
-            btnHome.Size = new Size(sidebarContentWidth, 45);
-            btnHome.Location = new Point(10, 90); // Positioned between profile and first card
-            btnHome.Visible = isSidebarExpanded;
-
-            // POSITION HISTORY BUTTON UNDER HOME PAGE
-            btnHistoryNav.Parent = pnlSidebar;
-            btnHistoryNav.Size = new Size(sidebarContentWidth, 45);
-            btnHistoryNav.Location = new Point(10, 140); // 50 pixels below btnHome (45 height + 5 gap)
-            btnHistoryNav.Visible = isSidebarExpanded;
-            dgvHistory.Dock = DockStyle.Fill;
-
-            Size cardSidebarSize = new Size(sidebarContentWidth, 110);
-            cardTotal.Parent = cardAvailable.Parent = cardPending.Parent = cardBorrowers.Parent = pnlSidebar;
-
-            // Offset cards further down to make room for btnHome
-
-            cardTotal.Location = new Point(10, 150);
-            cardAvailable.Location = new Point(10, 270);
-            cardPending.Location = new Point(10, 390);
-            cardBorrowers.Location = new Point(10, 510);
-
-            cardTotal.Size = cardAvailable.Size = cardPending.Size = cardBorrowers.Size = cardSidebarSize;
-
-            // Transition the Metric Cards (cardTotal, cardAvailable, etc.)
-            int cardYOffset = 200; // Start cards below btnHome
-            cardTotal.Location = new Point(10, cardYOffset);
-            cardAvailable.Location = new Point(10, cardYOffset + 120);
-            cardPending.Location = new Point(10, cardYOffset + 240);
-            cardBorrowers.Location = new Point(10, cardYOffset + 360);
-
-            // Sync labels visibility with the sidebar animation state
-            bool showLabels = isSidebarExpanded;
-            lblTotalTitle.Visible = lblTotalCount.Visible = showLabels;
-            lblAvailTitle.Visible = lblAvailCount.Visible = showLabels;
-            lblPendingTitle.Visible = lblPendingCount.Visible = showLabels;
-            lblBorrowersTitle.Visible = lblBorrowersCount.Visible = showLabels;
-
-            pnlHomeSummary.Width = pnlMainContent.Width - 40;
-            pnlHomeSummary.Height = pnlMainContent.Height - 130;
-
-            //User Profile Section
-            picUser.Location = new Point(isSidebarExpanded ? 15 : 12, 25); //
-            picUser.Size = isSidebarExpanded ? new Size(45, 45) : new Size(40, 40); //
-            lblOwnerRole.Visible = isSidebarExpanded; //
-            cmbAccountActions.Visible = isSidebarExpanded; //
-
-            if (isSidebarExpanded)
+            // Add this near the bottom of RefreshLayout()
+            // Inside RefreshLayout()
+            if (pnlHomeSummary.Visible)
             {
-                lblOwnerRole.Location = new Point(70, 25); //
-                cmbAccountActions.Location = new Point(65, 42); //
-                cmbAccountActions.Size = new Size(160, 30); //
+                lblUrgentHeader.Location = new Point(20, 20);
+                // Position the FlowPanel
+                flowRecentActivity.Size = new Size(pnlHomeSummary.Width / 3, pnlHomeSummary.Height - 100);
+                flowRecentActivity.Location = new Point(pnlHomeSummary.Width - flowRecentActivity.Width - 10, 80);
+
+                // Position the Clear Button directly above it
+                btnClearActivity.Size = new Size(100, 30);
+                btnClearActivity.Location = new Point(flowRecentActivity.Right - btnClearActivity.Width, 45);
             }
-        }
-    }
-
-    // ==========================================
-    //    PART 4: POPUP FORM CLASS (Add/Edit)
-    // ==========================================
-    public class InventoryPopup : Form
-    {
-        private TextBox txtName = new TextBox();
-        private ComboBox cmbCategory = new ComboBox();
-        private ComboBox cmbStatus = new ComboBox();
-        private ComboBox cmbCondition = new ComboBox();
-        private Button btnSave = new Button();
-        private int? _editId = null;
-
-        public InventoryPopup(int? idToEdit = null)
-        {
-            _editId = idToEdit;
-            InitializePopup();
-            if (_editId.HasValue) LoadDataForEdit();
+            // 6. UPDATE COMPONENTS INSIDE SIDEBAR
+            pnlSidebar.BringToFront();
+            UpdateSidebarInternalUI();
         }
 
-        private void InitializePopup()
+        private void UpdateSidebarInternalUI()
         {
-            this.Size = new Size(400, 450);
-            this.Text = _editId.HasValue ? "Edit Item" : "Add New Item";
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
+            int currentWidth = pnlSidebar.Width;
+            int contentWidth = currentWidth - 20;
+            bool expanded = currentWidth > 200; // Logic for "Expanded" state visuals
 
-            int y = 20;
-            AddControl("Item Name:", txtName, ref y);
-            AddControl("Category:", cmbCategory, ref y);
-            AddControl("Status:", cmbStatus, ref y);
-            AddControl("Condition:", cmbCondition, ref y);
-
-            // Populate Dropdowns
-            cmbCategory.Items.AddRange(new object[] { "Hardware", "Device", "Accessory", "Consumable" });
-            cmbStatus.Items.AddRange(new object[] { "Available", "Borrowed", "Maintenance", "Lost" });
-            cmbCondition.Items.AddRange(new object[] { "New", "Good", "Fair", "Damaged" });
-            cmbCategory.SelectedIndex = 0; cmbStatus.SelectedIndex = 0; cmbCondition.SelectedIndex = 0;
-
-            btnSave.Text = "SAVE ITEM";
-            btnSave.BackColor = Color.FromArgb(13, 71, 161);
-            btnSave.ForeColor = Color.White;
-            btnSave.FlatStyle = FlatStyle.Flat;
-            btnSave.Size = new Size(340, 45);
-            btnSave.Location = new Point(20, y + 20);
-            btnSave.Click += BtnSave_Click;
-            this.Controls.Add(btnSave);
-        }
-
-        private void AddControl(string labelText, Control input, ref int y)
-        {
-            Label lbl = new Label { Text = labelText, Location = new Point(20, y), AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
-            this.Controls.Add(lbl);
-            input.Location = new Point(20, y + 25);
-            input.Size = new Size(340, 30);
-            input.Font = new Font("Segoe UI", 10);
-            this.Controls.Add(input);
-            y += 70;
-        }
-
-        private void LoadDataForEdit()
-        {
-            using (var db = new AppDbContext())
+            // User Profile Section
+            picUser.Location = new Point(expanded ? 15 : 12, 25);
+            picUser.Size = expanded ? new Size(45, 45) : new Size(40, 40);
+            lblOwnerRole.Visible = cmbAccountActions.Visible = expanded;
+            if (expanded)
             {
-                var item = db.InventoryItems.Find(_editId.Value);
-                if (item != null)
-                {
-                    txtName.Text = item.Name;
-                    cmbCategory.Text = item.Category;
-                    cmbStatus.Text = item.Status;
-                    cmbCondition.Text = item.Condition;
-                }
+                lblOwnerRole.Location = new Point(70, 25);
+                cmbAccountActions.Location = new Point(65, 42);
+                cmbAccountActions.Size = new Size(160, 30);
+            }
+
+            // Navigation Buttons (Home & History)
+            btnHome.Location = new Point(10, 90);
+            btnHome.Size = new Size(contentWidth, 45);
+            btnHome.Visible = (currentWidth > 100);
+
+            btnHistoryNav.Location = new Point(10, 140);
+            btnHistoryNav.Size = new Size(contentWidth, 45);
+            btnHistoryNav.Visible = (currentWidth > 100);
+
+            // Metric Card Transitions
+            int cardY = 200; // Start below the nav buttons
+            var cards = new[] { cardTotal, cardAvailable, cardPending, cardBorrowers };
+            var titles = new[] { lblTotalTitle, lblAvailTitle, lblPendingTitle, lblBorrowersTitle };
+            var counts = new[] { lblTotalCount, lblAvailCount, lblPendingCount, lblBorrowersCount };
+
+            for (int i = 0; i < cards.Length; i++)
+            {
+                cards[i].Location = new Point(10, cardY);
+                cards[i].Size = new Size(contentWidth, 110);
+                cards[i].Width = contentWidth;
+
+                // Sync label visibility with sidebar state
+                titles[i].Visible = counts[i].Visible = expanded;
+
+                cardY += 120; // Maintain consistent vertical gap
             }
         }
 
         private void LoadRecentActivity()
         {
-            using (var db = new AppDbContext())
-            {
-                // Pull the 5 most recent borrow transactions from the database
-                var recentActions = db.BorrowRecords
-                    .OrderByDescending(b => b.BorrowDate)
-                    .Take(5)
-                    .ToList();
+            if (flowRecentActivity == null) return;
+            flowRecentActivity.Controls.Clear();
 
-                if (recentActions.Any())
+            // Pull the latest 10 records from your BorrowService
+            var recentLogs = _borrowService.GetAllBorrowRecords()
+                .OrderByDescending(b => b.BorrowDate)
+                .Take(10);
+
+            foreach (var log in recentLogs)
+            {
+                string msg;
+                Color color;
+
+                if (log.Status == "Active")
                 {
-                    // In a real app, you would populate a small ListBox or FlowLayoutPanel
-                    // showing "Student A borrowed Laptop X".
-                    Console.WriteLine("Recent Activity Loaded");
+                    msg = $"{log.BorrowerId} borrowed {log.ItemName}";
+                    color = Color.FromArgb(33, 150, 243); // Ventrix Blue
                 }
+                else
+                {
+                    msg = $"{log.ItemName} was returned by {log.BorrowerId}";
+                    color = Color.Teal; // Returned Green
+                }
+
+                AddActivityCard(msg, log.BorrowDate, color);
             }
         }
 
-        private void BtnSave_Click(object sender, EventArgs e)
+        private void AddActivityCard(string message, DateTime time, Color statusColor)
         {
-            if (string.IsNullOrWhiteSpace(txtName.Text)) { MessageBox.Show("Name is required!"); return; }
-
-            using (var db = new AppDbContext())
+            // Create a small 'Activity Tile'
+            Panel card = new Panel
             {
-                if (_editId.HasValue) // UPDATE
-                {
-                    var item = db.InventoryItems.Find(_editId.Value);
-                    if (item != null)
-                    {
-                        item.Name = txtName.Text;
-                        item.Category = cmbCategory.Text;
-                        item.Status = cmbStatus.Text;
-                        item.Condition = cmbCondition.Text;
-                    }
-                }
-                else // CREATE
-                {
-                    var newItem = new InventoryItem
-                    {
-                        Name = txtName.Text,
-                        Category = cmbCategory.Text,
-                        Status = cmbStatus.Text,
-                        Condition = cmbCondition.Text,
-                        DateAdded = DateTime.Now
-                    };
-                    db.InventoryItems.Add(newItem);
-                }
-                db.SaveChanges();
+                Size = new Size(flowRecentActivity.Width - 25, 70),
+                BackColor = Color.White,
+                Margin = new Padding(5, 0, 5, 10)
+            };
+
+            // Colored indicator bar on the left
+            Panel indicator = new Panel { Size = new Size(5, 70), BackColor = statusColor, Dock = DockStyle.Left };
+
+            Label lblMsg = new Label
+            {
+                Text = message,
+                Location = new Point(15, 12),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+            };
+
+            Label lblTime = new Label
+            {
+                Text = time.ToString("hh:mm tt | MMM dd"),
+                Location = new Point(15, 35),
+                AutoSize = true,
+                ForeColor = Color.Gray,
+                Font = new Font("Segoe UI", 8F)
+            };
+
+            card.Controls.Add(indicator);
+            card.Controls.Add(lblMsg);
+            card.Controls.Add(lblTime);
+            flowRecentActivity.Controls.Add(card);
+        }
+
+        private void ClearRecentActivity()
+        {
+            if (flowRecentActivity == null) return;
+
+            if (MessageBox.Show("Are you sure you want to clear the activity log?", "Clear History",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                // 1. Clear the UI controls
+                flowRecentActivity.Controls.Clear();
+
+                // 2. Optional: If you want to delete them from the database/service:
+                // _borrowService.ClearAllLogs(); 
+
+                // 3. Refresh to show the "All systems operational" state
+                LoadRecentActivity();
             }
-            this.DialogResult = DialogResult.OK;
+        }
+        #endregion
+    }
+
+    // ==========================================
+    //  POPUP CLASSES (Moved Outside AdminDashboard)
+    // ==========================================
+
+    public class InventoryPopup : Form
+    {
+        private readonly InventoryService _inventoryService;
+        private readonly BorrowService _borrowService;
+        private int? _editId;
+        private TextBox txtName = new TextBox();
+        private ComboBox cmbCategory = new ComboBox(), cmbStatus = new ComboBox(), cmbCondition = new ComboBox();
+
+        public InventoryPopup(InventoryService invService, BorrowService borService, int? id = null)
+        {
+            _inventoryService = invService; _borrowService = borService; _editId = id;
+            SetupCustomUI();
+            if (_editId.HasValue) LoadData();
+        }
+
+        private void SetupCustomUI()
+        {
+            this.Size = new Size(400, 450); this.Text = _editId.HasValue ? "Edit Item" : "Add Item";
+            this.StartPosition = FormStartPosition.CenterParent; this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            int y = 20;
+            AddCtrl("Item Name:", txtName, ref y); 
+            AddCtrl("Category:", cmbCategory, ref y);
+            AddCtrl("Status:", cmbStatus, ref y); 
+            AddCtrl("Condition:", cmbCondition, ref y);
+
+            cmbCategory.Items.AddRange(new[] { "Hardware", "Device", "Accessory" });
+            cmbStatus.Items.AddRange(new[] { "Available", "Borrowed", "Maintenance" });
+            cmbCondition.Items.AddRange(new[] { "New", "Good", "Fair", "Damaged" });
+            cmbCategory.SelectedIndex = 0; cmbStatus.SelectedIndex = 0; cmbCondition.SelectedIndex = 0;
+
+            Button btn = new Button { Text = "SAVE", Dock = DockStyle.Bottom, Height = 50, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White };
+            btn.Click += (s, e) => {
+                var item = _editId.HasValue ? _inventoryService.GetItemById(_editId.Value) : new InventoryItem { DateAdded = DateTime.Now };
+                item.Name = txtName.Text; item.Category = cmbCategory.Text; item.Status = cmbStatus.Text; item.Condition = cmbCondition.Text;
+                if (_editId.HasValue) _inventoryService.UpdateItem(item); else _inventoryService.AddItem(item);
+                this.DialogResult = DialogResult.OK;
+            };
+            this.Controls.Add(btn);
+        }
+
+        private void AddCtrl(string l, Control c, ref int y)
+        {
+            this.Controls.Add(new Label { Text = l, Location = new Point(20, y), AutoSize = true });
+            c.Location = new Point(20, y + 20); c.Width = 340; this.Controls.Add(c); y += 60;
+        }
+
+        private void LoadData()
+        {
+            var i = _inventoryService.GetItemById(_editId.Value);
+            txtName.Text = i.Name; cmbCategory.Text = i.Category; cmbStatus.Text = i.Status; cmbCondition.Text = i.Condition;
         }
     }
 
     public class BorrowPopup : Form
     {
-        private Label lblItemName = new Label();
-        private TextBox txtBorrowerId = new TextBox();
-        private TextBox txtPurpose = new TextBox();
+        private readonly BorrowService _borrowService;
+        private int _itemId; string _itemName;
+        private TextBox txtBorrower = new TextBox(), txtPurpose = new TextBox();
         private ComboBox cmbGrade = new ComboBox();
-        private Button btnConfirm = new Button();
-        private int _itemId;
-        private string _itemName;
 
-        public BorrowPopup(int itemId, string itemName)
+        public BorrowPopup(BorrowService service, int id, string name)
         {
-            _itemId = itemId;
-            _itemName = itemName;
-            InitializeBorrowPopup();
+            _borrowService = service; _itemId = id; _itemName = name;
+            SetupCustomUI();
         }
 
-        private void InitializeBorrowPopup()
+        private void SetupCustomUI()
         {
-            this.Size = new Size(400, 400);
-            this.Text = "Borrow Item Transaction";
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            Size = new Size(400, 420); this.Text = $"Borrowing: {_itemName}";
+            StartPosition = FormStartPosition.CenterParent;
+            int y = 30;
+            AddCtrl("Borrower ID:", txtBorrower, ref y); AddCtrl("Grade:", cmbGrade, ref y); AddCtrl("Purpose:", txtPurpose, ref y);
+            cmbGrade.Items.AddRange(new[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "College" });
 
-            int y = 20;
-            lblItemName.Text = $"Item: {_itemName}";
-            lblItemName.Font = new Font("Segoe UI", 12, FontStyle.Bold);
-            lblItemName.Location = new Point(20, y);
-            lblItemName.AutoSize = true;
-            this.Controls.Add(lblItemName);
-
-            y += 50;
-            AddField("Student ID / Borrower ID:", txtBorrowerId, ref y);
-            AddField("Grade/Section:", cmbGrade, ref y);
-            AddField("Purpose (Subject/Project):", txtPurpose, ref y);
-
-            cmbGrade.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "College" });
-            cmbGrade.SelectedIndex = 0;
-
-            btnConfirm.Text = "CONFIRM BORROW";
-            btnConfirm.BackColor = Color.FromArgb(13, 71, 161);
-            btnConfirm.ForeColor = Color.White;
-            btnConfirm.FlatStyle = FlatStyle.Flat;
-            btnConfirm.Size = new Size(340, 45);
-            btnConfirm.Location = new Point(20, y + 20);
-            btnConfirm.Click += BtnConfirm_Click;
-            this.Controls.Add(btnConfirm);
-        }
-
-        private void AddField(string label, Control input, ref int y)
-        {
-            Label l = new Label { Text = label, Location = new Point(20, y), AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) };
-            this.Controls.Add(l);
-            input.Location = new Point(20, y + 25);
-            input.Size = new Size(340, 30);
-            this.Controls.Add(input);
-            y += 70;
-        }
-
-        private void BtnConfirm_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtBorrowerId.Text)) { MessageBox.Show("Borrower ID is required!"); return; }
-
-            using (var db = new AppDbContext())
-            {
-                // 1. Update the Inventory Item Status
-                var item = db.InventoryItems.Find(_itemId);
-                if (item != null)
+            Button btn = new Button { Text = "CONFIRM", Dock = DockStyle.Bottom, Height = 50, BackColor = Color.Teal, ForeColor = Color.White };
+            btn.Click += (s, e) => {
+                _borrowService.ProcessBorrow(new BorrowRecord
                 {
-                    item.Status = "Borrowed";
-                }
-
-                // 2. Create the Borrow Record
-                var record = new BorrowRecord
-                {
-                    BorrowerId = txtBorrowerId.Text,
+                    BorrowerId = txtBorrower.Text,
                     ItemName = _itemName,
                     Purpose = txtPurpose.Text,
                     GradeLevel = cmbGrade.Text,
                     BorrowDate = DateTime.Now,
                     Status = "Active"
-                };
+                }, _itemId);
+                this.DialogResult = DialogResult.OK;
+            };
+            this.Controls.Add(btn);
+        }
 
-                db.BorrowRecords.Add(record);
-                db.SaveChanges();
-            }
-
-            this.DialogResult = DialogResult.OK;
+        private void AddCtrl(string l, Control c, ref int y)
+        {
+            this.Controls.Add(new Label { Text = l, Location = new Point(20, y), AutoSize = true });
+            c.Location = new Point(20, y + 20); c.Width = 340; this.Controls.Add(c); y += 70;
         }
     }
 }

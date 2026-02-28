@@ -6,7 +6,7 @@ namespace Ventrix.App
 {
     public partial class InitializingApp : Form
     {
-        private readonly InventoryService _invService;
+        private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
         private readonly UserService _userService;
 
@@ -15,11 +15,10 @@ namespace Ventrix.App
         // Inside InitializingApp.cs constructor
         public InitializingApp(InventoryService invService, BorrowService borrowService, UserService userService)
         {
-            _invService = invService;
+            InitializeComponent();
+            _inventoryService = invService;
             _borrowService = borrowService;
             _userService = userService;
-
-            InitializeComponent();
 
             this.Opacity = 1;
             fadeTimer.Interval = 10;
@@ -47,7 +46,9 @@ namespace Ventrix.App
                 else
                 {
                     fadeTimer.Stop();
-                    StartApp(); // Transition to the portal
+                    Hide();
+
+                    StartApp();
                 }
             }
         }
@@ -55,7 +56,7 @@ namespace Ventrix.App
         private void StartApp()
         {
             // Use the services passed from Program.cs
-            BorrowerPortal portal = new BorrowerPortal(_invService, _borrowService, _userService);
+            BorrowerPortal portal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
             portal.Show();
 
             // Use Hide instead of Close so the application doesn't terminate

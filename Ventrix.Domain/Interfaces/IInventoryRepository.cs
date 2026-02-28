@@ -8,7 +8,7 @@ namespace Ventrix.Domain.Interfaces
         InventoryItem GetById(int id);
         void Add(InventoryItem item);
         void Update(InventoryItem item);
-        void Delete(int id);
+        void Remove(InventoryItem item);
         int GetTotalCount();
         int GetCountByStatus(string status);
         int GetCountByCondition(string condition);

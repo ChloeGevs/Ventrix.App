@@ -6,8 +6,9 @@ namespace Ventrix.Domain.Interfaces
     {
         void AddRecord(BorrowRecord record);
         BorrowRecord GetRecordById(int id);
+        void UpdateRecord(BorrowRecord record);
+        IEnumerable<BorrowRecord> GetAll();
         IEnumerable<BorrowRecord> GetActiveRecords();
         IEnumerable<BorrowRecord> GetReturnedHistory();
-        void UpdateRecord(BorrowRecord record);
     }
 }

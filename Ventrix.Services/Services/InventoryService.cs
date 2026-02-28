@@ -12,6 +12,11 @@ namespace Ventrix.Application.Services
             _inventoryRepo = inventoryRepo;
         }
 
+        public List<InventoryItem> GetAllItems()
+        {
+            return _inventoryRepo.GetAll().ToList();
+        }
+
         public IEnumerable<InventoryItem> GetFilteredInventory(string search, string statusFilter)
         {
             var items = _inventoryRepo.GetAll();
@@ -29,6 +34,19 @@ namespace Ventrix.Application.Services
             if (item.Id == 0) _inventoryRepo.Add(item);
             else _inventoryRepo.Update(item);
         }
+
+        public bool DeleteItem(int id)
+        {
+            var item = _inventoryRepo.GetById(id);
+            if (item == null) return false;
+
+            _inventoryRepo.Remove(item);
+            return true;
+        }
+
+        public InventoryItem GetItemById(int id) => _inventoryRepo.GetById(id);
+        public void AddItem(InventoryItem item) => _inventoryRepo.Add(item);
+        public void UpdateItem(InventoryItem item) => _inventoryRepo.Update(item);
 
         public dynamic GetDashboardStats()
         {
