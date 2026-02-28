@@ -1,16 +1,20 @@
-﻿using MaterialSkin.Controls;
-using Ventrix.Application.Services;
-using Ventrix.Domain.Models ;       
-using Ventrix.Infrastructure;
+﻿using Ventrix.Application.Services;
+using Ventrix.Domain.Models ;
+using System.Windows.Forms;
+
 
 namespace Ventrix.App
 {
-    public partial class BorrowerRegistration : MaterialForm
+    public partial class BorrowerRegistration : Form
     {
         private readonly UserService _userService;
+        private readonly InventoryService _inventoryService;
+        private readonly BorrowService _borrowService;
 
-        public BorrowerRegistration(UserService userService)
+        public BorrowerRegistration(InventoryService inventoryService, BorrowService borrowService, UserService userService)
         {
+            _inventoryService = inventoryService;
+            _borrowService = borrowService;
             _userService = userService;
             InitializeComponent();
             InitializeEventHandlers();
@@ -18,6 +22,22 @@ namespace Ventrix.App
         private void InitializeEventHandlers()
         {
             btnRegister.Click += BtnRegister_Click;
+
+            lblLoginLink.Click += (s, e) => {
+                var portal = System.Windows.Forms.Application.OpenForms["BorrowerPortal"];
+
+                if (portal != null)
+                {
+                    portal.Show();
+                    this.Close(); 
+                }
+                else
+                {
+                    var newPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+                    newPortal.Show();
+                    this.Close();
+                }
+            };
         }
 
         private void BtnRegister_Click(object sender, EventArgs e)

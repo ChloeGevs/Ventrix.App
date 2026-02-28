@@ -31,6 +31,7 @@ namespace Ventrix.App
             // Actions
             btnLogin.Click += BtnLogin_Click;
             btnBorrow.Click += BtnBorrow_Click;
+            lblCreateAccount.Click += LblCreateAccount_Click;
 
             // Initial State
             ToggleMode("Student");
@@ -164,6 +165,13 @@ namespace Ventrix.App
             {
                 MessageBox.Show($"Error borrowing item: {ex.Message}");
             }
+        }
+
+        private void LblCreateAccount_Click(object sender, EventArgs e)
+        {
+            BorrowerRegistration registrationForm = new BorrowerRegistration(_inventoryService, _borrowService, _userService);
+            registrationForm.Show();
+            this.Hide();
         }
     }
    }
