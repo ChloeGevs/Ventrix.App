@@ -96,7 +96,6 @@ namespace Ventrix.App
 
                     pnlHomeSummary.BringToFront();
                     LoadHomeContent();
-                    LoadRecentActivity();
                     break;
 
                 case "Inventory":
@@ -191,30 +190,25 @@ namespace Ventrix.App
 
         private void LoadHomeContent()
         {
-            // Clear the main display panel inside the Home Summary
             flowRecentActivity.Controls.Clear();
-
-            // --- SECTION 1: SYSTEM ALERTS ---
             AddSectionHeader("URGENT SYSTEM ALERTS");
 
-            var damagedItems = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
+            var items = _inventoryService.GetAllItems();
+            var damagedItems = items.Where(i => i.Condition == "Damaged").ToList();
 
             if (!damagedItems.Any())
             {
-                // Add a friendly "All Clear" message so the panel isn't empty
                 AddDashboardAlert("✓ All laboratory systems are operational.", Color.Teal);
             }
             else
             {
-                foreach (var item in damagedItems)
-                {
-                    AddDashboardAlert($"REPAIR NEEDED: {item.Name} (ID: {item.Id})", Color.DarkRed);
-                }
+                // One interactive alert for all damaged items
+                string summaryMsg = $"⚠ REPAIR NEEDED: {damagedItems.Count} items require attention. (Click for details)";
+                AddDashboardAlert(summaryMsg, Color.DarkRed);
             }
 
-            // --- SECTION 2: RECENT ACTIVITY ---
             AddSectionHeader("RECENT ACTIVITY LOG");
-            LoadRecentActivity(); // This adds the activity cards
+            LoadRecentActivity();
         }
 
         private void LoadHistoryData()
@@ -229,19 +223,6 @@ namespace Ventrix.App
 
             foreach (var log in logs)
                 dgvHistory.Rows.Add(log.Id, log.ItemName, log.BorrowerId, log.BorrowDate.ToShortDateString(), log.ReturnDate?.ToShortDateString());
-        }
-
-        private void ProcessReturn(int recordId)
-        {
-            if (MessageBox.Show("Confirm return of this item?", "Return Process", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                if (_borrowService.ReturnItem(recordId)) //
-                {
-                    LoadHomeContent();    // Refresh alerts
-                    LoadRecentActivity(); // Refresh activity feed
-                    UpdateDashboardCounts(); // Refresh counters
-                }
-            }
         }
 
         #endregion
@@ -313,21 +294,6 @@ namespace Ventrix.App
             dgvHistory.Columns.Add("BDate", "Borrowed");
             dgvHistory.Columns.Add("RDate", "Returned");
             dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        }
-
-        private void AddDashboardAlert(string message, Color color, int? recordId = null)
-        {
-            Panel tile = new Panel { Size = new Size(flowRecentActivity.Width - 40, 60), BackColor = Color.White, Margin = new Padding(0, 0, 0, 10) };
-            Label msg = new Label { Text = message, ForeColor = color, Location = new Point(15, 20), AutoSize = true, Font = new Font("Segoe UI", 10) };
-            tile.Controls.Add(msg);
-
-            if (recordId.HasValue)
-            {
-                Button btn = new Button { Text = "RETURN", Location = new Point(tile.Width - 100, 15), Size = new Size(80, 30), BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-                btn.Click += (s, e) => ProcessReturn(recordId.Value);
-                tile.Controls.Add(btn);
-            }
-            flowRecentActivity.Controls.Add(tile);
         }
 
 
@@ -412,8 +378,45 @@ namespace Ventrix.App
 
         private void AddDashboardAlert(string message, Color color)
         {
-            Label msg = new Label { Text = message, ForeColor = color, AutoSize = true, Margin = new Padding(10) };
-            flowRecentActivity.Controls.Add(msg);
+            Panel tile = new Panel
+            {
+                Size = new Size(flowRecentActivity.Width - 40, 60),
+                BackColor = Color.White,
+                Margin = new Padding(0, 0, 0, 10),
+                Cursor = Cursors.Hand // Visual feedback
+            };
+
+            Label msg = new Label
+            {
+                Text = message,
+                ForeColor = color,
+                Location = new Point(10, 20),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+
+            // Shared Click Handler
+            EventHandler alertClick = (s, e) => {
+                if (message.Contains("REPAIR NEEDED"))
+                {
+                    var damaged = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
+                    using (var popup = new RepairDetailsPopup(damaged, _inventoryService, () => LoadHomeContent()))
+                    {
+                        popup.ShowDialog();
+                    }
+                }
+            };
+
+            // Attach to BOTH
+            tile.Click += alertClick;
+            msg.Click += alertClick;
+
+            tile.Controls.Add(msg);
+            flowRecentActivity.Controls.Add(tile);
+
+            // Ensure the new alert is visible and at the top of the flow
+            tile.BringToFront();
         }
 
         private void AddSectionHeader(string title)
@@ -448,8 +451,6 @@ namespace Ventrix.App
                 }
             }
 
-            // CRITICAL: Only update the items INSIDE the sidebar during the timer
-            // Do NOT call RefreshLayout() here to prevent header/background glitching
             UpdateSidebarInternalUI();
         }
 
@@ -494,20 +495,15 @@ namespace Ventrix.App
 
             if (pnlHomeSummary.Visible)
             {
-                // Ensure standard sizing first
-                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize); //
 
-                lblUrgentHeader.Location = new Point(20, 20);
+                lblUrgentHeader.Location = new Point(20, 20); //
 
-                // Force a valid width calculation for the flow panel
-                int targetWidth = Math.Max(300, pnlHomeSummary.Width / 3);
-                flowRecentActivity.Size = new Size(targetWidth, pnlHomeSummary.Height - 100);
-                flowRecentActivity.Location = new Point(pnlHomeSummary.Width - flowRecentActivity.Width - 20, 80);
+                // FIX: Make the flow panel take up the majority of the Home Panel
+                flowRecentActivity.Location = new Point(20, 70);
+                flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - 150);
 
-                btnClearActivity.Location = new Point(flowRecentActivity.Right - btnClearActivity.Width, 45);
-
-                // CRITICAL: Force the Home panel to the top of the stack
-                pnlHomeSummary.BringToFront();
+                pnlHomeSummary.BringToFront(); //
             }
             // 6. UPDATE COMPONENTS INSIDE SIDEBAR
             pnlSidebar.BringToFront();
@@ -594,38 +590,60 @@ namespace Ventrix.App
 
         private void AddActivityCard(string message, DateTime time, Color statusColor)
         {
-            // Ensure the width is at least 200 so the card is visible during initialization
-            int calculatedWidth = Math.Max(200, flowRecentActivity.Width - 25);
-
-            Panel card = new Panel
+            // 1. Setup the main card container
+            var card = new Guna.UI2.WinForms.Guna2Panel
             {
-                Size = new Size(calculatedWidth, 70),
-                BackColor = Color.White,
-                Margin = new Padding(5, 0, 5, 10)
+                Size = new Size(flowRecentActivity.Width - 45, 85),
+                FillColor = Color.White,
+                BorderRadius = 12,
+                Margin = new Padding(10, 80, 100, 10),
             };
 
-            Panel indicator = new Panel { Size = new Size(5, 70), BackColor = statusColor, Dock = DockStyle.Left };
+            // FIX: ShadowDecoration.Enabled is a 'bool', not an 'int'
+            card.ShadowDecoration.Enabled = true;
+            card.ShadowDecoration.Color = Color.Gainsboro;
 
-            Label lblMsg = new Label
+            // FIX: 'BlurResonance' is actually 'BlurRadius' in Guna UI2
+            card.ShadowDecoration.Shadow = new Padding(5); // Alternative to add depth
+            card.ShadowDecoration.Depth = 10;
+
+            // 2. Status Indicator
+            var indicator = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Size = new Size(6, 85),
+                FillColor = statusColor,
+                BorderRadius = 12,
+                Dock = DockStyle.Left
+            };
+   
+            // 3. Message Label
+            var lblMsg = new Label
             {
                 Text = message,
-                Location = new Point(15, 12),
+                Location = new Point(22, 18),
                 AutoSize = true,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(45, 45, 45)
             };
 
-            Label lblTime = new Label
+            // 4. Time Label
+            var lblTime = new Label
             {
-                Text = time.ToString("hh:mm tt | MMM dd"),
-                Location = new Point(15, 35),
+                Text = $"🕒 {time.ToString("hh:mm tt")} • {time.ToString("MMM dd, yyyy")}",
+                Location = new Point(22, 45),
                 AutoSize = true,
-                ForeColor = Color.Gray,
-                Font = new Font("Segoe UI", 8F)
+                ForeColor = Color.DarkGray,
+                Font = new Font("Segoe UI", 8.5F)
             };
 
             card.Controls.Add(indicator);
             card.Controls.Add(lblMsg);
             card.Controls.Add(lblTime);
+
+            // Subtle Hover Effect
+            card.MouseEnter += (s, e) => card.FillColor = Color.FromArgb(252, 252, 252);
+            card.MouseLeave += (s, e) => card.FillColor = Color.White;
+
             flowRecentActivity.Controls.Add(card);
         }
 
@@ -647,7 +665,80 @@ namespace Ventrix.App
     // ==========================================
     //  POPUP CLASSES (Moved Outside AdminDashboard)
     // ==========================================
+    public class RepairDetailsPopup : Form
+    {
+        private readonly InventoryService _inventoryService;
+        private readonly Action _onRefresh;
 
+        public RepairDetailsPopup(List<InventoryItem> damagedItems, InventoryService inventoryService, Action onRefresh)
+        {
+            _inventoryService = inventoryService;
+            _onRefresh = onRefresh;
+
+            this.Text = "Maintenance Management";
+            this.Size = new Size(550, 600);
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.BackColor = Color.FromArgb(242, 245, 250);
+
+            Label lblHeader = new Label
+            {
+                Text = $"Maintenance Queue ({damagedItems.Count})",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(13, 71, 161),
+                Location = new Point(20, 20),
+                AutoSize = true
+            };
+
+            FlowLayoutPanel flow = new FlowLayoutPanel
+            {
+                Location = new Point(20, 60),
+                Size = new Size(490, 420),
+                AutoScroll = true,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false
+            };
+
+            foreach (var item in damagedItems)
+            {
+                Panel card = new Panel { Size = new Size(460, 80), BackColor = Color.White, Margin = new Padding(0, 0, 0, 10) };
+
+                Label name = new Label { Text = item.Name, Font = new Font("Segoe UI", 10, FontStyle.Bold), Location = new Point(15, 15), AutoSize = true };
+                Label detail = new Label { Text = $"ID: {item.Id} | {item.Category}", ForeColor = Color.Gray, Location = new Point(15, 40), AutoSize = true };
+
+                // The "Mark as Repaired" Button
+                Button btnRepair = new Button
+                {
+                    Text = "REPAIRED",
+                    Size = new Size(100, 35),
+                    Location = new Point(340, 20),
+                    BackColor = Color.Teal,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 9, FontStyle.Bold)
+                };
+
+                btnRepair.Click += (s, e) => {
+                    item.Condition = "Good"; // Reset condition
+                    _inventoryService.UpdateItem(item); // Save to DB
+                    card.Visible = false; // Hide from current view
+                    _onRefresh?.Invoke(); // Trigger dashboard update
+                };
+
+                card.Controls.Add(name);
+                card.Controls.Add(detail);
+                card.Controls.Add(btnRepair);
+                flow.Controls.Add(card);
+            }
+
+            Button btnClose = new Button { Text = "CLOSE", Dock = DockStyle.Bottom, Height = 50, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+            btnClose.Click += (s, e) => this.Close();
+
+            this.Controls.Add(lblHeader);
+            this.Controls.Add(flow);
+            this.Controls.Add(btnClose);
+        }
+    }
     public class InventoryPopup : Form
     {
         private readonly InventoryService _inventoryService;
