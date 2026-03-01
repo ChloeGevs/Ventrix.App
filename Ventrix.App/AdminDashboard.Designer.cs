@@ -62,16 +62,16 @@
             btnHome = new Guna.UI2.WinForms.Guna2Button();
             pnlSidebar = new Guna.UI2.WinForms.Guna2Panel();
             btnHistoryNav = new Guna.UI2.WinForms.Guna2Button();
-            cardTotal = new Guna.UI2.WinForms.Guna2Panel();
+            cardTotal = new Ventrix.App.Controls.MetricCard();
             lblTotalTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblTotalCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            cardAvailable = new Guna.UI2.WinForms.Guna2Panel();
+            cardAvailable = new Ventrix.App.Controls.MetricCard();
             lblAvailTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblAvailCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            cardBorrowers = new Guna.UI2.WinForms.Guna2Panel();
+            cardBorrowers = new Ventrix.App.Controls.MetricCard();
             lblBorrowersTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblBorrowersCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            cardPending = new Guna.UI2.WinForms.Guna2Panel();
+            cardPending = new Ventrix.App.Controls.MetricCard();
             lblPendingTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblPendingCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
             picUser = new Guna.UI2.WinForms.Guna2CirclePictureBox();
@@ -205,122 +205,6 @@
             btnHistoryNav.ShadowDecoration.CustomizableEdges = customizableEdges8;
             btnHistoryNav.Size = new Size(180, 45);
             btnHistoryNav.TabIndex = 6;
-            // 
-            // cardTotal
-            // 
-            cardTotal.Controls.Add(lblTotalTitle);
-            cardTotal.Controls.Add(lblTotalCount);
-            cardTotal.CustomizableEdges = customizableEdges9;
-            cardTotal.Location = new Point(0, 0);
-            cardTotal.Name = "cardTotal";
-            cardTotal.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            cardTotal.Size = new Size(200, 100);
-            cardTotal.TabIndex = 0;
-            // 
-            // lblTotalTitle
-            // 
-            lblTotalTitle.BackColor = Color.Transparent;
-            lblTotalTitle.Location = new Point(0, 0);
-            lblTotalTitle.Name = "lblTotalTitle";
-            lblTotalTitle.Size = new Size(3, 2);
-            lblTotalTitle.TabIndex = 0;
-            lblTotalTitle.Text = null;
-            // 
-            // lblTotalCount
-            // 
-            lblTotalCount.BackColor = Color.Transparent;
-            lblTotalCount.Location = new Point(0, 0);
-            lblTotalCount.Name = "lblTotalCount";
-            lblTotalCount.Size = new Size(3, 2);
-            lblTotalCount.TabIndex = 1;
-            lblTotalCount.Text = null;
-            // 
-            // cardAvailable
-            // 
-            cardAvailable.Controls.Add(lblAvailTitle);
-            cardAvailable.Controls.Add(lblAvailCount);
-            cardAvailable.CustomizableEdges = customizableEdges11;
-            cardAvailable.Location = new Point(0, 0);
-            cardAvailable.Name = "cardAvailable";
-            cardAvailable.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            cardAvailable.Size = new Size(200, 100);
-            cardAvailable.TabIndex = 1;
-            // 
-            // lblAvailTitle
-            // 
-            lblAvailTitle.BackColor = Color.Transparent;
-            lblAvailTitle.Location = new Point(0, 0);
-            lblAvailTitle.Name = "lblAvailTitle";
-            lblAvailTitle.Size = new Size(3, 2);
-            lblAvailTitle.TabIndex = 0;
-            lblAvailTitle.Text = null;
-            // 
-            // lblAvailCount
-            // 
-            lblAvailCount.BackColor = Color.Transparent;
-            lblAvailCount.Location = new Point(0, 0);
-            lblAvailCount.Name = "lblAvailCount";
-            lblAvailCount.Size = new Size(3, 2);
-            lblAvailCount.TabIndex = 1;
-            lblAvailCount.Text = null;
-            // 
-            // cardBorrowers
-            // 
-            cardBorrowers.Controls.Add(lblBorrowersTitle);
-            cardBorrowers.Controls.Add(lblBorrowersCount);
-            cardBorrowers.CustomizableEdges = customizableEdges13;
-            cardBorrowers.Location = new Point(0, 0);
-            cardBorrowers.Name = "cardBorrowers";
-            cardBorrowers.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            cardBorrowers.Size = new Size(200, 100);
-            cardBorrowers.TabIndex = 4;
-            // 
-            // lblBorrowersTitle
-            // 
-            lblBorrowersTitle.BackColor = Color.Transparent;
-            lblBorrowersTitle.Location = new Point(0, 0);
-            lblBorrowersTitle.Name = "lblBorrowersTitle";
-            lblBorrowersTitle.Size = new Size(3, 2);
-            lblBorrowersTitle.TabIndex = 0;
-            lblBorrowersTitle.Text = null;
-            // 
-            // lblBorrowersCount
-            // 
-            lblBorrowersCount.BackColor = Color.Transparent;
-            lblBorrowersCount.Location = new Point(0, 0);
-            lblBorrowersCount.Name = "lblBorrowersCount";
-            lblBorrowersCount.Size = new Size(3, 2);
-            lblBorrowersCount.TabIndex = 1;
-            lblBorrowersCount.Text = null;
-            // 
-            // cardPending
-            // 
-            cardPending.Controls.Add(lblPendingTitle);
-            cardPending.Controls.Add(lblPendingCount);
-            cardPending.CustomizableEdges = customizableEdges15;
-            cardPending.Location = new Point(0, 0);
-            cardPending.Name = "cardPending";
-            cardPending.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            cardPending.Size = new Size(200, 100);
-            cardPending.TabIndex = 2;
-            // 
-            // lblPendingTitle
-            // 
-            lblPendingTitle.BackColor = Color.Transparent;
-            lblPendingTitle.Location = new Point(0, 0);
-            lblPendingTitle.Name = "lblPendingTitle";
-            lblPendingTitle.Size = new Size(3, 2);
-            lblPendingTitle.TabIndex = 0;
-            lblPendingTitle.Text = null;
-            // 
-            // lblPendingCount
-            // 
-            lblPendingCount.BackColor = Color.Transparent;
-            lblPendingCount.Location = new Point(0, 0);
-            lblPendingCount.Name = "lblPendingCount";
-            lblPendingCount.Size = new Size(3, 2);
-            lblPendingCount.TabIndex = 1;
-            lblPendingCount.Text = null;
             // 
             // picUser
             // 
@@ -641,17 +525,18 @@
             ResumeLayout(false);
         }
 
-        private Guna.UI2.WinForms.Guna2Panel pnlSidebar, pnlTopBar, pnlMainContent, pnlGridContainer, pnlHomeSummary, pnlHistory, cardHomePage,cardTotal, cardAvailable, cardPending, cardBorrowers;
+        private Guna.UI2.WinForms.Guna2Panel pnlSidebar, pnlTopBar, pnlMainContent, pnlGridContainer, pnlHomeSummary, pnlHistory, cardHomePage;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblDashboardHeader, lblHomePageTitle, lblTotalTitle, lblTotalCount, lblAvailTitle, lblAvailCount, lblPendingTitle, lblPendingCount, lblBorrowersTitle, lblBorrowersCount;
         private Guna.UI2.WinForms.Guna2TextBox txtSearch;
         private Guna.UI2.WinForms.Guna2DataGridView dgvInventory, dgvHistory;
-        private Guna.UI2.WinForms.Guna2Button btnHome, btnHistoryNav,btnCreate, btnEdit, btnDelete, btnClearActivity;
+        private Guna.UI2.WinForms.Guna2Button btnHome, btnHistoryNav, btnCreate, btnEdit, btnDelete, btnClearActivity;
         private Guna.UI2.WinForms.Guna2ImageButton btnHamburger;
         private System.Windows.Forms.Timer sidebarTimer;
         private Guna.UI2.WinForms.Guna2CirclePictureBox picUser;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblOwnerRole, lblUrgentHeader;
         private Guna.UI2.WinForms.Guna2ComboBox cmbAccountActions;
         private System.Windows.Forms.FlowLayoutPanel flowRecentActivity;
-        
+        private Ventrix.App.Controls.MetricCard cardTotal, cardAvailable, cardBorrowers, cardPending;
+
     }
-}
+}   

@@ -1,14 +1,14 @@
 ﻿using MaterialSkin;
 using MaterialSkin.Controls;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using TheArtOfDevHtmlRenderer.Adapters.Entities;
+using Ventrix.App.Controls; // MUST include this to see your new UserControls
+using Ventrix.App.Popups;   // MUST include this for the separate popup files
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
-using Ventrix.Infrastructure;
-
 namespace Ventrix.App
 {
     public partial class AdminDashboard : MaterialForm
@@ -26,14 +26,22 @@ namespace Ventrix.App
             _borrowService = borrowService;
 
             InitializeComponent();
+
+            ThemeManager.Initialize(this);
+
             InitializeMaterialSkin();
             ConfigureRuntimeUI();
-            ApplyModernBranding();  // Apply colors and fonts
-            RefreshLayout();
+            ApplyModernBranding();
+
+            this.Shown += (s, e) => {
+                RefreshLayout();
+            };
+            // Start at Home View
+            SwitchView("Home"); 
         }
 
         private void ConfigureRuntimeUI()
-        { 
+        {
 
             // Enable Double Buffering for smooth UI
             typeof(Panel).InvokeMember("DoubleBuffered",
@@ -55,10 +63,10 @@ namespace Ventrix.App
             dgvInventory.CellDoubleClick += DgvInventory_CellDoubleClick;
 
             // Sidebar Card Navigation
-            cardTotal.Click += (s, e) => SwitchView("Inventory", "All");
-            cardAvailable.Click += (s, e) => SwitchView("Inventory", "Available");
-            cardPending.Click += (s, e) => SwitchView("Inventory", "Borrowed");
-            cardBorrowers.Click += (s, e) => SwitchView("Inventory", "Borrower List");
+            cardTotal.CardClicked += (s, e) => SwitchView("Inventory", "All");
+            cardAvailable.CardClicked += (s, e) => SwitchView("Inventory", "Available");
+            cardPending.CardClicked += (s, e) => SwitchView("Inventory", "Borrowed");
+            cardBorrowers.CardClicked += (s, e) => SwitchView("Inventory", "Borrower List");
 
             // Sidebar Animation
             sidebarTimer.Interval = 1;
@@ -77,10 +85,9 @@ namespace Ventrix.App
 
         private void SwitchView(string viewName, string filter = "All")
         {
-            // 1. Reset all panel visibilities
-            pnlHomeSummary.Visible = false;
-            pnlGridContainer.Visible = false;
-            pnlHistory.Visible = false;
+            pnlHomeSummary.Visible = (viewName == "Home");
+            pnlGridContainer.Visible = (viewName == "Inventory");
+            pnlHistory.Visible = (viewName == "History");
 
             // 2. Handle CRUD button visibility
             btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = (viewName == "Inventory");
@@ -88,31 +95,25 @@ namespace Ventrix.App
             switch (viewName)
             {
                 case "Home":
-                    pnlHomeSummary.Visible = true;
-                    pnlGridContainer.Visible = false; // Explicitly hide other main panels
-                    pnlHistory.Visible = false;
-
                     lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
-
                     pnlHomeSummary.BringToFront();
                     LoadHomeContent();
                     break;
 
                 case "Inventory":
-                    pnlGridContainer.Visible = true;
                     pnlGridContainer.BringToFront();
                     lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
-                    LoadFromDatabase(filter); // Load the grid data
+                    LoadFromDatabase(filter);
                     break;
 
                 case "History":
-                    pnlHistory.Visible = true;
                     pnlHistory.BringToFront();
                     lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
                     LoadHistoryData();
                     break;
             }
             UpdateDashboardCounts();
+            pnlSidebar.BringToFront(); // Ensure sidebar is always on top
         }
 
         private void DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -188,6 +189,26 @@ namespace Ventrix.App
             }
         }
 
+        private void LoadRecentActivity()
+        {
+            if (flowRecentActivity == null) return;
+            flowRecentActivity.Controls.Clear();
+
+            var recentLogs = _borrowService.GetAllBorrowRecords()
+                .OrderByDescending(b => b.BorrowDate)
+                .Take(10);
+
+            foreach (var log in recentLogs)
+            {
+                string msg = log.Status == "Active"
+                    ? $"{log.BorrowerId} borrowed {log.ItemName}"
+                    : $"{log.ItemName} was returned by {log.BorrowerId}";
+
+                Color statusColor = log.Status == "Active" ? Color.FromArgb(33, 150, 243) : Color.Teal;
+
+                AddActivityCard(msg, log.BorrowDate, statusColor);
+            }
+        }
         private void LoadHomeContent()
         {
             flowRecentActivity.Controls.Clear();
@@ -211,12 +232,45 @@ namespace Ventrix.App
             LoadRecentActivity();
         }
 
+        private void AddDashboardAlert(string message, Color color)
+        {
+            // 1. Create a new instance of your custom control
+            var alert = new AlertTile(message, color);
+
+            // 2. Wire up the Click event defined in your AlertTile class
+            alert.AlertClicked += (s, e) =>
+            {
+                if (message.Contains("REPAIR"))
+                {
+                    var damaged = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
+                    using (var popup = new RepairDetailsPopup(damaged, _inventoryService, () => LoadHomeContent()))
+                    {
+                        popup.ShowDialog();
+                    }
+                }
+            };
+
+            // 3. Add to the flow panel and bring to top
+            flowRecentActivity.Controls.Add(alert);
+            alert.BringToFront();
+        }
+
+        private void AddActivityCard(string message, DateTime time, Color statusColor)
+        {
+            // Using the FULL path so the program CANNOT miss it
+            var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor);
+
+            // Ensure it fits the width of your flow panel
+            card.Width = flowRecentActivity.Width - 30;
+
+            flowRecentActivity.Controls.Add(card);
+        }
+
         private void LoadHistoryData()
         {
             dgvHistory.Rows.Clear();
             dgvHistory.Columns.Clear();
             SetupColumnsHistory();
-
             var logs = _borrowService.GetAllBorrowRecords()
                 .Where(b => b.Status == "Returned")
                 .OrderByDescending(b => b.ReturnDate);
@@ -225,26 +279,62 @@ namespace Ventrix.App
                 dgvHistory.Rows.Add(log.Id, log.ItemName, log.BorrowerId, log.BorrowDate.ToShortDateString(), log.ReturnDate?.ToShortDateString());
         }
 
+        private void UpdateDashboardCounts()
+        {
+            var items = _inventoryService.GetAllItems();
+            var records = _borrowService.GetAllBorrowRecords();
+
+            // --- INTEGRATION: Updating your MetricCard UserControls ---
+            cardTotal.UpdateMetrics("TOTAL ITEMS", items.Count().ToString("N0"), Color.FromArgb(13, 71, 161));
+            cardAvailable.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == "Available").ToString("N0"), Color.Teal);
+            cardPending.UpdateMetrics("BORROWED", items.Count(x => x.Status == "Borrowed").ToString("N0"), Color.FromArgb(192, 0, 0));
+            cardBorrowers.UpdateMetrics("RECORDS", records.Count().ToString("N0"), Color.Orange);
+
+            int damaged = items.Count(x => x.Condition == "Damaged");
+            lblUrgentHeader.ForeColor = damaged > 0 ? Color.DarkRed : Color.Teal;
+            lblUrgentHeader.Text = damaged > 0 ? $"URGENT SYSTEM ALERTS ({damaged} ISSUES)" : "URGENT SYSTEM ALERTS";
+        }
+
         #endregion
 
         #region CRUD Actions
 
         private void BtnCreate_Click(object sender, EventArgs e)
         {
-            using (var popup = new InventoryPopup(_inventoryService, _borrowService))
+            using (var popup = new InventoryPopup(_inventoryService))
             {
-                if (popup.ShowDialog() == DialogResult.OK) SwitchView("Inventory", "All");
+                popup.StartPosition = FormStartPosition.CenterParent;
+
+                // This pauses the Dashboard logic here; no layout changes can happen.
+                if (popup.ShowDialog() == DialogResult.OK)
+                {
+                    // Only refresh data, don't touch UI layout properties
+                    LoadFromDatabase("All");
+                    UpdateDashboardCounts();
+                }
             }
         }
 
         private void BtnEdit_Click(object sender, EventArgs e)
         {
-            if (dgvInventory.SelectedRows.Count == 0) return;
+            // 1. Validation: Ensure a row is actually selected in the grid
+            if (dgvInventory.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a record to edit.", "Ventrix System");
+                return;
+            }
+
             int id = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value);
 
-            using (var popup = new InventoryPopup(_inventoryService, _borrowService, id))
+            using (var popup = new InventoryPopup(_inventoryService, id))
             {
-                if (popup.ShowDialog() == DialogResult.OK) LoadFromDatabase("All");
+                popup.StartPosition = FormStartPosition.CenterParent;
+
+                if (popup.ShowDialog() == DialogResult.OK)
+                {
+                    LoadFromDatabase("All");
+                    UpdateDashboardCounts();
+                }
             }
         }
 
@@ -262,30 +352,6 @@ namespace Ventrix.App
         #endregion
 
         #region UI Styling & Helpers
-
-        private void UpdateDashboardCounts()
-        {
-            var items = _inventoryService.GetAllItems();
-            lblTotalCount.Text = items.Count().ToString("N0");
-            lblAvailCount.Text = items.Count(x => x.Status == "Available").ToString("N0");
-            lblPendingCount.Text = items.Count(x => x.Status == "Borrowed").ToString("N0");
-
-            // Check for damaged items
-            int damaged = items.Count(x => x.Condition == "Damaged");
-
-            // If there are damaged items, make the header Red and Bold
-            if (damaged > 0)
-            {
-                lblUrgentHeader.ForeColor = Color.DarkRed;
-                lblUrgentHeader.Text = $"URGENT SYSTEM ALERTS ({damaged} ISSUES)";
-            }
-            else
-            {
-                lblUrgentHeader.ForeColor = Color.Teal; // Professional green for "All Clear"
-                lblUrgentHeader.Text = "URGENT SYSTEM ALERTS";
-            }
-        }
-
         private void SetupColumnsHistory()
         {
             dgvHistory.Columns.Add("ID", "ID");
@@ -307,57 +373,20 @@ namespace Ventrix.App
 
         private void ApplyModernBranding()
         {
+            ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
             lblDashboardHeader.Text = "INVENTORY OVERVIEW";
-            lblDashboardHeader.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
-            lblDashboardHeader.ForeColor = Color.FromArgb(13, 71, 161);
 
-            // 2.APPLY STYLES TO NAVIGATION BUTTONS
-            // These ensure buttons look like modern Material links instead of gray boxes
+            ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont);
+
             StyleNavButton(btnHistoryNav, "HISTORY", Color.Orange);
-            StyleNavButton(btnHome, "HOME PAGE", Color.FromArgb(33, 150, 243));
+            StyleNavButton(btnHome, "HOME PAGE", ThemeManager.VentrixLightBlue);
             StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
-            StyleNavButton(btnEdit, "EDIT RECORD", Color.FromArgb(33, 150, 243));
-            StyleNavButton(btnDelete, "DELETE ITEM", Color.FromArgb(192, 0, 0));
+            StyleNavButton(btnEdit, "EDIT RECORD", ThemeManager.VentrixLightBlue);
+            StyleNavButton(btnDelete, "DELETE ITEM", ThemeManager.VentrixBlue);
             StyleNavButton(btnClearActivity, "CLEAR ALL", Color.FromArgb(192, 0, 0));
 
-            // 3. APPLY STYLES TO METRIC CARDS
-            // This gives them the rounded white "Card" look
-            SetupCard(cardTotal, lblTotalTitle, lblTotalCount, "TOTAL ITEMS", "0", Color.FromArgb(13, 71, 161));
-            SetupCard(cardAvailable, lblAvailTitle, lblAvailCount, "AVAILABLE", "0", Color.Teal);
-            SetupCard(cardPending, lblPendingTitle, lblPendingCount, "BORROWED", "0", Color.FromArgb(192, 0, 0));
-            SetupCard(cardBorrowers, lblBorrowersTitle, lblBorrowersCount, "RECORDS", "0", Color.Orange);
-            cardTotal.Parent = cardAvailable.Parent = cardPending.Parent = cardBorrowers.Parent = pnlSidebar;
-
-            btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = true;
-            UpdateDashboardCounts();
+            Invalidate();
         }
-
-        private void SetupCard(Guna.UI2.WinForms.Guna2Panel card, Guna.UI2.WinForms.Guna2HtmlLabel title, Guna.UI2.WinForms.Guna2HtmlLabel count, string titleText, string countText, Color accentColor)
-        {
-            title.Parent = card;
-            count.Parent = card;
-            card.FillColor = Color.White;
-            card.BorderRadius = 15;
-            card.Cursor = Cursors.Hand;
-
-            title.Text = titleText;
-            title.Font = new Font("Segoe UI Semibold", 9F);
-            title.ForeColor = Color.Gray;
-            title.BackColor = Color.Transparent;
-            // FIXED LOCATION:
-            title.Location = new Point(20, 15);
-
-            count.Text = countText;
-            count.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
-            count.ForeColor = accentColor;
-            count.BackColor = Color.Transparent;
-            // FIXED LOCATION:
-            count.Location = new Point(20, 55);
-
-            title.BringToFront();
-            count.BringToFront();
-        }
-
         private void StyleNavButton(Guna.UI2.WinForms.Guna2Button btn, string text, Color hover)
         {
             btn.Text = text;
@@ -376,49 +405,6 @@ namespace Ventrix.App
             dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
-        private void AddDashboardAlert(string message, Color color)
-        {
-            Panel tile = new Panel
-            {
-                Size = new Size(flowRecentActivity.Width - 40, 60),
-                BackColor = Color.White,
-                Margin = new Padding(0, 0, 0, 10),
-                Cursor = Cursors.Hand // Visual feedback
-            };
-
-            Label msg = new Label
-            {
-                Text = message,
-                ForeColor = color,
-                Location = new Point(10, 20),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 18, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-
-            // Shared Click Handler
-            EventHandler alertClick = (s, e) => {
-                if (message.Contains("REPAIR NEEDED"))
-                {
-                    var damaged = _inventoryService.GetAllItems().Where(i => i.Condition == "Damaged").ToList();
-                    using (var popup = new RepairDetailsPopup(damaged, _inventoryService, () => LoadHomeContent()))
-                    {
-                        popup.ShowDialog();
-                    }
-                }
-            };
-
-            // Attach to BOTH
-            tile.Click += alertClick;
-            msg.Click += alertClick;
-
-            tile.Controls.Add(msg);
-            flowRecentActivity.Controls.Add(tile);
-
-            // Ensure the new alert is visible and at the top of the flow
-            tile.BringToFront();
-        }
-
         private void AddSectionHeader(string title)
         {
             Label lbl = new Label { Text = title, Font = new Font("Segoe UI", 12, FontStyle.Bold), AutoSize = true };
@@ -427,6 +413,13 @@ namespace Ventrix.App
 
         private void SidebarTimer_Tick(object sender, EventArgs e)
         {
+
+            if (!this.ContainsFocus)
+            {
+                sidebarTimer.Stop();
+                return;
+            }
+
             // Speed of the animation
             int speed = 40;
 
@@ -456,6 +449,7 @@ namespace Ventrix.App
 
         private void RefreshLayout()
         {
+            if (!ContainsFocus) return;
             if (pnlMainContent == null || pnlSidebar == null || lblDashboardHeader == null) return;
 
             int rightMargin = 70;
@@ -463,7 +457,7 @@ namespace Ventrix.App
 
             // 1. TOP BAR & HEADER: Stays fixed, does not move when sidebar expands
             btnHamburger.Location = new Point(20, 30);
-            lblDashboardHeader.Location = new Point (60, 22);
+            lblDashboardHeader.Location = new Point(60, 22);
             txtSearch.Location = new Point(this.Width - txtSearch.Width - rightMargin, 20);
 
             // 2. MAIN CONTENT: Fills the whole form background behind the sidebar
@@ -499,7 +493,7 @@ namespace Ventrix.App
 
                 lblUrgentHeader.Location = new Point(20, 20); //
 
-                // FIX: Make the flow panel take up the majority of the Home Panel
+                // FIX: Make the flow panel take up the majority of the Home Panel  
                 flowRecentActivity.Location = new Point(20, 70);
                 flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - 150);
 
@@ -555,98 +549,6 @@ namespace Ventrix.App
             }
         }
 
-        private void LoadRecentActivity()
-        {
-            if (flowRecentActivity == null) return;
-            flowRecentActivity.Controls.Clear();
-
-            // Pull the latest 10 records from your BorrowService
-            var recentLogs = _borrowService.GetAllBorrowRecords()
-                .OrderByDescending(b => b.BorrowDate)
-                .Take(10);
-
-            foreach (var log in recentLogs)
-            {
-                string msg;
-                Color color;
-
-                if (log.Status == "Active")
-                {
-                    msg = $"{log.BorrowerId} borrowed {log.ItemName}";
-                    color = Color.FromArgb(33, 150, 243); // Ventrix Blue
-                }
-                else
-                {
-                    msg = $"{log.ItemName} was returned by {log.BorrowerId}";
-                    color = Color.Teal; // Returned Green
-                }
-
-                AddActivityCard(msg, log.BorrowDate, color);
-            }
-
-            flowRecentActivity.ResumeLayout(true);
-            flowRecentActivity.PerformLayout();
-        }
-
-        private void AddActivityCard(string message, DateTime time, Color statusColor)
-        {
-            // 1. Setup the main card container
-            var card = new Guna.UI2.WinForms.Guna2Panel
-            {
-                Size = new Size(flowRecentActivity.Width - 45, 85),
-                FillColor = Color.White,
-                BorderRadius = 12,
-                Margin = new Padding(10, 80, 100, 10),
-            };
-
-            // FIX: ShadowDecoration.Enabled is a 'bool', not an 'int'
-            card.ShadowDecoration.Enabled = true;
-            card.ShadowDecoration.Color = Color.Gainsboro;
-
-            // FIX: 'BlurResonance' is actually 'BlurRadius' in Guna UI2
-            card.ShadowDecoration.Shadow = new Padding(5); // Alternative to add depth
-            card.ShadowDecoration.Depth = 10;
-
-            // 2. Status Indicator
-            var indicator = new Guna.UI2.WinForms.Guna2Panel
-            {
-                Size = new Size(6, 85),
-                FillColor = statusColor,
-                BorderRadius = 12,
-                Dock = DockStyle.Left
-            };
-   
-            // 3. Message Label
-            var lblMsg = new Label
-            {
-                Text = message,
-                Location = new Point(22, 18),
-                AutoSize = true,
-                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(45, 45, 45)
-            };
-
-            // 4. Time Label
-            var lblTime = new Label
-            {
-                Text = $"🕒 {time.ToString("hh:mm tt")} • {time.ToString("MMM dd, yyyy")}",
-                Location = new Point(22, 45),
-                AutoSize = true,
-                ForeColor = Color.DarkGray,
-                Font = new Font("Segoe UI", 8.5F)
-            };
-
-            card.Controls.Add(indicator);
-            card.Controls.Add(lblMsg);
-            card.Controls.Add(lblTime);
-
-            // Subtle Hover Effect
-            card.MouseEnter += (s, e) => card.FillColor = Color.FromArgb(252, 252, 252);
-            card.MouseLeave += (s, e) => card.FillColor = Color.White;
-
-            flowRecentActivity.Controls.Add(card);
-        }
-
         private void ClearRecentActivity()
         {
             if (flowRecentActivity == null) return;
@@ -660,179 +562,7 @@ namespace Ventrix.App
             }
         }
         #endregion
-    }
 
-    // ==========================================
-    //  POPUP CLASSES (Moved Outside AdminDashboard)
-    // ==========================================
-    public class RepairDetailsPopup : Form
-    {
-        private readonly InventoryService _inventoryService;
-        private readonly Action _onRefresh;
-
-        public RepairDetailsPopup(List<InventoryItem> damagedItems, InventoryService inventoryService, Action onRefresh)
-        {
-            _inventoryService = inventoryService;
-            _onRefresh = onRefresh;
-
-            this.Text = "Maintenance Management";
-            this.Size = new Size(550, 600);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.BackColor = Color.FromArgb(242, 245, 250);
-
-            Label lblHeader = new Label
-            {
-                Text = $"Maintenance Queue ({damagedItems.Count})",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.FromArgb(13, 71, 161),
-                Location = new Point(20, 20),
-                AutoSize = true
-            };
-
-            FlowLayoutPanel flow = new FlowLayoutPanel
-            {
-                Location = new Point(20, 60),
-                Size = new Size(490, 420),
-                AutoScroll = true,
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false
-            };
-
-            foreach (var item in damagedItems)
-            {
-                Panel card = new Panel { Size = new Size(460, 80), BackColor = Color.White, Margin = new Padding(0, 0, 0, 10) };
-
-                Label name = new Label { Text = item.Name, Font = new Font("Segoe UI", 10, FontStyle.Bold), Location = new Point(15, 15), AutoSize = true };
-                Label detail = new Label { Text = $"ID: {item.Id} | {item.Category}", ForeColor = Color.Gray, Location = new Point(15, 40), AutoSize = true };
-
-                // The "Mark as Repaired" Button
-                Button btnRepair = new Button
-                {
-                    Text = "REPAIRED",
-                    Size = new Size(100, 35),
-                    Location = new Point(340, 20),
-                    BackColor = Color.Teal,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 9, FontStyle.Bold)
-                };
-
-                btnRepair.Click += (s, e) => {
-                    item.Condition = "Good"; // Reset condition
-                    _inventoryService.UpdateItem(item); // Save to DB
-                    card.Visible = false; // Hide from current view
-                    _onRefresh?.Invoke(); // Trigger dashboard update
-                };
-
-                card.Controls.Add(name);
-                card.Controls.Add(detail);
-                card.Controls.Add(btnRepair);
-                flow.Controls.Add(card);
-            }
-
-            Button btnClose = new Button { Text = "CLOSE", Dock = DockStyle.Bottom, Height = 50, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-            btnClose.Click += (s, e) => this.Close();
-
-            this.Controls.Add(lblHeader);
-            this.Controls.Add(flow);
-            this.Controls.Add(btnClose);
-        }
-    }
-    public class InventoryPopup : Form
-    {
-        private readonly InventoryService _inventoryService;
-        private readonly BorrowService _borrowService;
-        private int? _editId;
-        private TextBox txtName = new TextBox();
-        private ComboBox cmbCategory = new ComboBox(), cmbStatus = new ComboBox(), cmbCondition = new ComboBox();
-
-        public InventoryPopup(InventoryService invService, BorrowService borService, int? id = null)
-        {
-            _inventoryService = invService; _borrowService = borService; _editId = id;
-            SetupCustomUI();
-            if (_editId.HasValue) LoadData();
-        }
-
-        private void SetupCustomUI()
-        {
-            this.Size = new Size(400, 450); this.Text = _editId.HasValue ? "Edit Item" : "Add Item";
-            this.StartPosition = FormStartPosition.CenterParent; this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            int y = 20;
-            AddCtrl("Item Name:", txtName, ref y); 
-            AddCtrl("Category:", cmbCategory, ref y);
-            AddCtrl("Status:", cmbStatus, ref y); 
-            AddCtrl("Condition:", cmbCondition, ref y);
-
-            cmbCategory.Items.AddRange(new[] { "Hardware", "Device", "Accessory" });
-            cmbStatus.Items.AddRange(new[] { "Available", "Borrowed", "Maintenance" });
-            cmbCondition.Items.AddRange(new[] { "New", "Good", "Fair", "Damaged" });
-            cmbCategory.SelectedIndex = 0; cmbStatus.SelectedIndex = 0; cmbCondition.SelectedIndex = 0;
-
-            Button btn = new Button { Text = "SAVE", Dock = DockStyle.Bottom, Height = 50, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White };
-            btn.Click += (s, e) => {
-                var item = _editId.HasValue ? _inventoryService.GetItemById(_editId.Value) : new InventoryItem { DateAdded = DateTime.Now };
-                item.Name = txtName.Text; item.Category = cmbCategory.Text; item.Status = cmbStatus.Text; item.Condition = cmbCondition.Text;
-                if (_editId.HasValue) _inventoryService.UpdateItem(item); else _inventoryService.AddItem(item);
-                this.DialogResult = DialogResult.OK;
-            };
-            this.Controls.Add(btn);
-        }
-
-        private void AddCtrl(string l, Control c, ref int y)
-        {
-            this.Controls.Add(new Label { Text = l, Location = new Point(20, y), AutoSize = true });
-            c.Location = new Point(20, y + 20); c.Width = 340; this.Controls.Add(c); y += 60;
-        }
-
-        private void LoadData()
-        {
-            var i = _inventoryService.GetItemById(_editId.Value);
-            txtName.Text = i.Name; cmbCategory.Text = i.Category; cmbStatus.Text = i.Status; cmbCondition.Text = i.Condition;
-        }
-    }
-
-    public class BorrowPopup : Form
-    {
-        private readonly BorrowService _borrowService;
-        private int _itemId; string _itemName;
-        private TextBox txtBorrower = new TextBox(), txtPurpose = new TextBox();
-        private ComboBox cmbGrade = new ComboBox();
-
-        public BorrowPopup(BorrowService service, int id, string name)
-        {
-            _borrowService = service; _itemId = id; _itemName = name;
-            SetupCustomUI();
-        }
-
-        private void SetupCustomUI()
-        {
-            Size = new Size(400, 420); this.Text = $"Borrowing: {_itemName}";
-            StartPosition = FormStartPosition.CenterParent;
-            int y = 30;
-            AddCtrl("Borrower ID:", txtBorrower, ref y); AddCtrl("Grade:", cmbGrade, ref y); AddCtrl("Purpose:", txtPurpose, ref y);
-            cmbGrade.Items.AddRange(new[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "College" });
-
-            Button btn = new Button { Text = "CONFIRM", Dock = DockStyle.Bottom, Height = 50, BackColor = Color.Teal, ForeColor = Color.White };
-            btn.Click += (s, e) => {
-                _borrowService.ProcessBorrow(new BorrowRecord
-                {
-                    BorrowerId = txtBorrower.Text,
-                    ItemName = _itemName,
-                    Purpose = txtPurpose.Text,
-                    GradeLevel = cmbGrade.Text,
-                    BorrowDate = DateTime.Now,
-                    Status = "Active"
-                }, _itemId);
-                this.DialogResult = DialogResult.OK;
-            };
-            this.Controls.Add(btn);
-        }
-
-        private void AddCtrl(string l, Control c, ref int y)
-        {
-            this.Controls.Add(new Label { Text = l, Location = new Point(20, y), AutoSize = true });
-            c.Location = new Point(20, y + 20); c.Width = 340; this.Controls.Add(c); y += 70;
-        }
     }
 }
+
