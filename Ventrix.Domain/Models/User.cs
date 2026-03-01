@@ -14,7 +14,6 @@ namespace Ventrix.Domain.Models
         public string Password { get; set; } // Only for Staff/Admin
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // Helper to get full name
         public string FullName => $"{FirstName} {LastName} {Suffix}".Trim();
     }
 }
