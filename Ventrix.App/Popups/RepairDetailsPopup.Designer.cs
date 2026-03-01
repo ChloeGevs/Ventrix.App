@@ -20,7 +20,7 @@
             // lblHeader
             // 
             lblHeader.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblHeader.Location = new Point(20, 20);
+            lblHeader.Location = new Point(41, 110);
             lblHeader.Name = "lblHeader";
             lblHeader.Size = new Size(500, 30);
             lblHeader.TabIndex = 0;
@@ -28,7 +28,7 @@
             // flowRepairList
             // 
             flowRepairList.AutoScroll = true;
-            flowRepairList.Location = new Point(20, 60);
+            flowRepairList.Location = new Point(41, 150);
             flowRepairList.Name = "flowRepairList";
             flowRepairList.Size = new Size(500, 420);
             flowRepairList.TabIndex = 1;
@@ -36,16 +36,16 @@
             // btnClose
             // 
             btnClose.Dock = DockStyle.Bottom;
-            btnClose.Location = new Point(3, 594);
+            btnClose.Location = new Point(3, 641);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(562, 50);
+            btnClose.Size = new Size(580, 50);
             btnClose.TabIndex = 2;
             btnClose.Text = "CLOSE";
             btnClose.Click += btnClose_Click;
             // 
             // RepairDetailsPopup
             // 
-            ClientSize = new Size(568, 647);
+            ClientSize = new Size(586, 694);
             Controls.Add(lblHeader);
             Controls.Add(flowRepairList);
             Controls.Add(btnClose);

@@ -10,5 +10,7 @@ namespace Ventrix.Domain.Interfaces
         IEnumerable<BorrowRecord> GetAll();
         IEnumerable<BorrowRecord> GetActiveRecords();
         IEnumerable<BorrowRecord> GetReturnedHistory();
+
+        void ClearAllRecords();
     }
 }

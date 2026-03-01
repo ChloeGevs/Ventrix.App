@@ -48,5 +48,12 @@ namespace Ventrix.Infrastructure.Repositories
             _context.Entry(record).State = EntityState.Modified;
             _context.SaveChanges();
         }
+
+        public void ClearAllRecords()
+        {
+            var allRecords = _context.BorrowRecords.ToList();
+            _context.BorrowRecords.RemoveRange(allRecords);
+            _context.SaveChanges();
+        }
     }
 }

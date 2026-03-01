@@ -11,8 +11,10 @@ namespace Ventrix.App.Controls
         public MetricCard()
         {
             InitializeComponent();
-
             BindClickEvents(this);
+
+            lblTitle.Tag = "LockedFont";
+            lblCount.Tag = "LockedFont";
         }
 
         private void BindClickEvents(Control container)
@@ -34,5 +36,27 @@ namespace Ventrix.App.Controls
             lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             lblCount.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
         }
+
+        protected override void OnFontChanged(EventArgs e)
+        {
+            if (this.Font.Name != "Segoe UI")
+            {
+                this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+                lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+                lblCount.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
+            }
+            base.OnFontChanged(e);
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            if (lblTitle.Font.Name != "Segoe UI")
+            {
+                lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+                lblCount.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
+            }
+        }
     }
+
 }

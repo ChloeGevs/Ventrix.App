@@ -20,7 +20,7 @@ namespace Ventrix.App.Popups
             InitializeComponent();
 
             // 1. Add form to manager first
-            ThemeManager.Initialize(this);
+            MaterialSkinManager.Instance.AddFormToManage(this);
 
             // 2. Load data
             SetupDropdowns();

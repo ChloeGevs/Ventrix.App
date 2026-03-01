@@ -17,13 +17,19 @@ namespace Ventrix.App
         public static void Initialize(MaterialForm form)
         {
             var manager = MaterialSkinManager.Instance;
+
+            manager.EnforceBackcolorOnAllComponents = false;
+
             manager.AddFormToManage(form);
+
             if (manager.Theme != MaterialSkinManager.Themes.LIGHT)
             {
                 manager.Theme = MaterialSkinManager.Themes.LIGHT;
                 manager.ColorScheme = new ColorScheme(
-                    VentrixBlue, Color.FromArgb(10, 50, 120),
-                    VentrixLightBlue, Color.FromArgb(30, 136, 229),
+                    VentrixBlue,
+                    Color.FromArgb(10, 50, 120),
+                    VentrixLightBlue,
+                    Color.FromArgb(30, 136, 229),
                     TextShade.WHITE);
             }
         }

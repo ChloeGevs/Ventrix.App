@@ -1,4 +1,5 @@
-﻿using MaterialSkin.Controls;
+﻿using MaterialSkin;
+using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 
@@ -18,7 +19,7 @@ namespace Ventrix.App.Popups
 
             InitializeComponent();
 
-            ThemeManager.Initialize(this); 
+            MaterialSkinManager.Instance.AddFormToManage(this);
             ApplyLocalBranding();
 
             lblItemHeader.Text = $"Borrowing: {_itemName}";

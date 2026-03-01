@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Ventrix.Domain.Interfaces;
+﻿using Ventrix.Domain.Interfaces;
 using Ventrix.Domain.Models;
 
 namespace Ventrix.Application.Services
@@ -57,6 +54,11 @@ namespace Ventrix.Application.Services
             _borrowRepo.UpdateRecord(record);
 
             return true;
+        }
+
+        public void ClearAllActivity()
+        {
+            _borrowRepo.ClearAllRecords();
         }
     }
 }

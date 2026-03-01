@@ -42,7 +42,6 @@ namespace Ventrix.App
 
         private void ConfigureRuntimeUI()
         {
-
             // Enable Double Buffering for smooth UI
             typeof(Panel).InvokeMember("DoubleBuffered",
                 System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
@@ -58,6 +57,26 @@ namespace Ventrix.App
             btnHistoryNav.Click += (s, e) => SwitchView("History");
             txtSearch.TextChanged += (s, e) => LoadFromDatabase("All");
             btnClearActivity.Click += (s, e) => ClearRecentActivity();
+
+            // Wire up the Urgent Header click logic
+            lblUrgentHeader.Click += LblUrgentHeader_Click;
+
+            pnlHomeSummary.MouseMove += (s, e) => {
+                if (lblUrgentHeader.Bounds.Contains(e.Location))
+                {
+                    var items = _inventoryService.GetAllItems();
+                    if (items.Any(x => x.Condition == "Damaged"))
+                    {
+                        this.Cursor = System.Windows.Forms.Cursors.Hand;
+                        return;
+                    }
+                }
+                this.Cursor = System.Windows.Forms.Cursors.Default;
+            };
+
+            pnlHomeSummary.MouseLeave += (s, e) => {
+                this.Cursor = System.Windows.Forms.Cursors.Default;
+            };
 
             // Double-click to Borrow
             dgvInventory.CellDoubleClick += DgvInventory_CellDoubleClick;
@@ -122,6 +141,31 @@ namespace Ventrix.App
             pnlSidebar.BringToFront(); // Ensure sidebar is always on top
         }
 
+        private void LblUrgentHeader_Click(object sender, EventArgs e)
+        {
+            // 1. Get the current list of damaged items
+            var damagedItems = _inventoryService.GetAllItems()
+                .Where(i => i.Condition == "Damaged")
+                .ToList();
+
+            // 2. Only show the popup if there are actually items to repair
+            if (damagedItems.Any())
+            {
+                using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, () => LoadHomeContent()))
+                {
+                    popup.StartPosition = FormStartPosition.CenterParent;
+                    popup.ShowDialog();
+
+                    // Refresh counts after the popup closes in case items were fixed
+                    UpdateDashboardCounts();
+                }
+            }
+            else
+            {
+                MessageBox.Show("All systems are currently operational. No repairs needed.", "Ventrix System");
+            }
+        }
+
         private void DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -173,14 +217,14 @@ namespace Ventrix.App
                     break;
 
                 case "Borrowed":
-                    SetupColumns("ID", "Item Name", "Borrower", "Status", "Date Borrowed");
+                    SetupColumns("ID", "Item Name", "Borrower ID", "Status", "Date Borrowed", "Return Date");
                     var active = _borrowService.GetAllBorrowRecords().Where(b => b.Status == "Active");
                     foreach (var r in active)
                         dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
                     break;
 
                 case "Borrower List":
-                    SetupColumns("Borrower ID", "Grade Level", "Items Held");
+                    SetupColumns("Borrower ID", "Borrower Name", "Grade Level", "Subject/Purpose","Items Held", "Quantity");
                     var students = _borrowService.GetAllBorrowRecords()
                                                  .GroupBy(b => b.BorrowerId);
                     foreach (var group in students)
@@ -240,10 +284,8 @@ namespace Ventrix.App
 
         private void AddDashboardAlert(string message, Color color)
         {
-            // 1. Create a new instance of your custom control
             var alert = new AlertTile(message, color);
 
-            // 2. Wire up the Click event defined in your AlertTile class
             alert.AlertClicked += (s, e) =>
             {
                 if (message.Contains("REPAIR"))
@@ -256,17 +298,14 @@ namespace Ventrix.App
                 }
             };
 
-            // 3. Add to the flow panel and bring to top
             flowRecentActivity.Controls.Add(alert);
             alert.BringToFront();
         }
 
         private void AddActivityCard(string message, DateTime time, Color statusColor)
         {
-            // Using the FULL path so the program CANNOT miss it
             var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor);
 
-            // Ensure it fits the width of your flow panel
             card.Width = flowRecentActivity.Width - 30;
 
             flowRecentActivity.Controls.Add(card);
@@ -290,15 +329,35 @@ namespace Ventrix.App
             var items = _inventoryService.GetAllItems();
             var records = _borrowService.GetAllBorrowRecords();
 
-            // --- INTEGRATION: Updating your MetricCard UserControls ---
+            // 1. Update the Metric Cards
             cardTotal.UpdateMetrics("TOTAL ITEMS", items.Count().ToString("N0"), Color.FromArgb(13, 71, 161));
             cardAvailable.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == "Available").ToString("N0"), Color.Teal);
             cardPending.UpdateMetrics("BORROWED", items.Count(x => x.Status == "Borrowed").ToString("N0"), Color.FromArgb(192, 0, 0));
             cardBorrowers.UpdateMetrics("RECORDS", records.Count().ToString("N0"), Color.Orange);
 
-            int damaged = items.Count(x => x.Condition == "Damaged");
-            lblUrgentHeader.ForeColor = damaged > 0 ? Color.DarkRed : Color.Teal;
-            lblUrgentHeader.Text = damaged > 0 ? $"URGENT SYSTEM ALERTS ({damaged} ISSUES)" : "URGENT SYSTEM ALERTS";
+            // 2. Logic for lblUrgentHeader (Interactive Alert System)
+            int damagedCount = items.Count(x => x.Condition == "Damaged");
+
+            if (damagedCount > 0)
+            {
+                // Alert State: Red text with issue count
+                lblUrgentHeader.ForeColor = Color.DarkRed;
+                lblUrgentHeader.Text = $"URGENT SYSTEM ALERTS ({damagedCount} ISSUES)";
+                lblUrgentHeader.Cursor = System.Windows.Forms.Cursors.Hand;// Indicates the header is clickable for repairs
+            }
+            else
+            {
+                // Normal State: Teal text indicating healthy status
+                lblUrgentHeader.ForeColor = Color.Teal;
+                lblUrgentHeader.Text = "URGENT SYSTEM ALERTS";
+                lblUrgentHeader.Cursor = System.Windows.Forms.Cursors.Default;
+            }
+
+            // 3. Force Refresh to prevent "Black Labels" and Roboto font overrides
+            cardTotal.Invalidate();
+            cardAvailable.Invalidate();
+            cardPending.Invalidate();
+            cardBorrowers.Invalidate();
         }
 
         #endregion
@@ -328,7 +387,6 @@ namespace Ventrix.App
 
         private void BtnEdit_Click(object sender, EventArgs e)
         {
-            // 1. Validation: Ensure a row is actually selected in the grid
             if (dgvInventory.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Please select a record to edit.", "Ventrix System");
@@ -389,13 +447,16 @@ namespace Ventrix.App
 
         private void ApplyModernBranding()
         {
-            // Force the Header
+            // 1. Force the Main Header - Clear cache first to bypass MaterialSkin's internal override
+            lblDashboardHeader.Font = null;
             ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
             lblDashboardHeader.Text = "INVENTORY OVERVIEW";
 
+            // 2. Force the Sub-Header
+            lblUrgentHeader.Font = null;
             ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont);
 
-            // Re-assert fonts for every button explicitly
+            // 3. Define UI arrays for consistent button styling
             var buttons = new[] { btnHistoryNav, btnHome, btnCreate, btnEdit, btnDelete, btnClearActivity };
             var colors = new[] { Color.Orange, ThemeManager.VentrixLightBlue, Color.Teal, ThemeManager.VentrixLightBlue, ThemeManager.VentrixBlue, Color.FromArgb(192, 0, 0) };
             var texts = new[] { "HISTORY", "HOME PAGE", "ADD ITEM", "EDIT RECORD", "DELETE ITEM", "CLEAR ALL" };
@@ -403,12 +464,18 @@ namespace Ventrix.App
             for (int i = 0; i < buttons.Length; i++)
             {
                 StyleNavButton(buttons[i], texts[i], colors[i]);
-                // Explicitly set the font AGAIN after the StyleNavButton call
+
+                buttons[i].Font = null; 
                 buttons[i].Font = ThemeManager.ButtonFont;
             }
 
+            cardTotal.Invalidate();
+            cardAvailable.Invalidate();
+            cardPending.Invalidate();
+            cardBorrowers.Invalidate();
+
             this.Invalidate();
-            this.Update(); // Force immediate redraw
+            this.Update();
         }
         private void StyleNavButton(Guna.UI2.WinForms.Guna2Button btn, string text, Color hover)
         {
@@ -478,12 +545,10 @@ namespace Ventrix.App
             int rightMargin = 70;
             int contentStartX = 110;
 
-            // 1. TOP BAR & HEADER: Stays fixed, does not move when sidebar expands
             btnHamburger.Location = new Point(20, 30);
             lblDashboardHeader.Location = new Point(60, 22);
             txtSearch.Location = new Point(this.Width - txtSearch.Width - rightMargin, 20);
 
-            // 2. MAIN CONTENT: Fills the whole form background behind the sidebar
             pnlMainContent.Location = new Point(0, 64);
             pnlMainContent.Size = new Size(this.Width, this.Height - 64);
 
@@ -499,11 +564,9 @@ namespace Ventrix.App
             dgvInventory.Size = dgvHistory.Size = new Size(pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
             dgvInventory.Location = dgvHistory.Location = new Point(5, 5);
 
-            // 4. FLOATING SIDEBAR: Positioned on top (Z-order)
             pnlSidebar.Location = new Point(0, 64);
             pnlSidebar.Height = this.Height - 64;
 
-            // 5. CRUD BUTTONS: Fixed to the top-right of the form
             int btnWidth = 150;
 
             btnDelete.Location = new Point(this.Width - btnWidth - rightMargin, 30);
@@ -512,31 +575,27 @@ namespace Ventrix.App
 
             if (pnlHomeSummary.Visible)
             {
-                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize); //
+                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize); 
 
-                lblUrgentHeader.Location = new Point(20, 20); //
+                lblUrgentHeader.Location = new Point(20, btnClearActivity.Bottom + 15);
+                flowRecentActivity.Location = new Point(20, lblUrgentHeader.Bottom + 10);
+                flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
 
-                // FIX: Make the flow panel take up the majority of the Home Panel  
-                flowRecentActivity.Location = new Point(20, 70);
-                flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - 150);
-
-                pnlHomeSummary.BringToFront(); //
+                pnlHomeSummary.BringToFront(); 
             }
-            // 6. UPDATE COMPONENTS INSIDE SIDEBAR
+
             pnlSidebar.BringToFront();
             UpdateSidebarInternalUI();
         }
 
         private void UpdateSidebarInternalUI()
         {
-            // SuspendLayout prevents the control from redrawing until all items are moved
             pnlSidebar.SuspendLayout();
 
             int currentWidth = pnlSidebar.Width;
             int contentWidth = currentWidth - 20;
             bool expanded = currentWidth > 200;
 
-            // 1. User Profile Section - Use SetBounds for atomic movement
             int picSize = expanded ? 45 : 40;
             picUser.SetBounds(expanded ? 15 : 12, 25, picSize, picSize);
 
@@ -547,7 +606,6 @@ namespace Ventrix.App
                 cmbAccountActions.SetBounds(65, 42, 160, 30);
             }
 
-            // 2. Navigation Buttons - Ensure they only show when there is enough width
             bool showNav = currentWidth > 100;
             btnHome.Visible = showNav;
             btnHistoryNav.Visible = showNav;
@@ -558,32 +616,38 @@ namespace Ventrix.App
                 btnHistoryNav.SetBounds(10, 140, contentWidth, 45);
             }
 
-            // 3. Metric Card Transitions
-            // Use a fixed starting Y to prevent 'drifting' locations
             int cardY = 200;
             var cards = new[] { cardTotal, cardAvailable, cardPending, cardBorrowers };
 
             for (int i = 0; i < cards.Length; i++)
             {
-                // SetBounds is much more stable than setting .Location and .Size separately
                 cards[i].SetBounds(10, cardY, contentWidth, 110);
-
-                // Internal label visibility is now managed by the card's Z-order fix
-                // so we don't need to manually toggle titles[i] and counts[i] here.
 
                 cardY += 120;
             }
 
-            // ResumeLayout(false) tells the sidebar to perform ONE single refresh pass
             pnlSidebar.ResumeLayout(false);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-
-            // If the manager forced 'Roboto' or 'Microsoft Sans Serif' while the popup was open
             if (lblDashboardHeader.Font.Name != "Segoe UI")
+            {
+                ApplyModernBranding();
+            }
+        }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            ApplyModernBranding();
+        }
+
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+            if (lblDashboardHeader != null)
             {
                 ApplyModernBranding();
             }
@@ -593,12 +657,32 @@ namespace Ventrix.App
         {
             if (flowRecentActivity == null) return;
 
-            if (MessageBox.Show("Are you sure you want to clear the activity log?", "Clear History",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            var result = MessageBox.Show(
+                "Are you sure you want to permanently delete all activity logs from the database?",
+                "Ventrix System | Critical Action",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
             {
-                // 1. Clear the UI controls
-                flowRecentActivity.Controls.Clear();
-                LoadRecentActivity();
+                try
+                {
+                    // 1. Delete from Database
+                    _borrowService.ClearAllActivity();
+
+                    // 2. Clear the UI Flow Panel
+                    flowRecentActivity.Controls.Clear();
+
+                    // 3. Refresh the UI to show the empty state or headers
+                    LoadHomeContent();
+                    UpdateDashboardCounts();
+
+                    MessageBox.Show("All activity records have been cleared.", "Success");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error clearing records: {ex.Message}", "System Error");
+                }
             }
         }
         #endregion
