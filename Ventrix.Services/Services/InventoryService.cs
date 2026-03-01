@@ -1,4 +1,7 @@
-﻿using Ventrix.Domain.Interfaces;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks; // Required for Task
+using Ventrix.Domain.Interfaces;
 using Ventrix.Domain.Models;
 
 namespace Ventrix.Application.Services
@@ -12,14 +15,16 @@ namespace Ventrix.Application.Services
             _inventoryRepo = inventoryRepo;
         }
 
-        public List<InventoryItem> GetAllItems()
+        public async Task<List<InventoryItem>> GetAllItemsAsync()
         {
-            return _inventoryRepo.GetAll().ToList();
+            var items = await _inventoryRepo.GetAllAsync(); // Updated to async
+            return items.ToList();
         }
 
-        public IEnumerable<InventoryItem> GetFilteredInventory(string search, string statusFilter)
+        public async Task<IEnumerable<InventoryItem>> GetFilteredInventoryAsync(string search, string statusFilter)
         {
-            var items = _inventoryRepo.GetAll();
+            var items = await _inventoryRepo.GetAllAsync(); 
+
             if (!string.IsNullOrEmpty(search))
                 items = items.Where(i => i.Name.ToLower().Contains(search.ToLower()));
 
@@ -29,33 +34,40 @@ namespace Ventrix.Application.Services
             return items;
         }
 
-        public void SaveItem(InventoryItem item)
+        public async Task SaveItemAsync(InventoryItem item)
         {
-            if (item.Id == 0) _inventoryRepo.Add(item);
-            else _inventoryRepo.Update(item);
+            if (item.Id == 0)
+                await _inventoryRepo.AddAsync(item); // Updated to async
+            else
+                await _inventoryRepo.UpdateAsync(item); // Updated to async
         }
 
-        public bool DeleteItem(int id)
+        public async Task<bool> DeleteItemAsync(int id)
         {
-            var item = _inventoryRepo.GetById(id);
+            var item = await _inventoryRepo.GetByIdAsync(id); // Updated to async
             if (item == null) return false;
 
-            _inventoryRepo.Remove(item);
+            await _inventoryRepo.RemoveAsync(item); // Updated to async
             return true;
         }
 
-        public InventoryItem GetItemById(int id) => _inventoryRepo.GetById(id);
-        public void AddItem(InventoryItem item) => _inventoryRepo.Add(item);
-        public void UpdateItem(InventoryItem item) => _inventoryRepo.Update(item);
+        public async Task<InventoryItem> GetItemByIdAsync(int id) =>
+            await _inventoryRepo.GetByIdAsync(id); // Updated to async
 
-        public dynamic GetDashboardStats()
+        public async Task AddItemAsync(InventoryItem item) =>
+            await _inventoryRepo.AddAsync(item); // Updated to async
+
+        public async Task UpdateItemAsync(InventoryItem item) =>
+            await _inventoryRepo.UpdateAsync(item); // Updated to async
+
+        public async Task<dynamic> GetDashboardStatsAsync()
         {
             return new
             {
-                Total = _inventoryRepo.GetTotalCount(),
-                Available = _inventoryRepo.GetCountByStatus("Available"),
-                Borrowed = _inventoryRepo.GetCountByStatus("Borrowed"),
-                Damaged = _inventoryRepo.GetCountByCondition("Damaged")
+                Total = await _inventoryRepo.GetTotalCountAsync(), // Updated to async
+                Available = await _inventoryRepo.GetCountByStatusAsync("Available"), // Updated to async
+                Borrowed = await _inventoryRepo.GetCountByStatusAsync("Borrowed"), // Updated to async
+                Damaged = await _inventoryRepo.GetCountByConditionAsync("Damaged") // Updated to async
             };
         }
     }

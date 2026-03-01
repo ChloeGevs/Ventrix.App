@@ -1,16 +1,17 @@
 ﻿using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
+using System.Threading.Tasks;
 
 namespace Ventrix.App.Popups
 {
     public partial class RepairDetailsPopup : MaterialForm
     {
         private readonly InventoryService _inventoryService;
-        private readonly Action _onRefresh;
+        private readonly Func<Task> _onRefresh;
         private List<InventoryItem> _damagedItems;
 
-        public RepairDetailsPopup(List<InventoryItem> damagedItems, InventoryService inventoryService, Action onRefresh)
+        public RepairDetailsPopup(List<InventoryItem> damagedItems, InventoryService inventoryService, Func<Task> onRefresh)
         {
             _inventoryService = inventoryService;
             _onRefresh = onRefresh;
@@ -26,9 +27,8 @@ namespace Ventrix.App.Popups
 
         private void ApplyLocalBranding()
         {
-            // Lock header font using the ThemeManager
             ThemeManager.ApplyCustomFont(lblHeader, ThemeManager.SubHeaderFont, ThemeManager.VentrixBlue);
-            this.Text = "Ventrix | Maintenance Queue";
+            Text = "Ventrix | Maintenance Queue";
         }
 
         private void LoadRepairList()
@@ -64,24 +64,33 @@ namespace Ventrix.App.Popups
                     FlatStyle = FlatStyle.Flat
                 };
 
-                btnRepair.Click += (s, e) => {
+                btnRepair.Click += async (s, e) => {
                     item.Condition = "Good";
                     item.Status = "Available";
-                    _inventoryService.UpdateItem(item);
 
-                    _onRefresh?.Invoke(); // Refresh dashboard counts
+                    await _inventoryService.UpdateItemAsync(item);
 
-                    // Update local list
+                    if (_onRefresh != null)
+                    {
+                        await _onRefresh.Invoke();
+                    }
+
                     _damagedItems.Remove(item);
                     LoadRepairList();
-                };
 
+                    if (_damagedItems.Count == 0)
+                    {
+                        MessageBox.Show("All items have been repaired.", "Maintenance Complete");
+                        this.Close();
+                    }
+                };
+               
                 card.Controls.Add(name);
                 card.Controls.Add(btnRepair);
                 flowRepairList.Controls.Add(card);
             }
         }
 
-        private void btnClose_Click(object sender, EventArgs e) => this.Close();
+        private void btnClose_Click(object sender, EventArgs e) => Close();
     }
 }

@@ -1,4 +1,6 @@
-﻿using Ventrix.Domain.Interfaces;
+﻿using System;
+using System.Threading.Tasks; // Required for Task
+using Ventrix.Domain.Interfaces;
 using User = Ventrix.Domain.Models.User;
 
 namespace Ventrix.Application.Services
@@ -12,22 +14,22 @@ namespace Ventrix.Application.Services
             _userRepo = userRepo;
         }
 
-        public void InitializeDefaultAdmin()
+        public async Task InitializeDefaultAdminAsync()
         {
-            _userRepo.SeedAdminUser();
+            await _userRepo.SeedAdminUserAsync(); // Updated to async
         }
 
-        public User Login(string userId, string password)
+        public async Task<User> LoginAsync(string userId, string password)
         {
-            return _userRepo.GetByCredentials(userId, password);
+            return await _userRepo.GetByCredentialsAsync(userId, password); // Updated to async
         }
 
-        public void RegisterNewBorrower(User user)
+        public async Task RegisterNewBorrowerAsync(User user)
         {
             if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.LastName))
                 throw new ArgumentException("Names are required for registration.");
 
-            _userRepo.Add(user);
+            await _userRepo.AddAsync(user); // Updated to async
         }
     }
 }

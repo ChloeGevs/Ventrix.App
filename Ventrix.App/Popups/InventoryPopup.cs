@@ -4,6 +4,7 @@ using MaterialSkin;
 using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
+using System.Threading.Tasks;
 
 namespace Ventrix.App.Popups
 {
@@ -24,10 +25,10 @@ namespace Ventrix.App.Popups
 
             // 2. Load data
             SetupDropdowns();
-            if (_editId.HasValue) LoadItemData();
-
-            // 3. APPLY POPUP BRANDING LAST 
-            // This stops the manager's broadcast from hitting the Dashboard a second time
+            this.Load += async (s, e) =>
+            {
+                if (_editId.HasValue) await LoadItemDataAsync();
+            };
             ApplyPopupBranding();
         }
 
@@ -56,9 +57,9 @@ namespace Ventrix.App.Popups
             cmbCondition.SelectedIndex = 0;
         }
 
-        private void LoadItemData()
+        private async Task LoadItemDataAsync()
         {
-            var item = _inventoryService.GetItemById(_editId.Value);
+            var item = await _inventoryService.GetItemByIdAsync(_editId.Value);
             if (item != null)
             {
                 Text = "Ventrix | Edit Item Record";
@@ -69,7 +70,7 @@ namespace Ventrix.App.Popups
             }
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        private async void btnSave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
@@ -79,7 +80,7 @@ namespace Ventrix.App.Popups
             }
 
             var item = _editId.HasValue
-                ? _inventoryService.GetItemById(_editId.Value)
+                ? await _inventoryService.GetItemByIdAsync(_editId.Value)
                 : new InventoryItem { DateAdded = DateTime.Now };
 
             item.Name = txtName.Text;
@@ -88,9 +89,9 @@ namespace Ventrix.App.Popups
             item.Condition = cmbCondition.Text;
 
             if (_editId.HasValue)
-                _inventoryService.UpdateItem(item);
+                await _inventoryService.UpdateItemAsync(item);
             else
-                _inventoryService.AddItem(item);
+                await _inventoryService.AddItemAsync(item);
 
             DialogResult = DialogResult.OK;
             Close();

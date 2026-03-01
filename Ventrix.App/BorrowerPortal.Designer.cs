@@ -115,9 +115,9 @@
             txtPassword.BorderRadius = 10;
             txtPassword.CustomizableEdges = customizableEdges1;
             txtPassword.DefaultText = "";
-            txtPassword.Font = new Font("Sitka Text", 11F);
+            txtPassword.Font = new Font("Segoe UI", 10F);
             txtPassword.IconRight = Properties.Resources.eye;
-            txtPassword.Location = new Point(61, 279);
+            txtPassword.Location = new Point(63, 293);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '●';
@@ -141,7 +141,7 @@
             // lblCreateAccount
             // 
             lblCreateAccount.BackColor = Color.Transparent;
-            lblCreateAccount.Font = new Font("Sitka Banner", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCreateAccount.Font = new Font("Sitka Banner", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblCreateAccount.Location = new Point(218, 630);
             lblCreateAccount.Name = "lblCreateAccount";
             lblCreateAccount.Size = new Size(180, 28);
@@ -192,8 +192,8 @@
             txtStudentId.BorderRadius = 10;
             txtStudentId.CustomizableEdges = customizableEdges7;
             txtStudentId.DefaultText = "";
-            txtStudentId.Font = new Font("Sitka Text", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtStudentId.Location = new Point(60, 206);
+            txtStudentId.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.Location = new Point(61, 211);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
             txtStudentId.PlaceholderText = "";
@@ -259,7 +259,7 @@
             txtSubject.BorderRadius = 10;
             txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
-            txtSubject.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtSubject.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtSubject.Location = new Point(230, 396);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
@@ -303,10 +303,10 @@
             btnLogin.FillColor = Color.FromArgb(13, 71, 161);
             btnLogin.Font = new Font("Sitka Display", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
-            btnLogin.Location = new Point(127, 569);
+            btnLogin.Location = new Point(63, 569);
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges20;
-            btnLogin.Size = new Size(350, 55);
+            btnLogin.Size = new Size(477, 55);
             btnLogin.TabIndex = 13;
             btnLogin.Text = "LOGIN";
             btnLogin.Visible = false;

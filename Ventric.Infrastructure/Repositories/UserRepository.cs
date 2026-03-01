@@ -1,5 +1,8 @@
 ﻿using Ventrix.Domain.Interfaces;
 using Ventrix.Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Ventrix.Infrastructure.Repositories
 {
@@ -8,21 +11,22 @@ namespace Ventrix.Infrastructure.Repositories
         private readonly AppDbContext _context;
         public UserRepository(AppDbContext context) => _context = context;
 
-        public User GetByCredentials(string userId, string password) =>
-            _context.Users.FirstOrDefault(u => u.UserId == userId && u.Password == password);
+        public async Task<User> GetByCredentialsAsync(string userId, string password) =>
+            await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId && u.Password == password);
 
-        public void Add(User user)
+        public async Task AddAsync(User user)
         {
-            _context.Users.Add(user);
-            _context.SaveChanges();
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
         }
 
-        public bool Exists(string userId) => _context.Users.Any(u => u.UserId == userId);
+        public async Task<bool> ExistsAsync(string userId) =>
+            await _context.Users.AnyAsync(u => u.UserId == userId);
 
-        public void SeedAdminUser()
+        public async Task SeedAdminUserAsync()
         {
             // Check if any admin already exists to avoid duplicates
-            if (!_context.Users.Any(u => u.Role == "Admin"))
+            if (!await _context.Users.AnyAsync(u => u.Role == "Admin"))
             {
                 var admin = new User
                 {
@@ -36,8 +40,8 @@ namespace Ventrix.Infrastructure.Repositories
                     CreatedAt = DateTime.Now
                 };
 
-                _context.Users.Add(admin);
-                _context.SaveChanges();
+                await _context.Users.AddAsync(admin);
+                await _context.SaveChangesAsync();
             }
         }
     }

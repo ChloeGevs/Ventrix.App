@@ -2,6 +2,7 @@
 using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
+using System.Threading.Tasks;
 
 namespace Ventrix.App.Popups
 {
@@ -37,7 +38,7 @@ namespace Ventrix.App.Popups
             btnConfirm.Font = ThemeManager.ButtonFont;
         }
 
-        private void btnConfirm_Click(object sender, EventArgs e)
+        private async void btnConfirm_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtBorrower.Text))
             {
@@ -55,9 +56,9 @@ namespace Ventrix.App.Popups
                 Status = "Active"
             };
 
-            _borrowService.ProcessBorrow(record, _itemId);
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            await _borrowService.ProcessBorrowAsync(record, _itemId);
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

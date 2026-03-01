@@ -4,11 +4,10 @@ namespace Ventrix.Domain.Interfaces
 {
     public interface IUserRepository
     {
-        User GetByCredentials(string userId, string password);
-        void Add(User user);
-        bool Exists(string userId);
-
-        void SeedAdminUser();
+        Task<User> GetByCredentialsAsync(string userId, string password);
+        Task AddAsync(User user);
+        Task<bool> ExistsAsync(string userId);
+        Task SeedAdminUserAsync();
     }
 
 }

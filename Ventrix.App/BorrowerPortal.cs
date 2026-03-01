@@ -1,9 +1,10 @@
 using System;
-using System.Linq; // Needed for database queries
+using System.Linq; 
 using System.Windows.Forms;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using Ventrix.Infrastructure;
+using System.Threading.Tasks;
 
 namespace Ventrix.App
 {
@@ -29,20 +30,21 @@ namespace Ventrix.App
             btnStudentToggle.Click += (s, e) => ToggleMode("Student");
 
             // Actions
-            btnLogin.Click += BtnLogin_Click;
-            btnBorrow.Click += BtnBorrow_Click;
+            btnLogin.Click += async (s, e) => await BtnLogin_Click(s, e);
+            btnBorrow.Click += async (s, e) => await BtnBorrow_Click(s, e);
             lblCreateAccount.Click += LblCreateAccount_Click;
 
             // Initial State
             ToggleMode("Student");
-            LoadEquipmentList();
+            Load += async (s, e) => await LoadEquipmentListAsync();
         }
 
-        private void LoadEquipmentList()
+        private async Task LoadEquipmentListAsync()
         {
             cmbListEquipments.Items.Clear();
-            var items = _inventoryService.GetFilteredInventory("", "Available")
-                                         .Select(i => i.Name).Distinct().ToArray();
+            var items = await _inventoryService.GetFilteredInventoryAsync("", "Available");
+            var names = items.Select(i => i.Name).Distinct().ToArray();
+            cmbListEquipments.Items.AddRange(names);
             cmbListEquipments.Items.AddRange(items);
         }
 
@@ -92,20 +94,19 @@ namespace Ventrix.App
             }
         }
 
-        private void BtnLogin_Click(object sender, EventArgs e)
+        private async Task BtnLogin_Click(object sender, EventArgs e)
         {
             try
             {
-                var user = _userService.Login(txtStudentId.Text, txtPassword.Text);
+                var user = await _userService.LoginAsync(txtStudentId.Text, txtPassword.Text);
 
                 if (user != null)
                 {
                     if (user.Role == "Admin" || user.Role == "Faculty")
                     {
-                        // Open Admin Dashboard and pass required services
                         AdminDashboard dashboard = new AdminDashboard(_inventoryService, _borrowService);
                         dashboard.Show();
-                        this.Hide();
+                        Hide();
                     }
                     else
                     {
@@ -123,7 +124,7 @@ namespace Ventrix.App
             }
         }
 
-        private void BtnBorrow_Click(object sender, EventArgs e)
+        private async Task BtnBorrow_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtStudentId.Text) || cmbListEquipments.SelectedIndex == -1)
             {
@@ -131,7 +132,6 @@ namespace Ventrix.App
                 return;
             }
 
-            // 1. Create the Domain Model
             var record = new BorrowRecord
             {
                 BorrowerId = txtStudentId.Text,
@@ -144,17 +144,14 @@ namespace Ventrix.App
 
             try
             {
-                // 2. Use the Service instead of direct DB context
-                // You need to find the item ID first, or update your service 
-                // to accept the name. Assuming a helper method or search:
-                var items = _inventoryService.GetFilteredInventory(record.ItemName, "Available");
+                var items = await _inventoryService.GetFilteredInventoryAsync(record.ItemName, "Available");
                 var itemToBorrow = items.FirstOrDefault();
 
                 if (itemToBorrow != null)
                 {
-                    _borrowService.ProcessBorrow(record, itemToBorrow.Id);
+                    await _borrowService.ProcessBorrowAsync(record, itemToBorrow.Id);
                     MessageBox.Show("Item Borrowed Successfully!");
-                    LoadEquipmentList(); // Refresh the list
+                    await LoadEquipmentListAsync(); 
                 }
                 else
                 {

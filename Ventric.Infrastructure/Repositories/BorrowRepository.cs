@@ -1,6 +1,9 @@
 ﻿using Ventrix.Domain.Interfaces;
 using Ventrix.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Ventrix.Infrastructure.Repositories
 {
@@ -13,47 +16,48 @@ namespace Ventrix.Infrastructure.Repositories
             _context = context;
         }
 
-        public void AddRecord(BorrowRecord record)
+        public async Task AddRecordAsync(BorrowRecord record)
         {
-            _context.BorrowRecords.Add(record);
-            _context.SaveChanges();
+            await _context.BorrowRecords.AddAsync(record);
+            await _context.SaveChangesAsync();
         }
 
-        public BorrowRecord GetRecordById(int id)
+        public async Task<BorrowRecord> GetRecordByIdAsync(int id)
         {
-            return _context.BorrowRecords.Find(id);
+            return await _context.BorrowRecords.FindAsync(id);
         }
 
-        public IEnumerable<BorrowRecord> GetAll()
+        public async Task<IEnumerable<BorrowRecord>> GetAllAsync()
         {
-            return _context.BorrowRecords.ToList(); 
+            return await _context.BorrowRecords.ToListAsync();
         }
-        public IEnumerable<BorrowRecord> GetActiveRecords()
+
+        public async Task<IEnumerable<BorrowRecord>> GetActiveRecordsAsync()
         {
-            return _context.BorrowRecords
+            return await _context.BorrowRecords
                 .Where(b => b.Status == "Active")
-                .ToList();
+                .ToListAsync();
         }
 
-        public IEnumerable<BorrowRecord> GetReturnedHistory()
+        public async Task<IEnumerable<BorrowRecord>> GetReturnedHistoryAsync()
         {
-            return _context.BorrowRecords
+            return await _context.BorrowRecords
                 .Where(b => b.Status == "Returned")
                 .OrderByDescending(b => b.ReturnDate)
-                .ToList();
+                .ToListAsync();
         }
 
-        public void UpdateRecord(BorrowRecord record)
+        public async Task UpdateRecordAsync(BorrowRecord record)
         {
             _context.Entry(record).State = EntityState.Modified;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void ClearAllRecords()
+        public async Task ClearAllRecordsAsync()
         {
-            var allRecords = _context.BorrowRecords.ToList();
+            var allRecords = await _context.BorrowRecords.ToListAsync();
             _context.BorrowRecords.RemoveRange(allRecords);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }

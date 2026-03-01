@@ -408,10 +408,10 @@
             btnHamburger.Image = (Image)resources.GetObject("btnHamburger.Image");
             btnHamburger.ImageOffset = new Point(0, 0);
             btnHamburger.ImageRotate = 0F;
-            btnHamburger.Location = new Point(39, 36);
+            btnHamburger.Location = new Point(35, 45);
             btnHamburger.Name = "btnHamburger";
             btnHamburger.ShadowDecoration.CustomizableEdges = customizableEdges19;
-            btnHamburger.Size = new Size(38, 38);
+            btnHamburger.Size = new Size(42, 35);
             btnHamburger.TabIndex = 0;
             // 
             // lblDashboardHeader
@@ -425,6 +425,7 @@
             // 
             // txtSearch
             // 
+            txtSearch.BackColor = Color.Transparent;
             txtSearch.BorderRadius = 20;
             txtSearch.CustomizableEdges = customizableEdges20;
             txtSearch.DefaultText = "";
@@ -450,10 +451,10 @@
             pnlMainContent.Controls.Add(pnlHistory);
             pnlMainContent.CustomizableEdges = customizableEdges1;
             pnlMainContent.Dock = DockStyle.Fill;
-            pnlMainContent.Location = new Point(243, 144);
+            pnlMainContent.Location = new Point(3, 144);
             pnlMainContent.Name = "pnlMainContent";
             pnlMainContent.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            pnlMainContent.Size = new Size(1034, 703);
+            pnlMainContent.Size = new Size(1274, 703);
             pnlMainContent.TabIndex = 0;
             // 
             // pnlGridContainer
@@ -588,8 +589,8 @@
             // AdminDashboard
             // 
             ClientSize = new Size(1280, 850);
-            Controls.Add(pnlMainContent);
             Controls.Add(pnlSidebar);
+            Controls.Add(pnlMainContent);
             Controls.Add(pnlTopBar);
             Name = "AdminDashboard";
             pnlHomeSummary.ResumeLayout(false);

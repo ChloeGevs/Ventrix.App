@@ -1,4 +1,8 @@
-﻿using Ventrix.Domain.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks; // Required for Task
+using Ventrix.Domain.Interfaces;
 using Ventrix.Domain.Models;
 
 namespace Ventrix.Application.Services
@@ -15,50 +19,50 @@ namespace Ventrix.Application.Services
         }
 
         // --- CREATE ---
-        public void ProcessBorrow(BorrowRecord record, int itemId)
+        public async Task ProcessBorrowAsync(BorrowRecord record, int itemId)
         {
-            var item = _inventoryRepo.GetById(itemId);
+            var item = await _inventoryRepo.GetByIdAsync(itemId);
             if (item != null && item.Status == "Available")
             {
                 item.Status = "Borrowed";
-                _inventoryRepo.Update(item);
-                _borrowRepo.AddRecord(record);
+                await _inventoryRepo.UpdateAsync(item);
+                await _borrowRepo.AddRecordAsync(record);
             }
         }
 
         // --- READ ---
-        public IEnumerable<BorrowRecord> GetAllBorrowRecords()
+        public async Task<IEnumerable<BorrowRecord>> GetAllBorrowRecordsAsync()
         {
-            return _borrowRepo.GetAll();
+            return await _borrowRepo.GetAllAsync();
         }
 
         // --- UPDATE (RETURN) ---
-        // Consolidating ProcessReturn and ReturnItem into one robust method
-        public bool ReturnItem(int recordId)
+        public async Task<bool> ReturnItemAsync(int recordId)
         {
-            var record = _borrowRepo.GetRecordById(recordId);
+            var record = await _borrowRepo.GetRecordByIdAsync(recordId);
             if (record == null) return false;
 
             // Find the item associated with this record
-            var item = _inventoryRepo.GetAll().FirstOrDefault(i => i.Name == record.ItemName);
+            var items = await _inventoryRepo.GetAllAsync();
+            var item = items.FirstOrDefault(i => i.Name == record.ItemName);
 
             if (item != null)
             {
                 item.Status = "Available";
-                _inventoryRepo.Update(item);
+                await _inventoryRepo.UpdateAsync(item);
             }
 
             // Update the record status
             record.Status = "Returned";
             record.ReturnDate = DateTime.Now;
-            _borrowRepo.UpdateRecord(record);
+            await _borrowRepo.UpdateRecordAsync(record);
 
             return true;
         }
 
-        public void ClearAllActivity()
+        public async Task ClearAllActivityAsync()
         {
-            _borrowRepo.ClearAllRecords();
+            await _borrowRepo.ClearAllRecordsAsync();
         }
     }
 }

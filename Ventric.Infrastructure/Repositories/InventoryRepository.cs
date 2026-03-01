@@ -3,6 +3,7 @@ using Ventrix.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks; // Required for Task
 
 namespace Ventrix.Infrastructure.Repositories
 {
@@ -11,44 +12,45 @@ namespace Ventrix.Infrastructure.Repositories
         private readonly AppDbContext _context;
         public InventoryRepository(AppDbContext context) => _context = context;
 
-        // Optimized for reading
-        public IEnumerable<InventoryItem> GetAll() =>
-            _context.InventoryItems.AsNoTracking().ToList();
+        // Optimized for reading with async
+        public async Task<IEnumerable<InventoryItem>> GetAllAsync() =>
+            await _context.InventoryItems.AsNoTracking().ToListAsync();
 
-        public InventoryItem GetById(int id) => _context.InventoryItems.Find(id);
+        public async Task<InventoryItem> GetByIdAsync(int id) =>
+            await _context.InventoryItems.FindAsync(id);
 
-        public void Add(InventoryItem item)
+        public async Task AddAsync(InventoryItem item)
         {
-            _context.InventoryItems.Add(item);
-            _context.SaveChanges();
+            await _context.InventoryItems.AddAsync(item);
+            await _context.SaveChangesAsync();
         }
 
-        public void Update(InventoryItem item)
+        public async Task UpdateAsync(InventoryItem item)
         {
             _context.InventoryItems.Update(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        // Consolidated removal logic
-        public void Remove(InventoryItem item)
+        // Consolidated removal logic with async
+        public async Task RemoveAsync(InventoryItem item)
         {
             _context.InventoryItems.Remove(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var item = GetById(id);
-            if (item != null) Remove(item);
+            var item = await GetByIdAsync(id);
+            if (item != null) await RemoveAsync(item);
         }
 
-        // Count methods for Dashboard Stats
-        public int GetTotalCount() => _context.InventoryItems.Count();
+        public async Task<int> GetTotalCountAsync() =>
+            await _context.InventoryItems.CountAsync();
 
-        public int GetCountByStatus(string status) =>
-            _context.InventoryItems.Count(i => i.Status == status);
+        public async Task<int> GetCountByStatusAsync(string status) =>
+            await _context.InventoryItems.CountAsync(i => i.Status == status);
 
-        public int GetCountByCondition(string condition) =>
-            _context.InventoryItems.Count(i => i.Condition == condition);
+        public async Task<int> GetCountByConditionAsync(string condition) =>
+            await _context.InventoryItems.CountAsync(i => i.Condition == condition);
     }
 }

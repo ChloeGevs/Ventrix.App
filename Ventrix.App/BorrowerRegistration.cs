@@ -1,6 +1,7 @@
 ﻿using Ventrix.Application.Services;
 using Ventrix.Domain.Models ;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 
 
 namespace Ventrix.App
@@ -21,7 +22,7 @@ namespace Ventrix.App
         }
         private void InitializeEventHandlers()
         {
-            btnRegister.Click += BtnRegister_Click;
+            btnRegister.Click += async (s, e) => await BtnRegister_Click(s, e);
 
             lblLoginLink.Click += (s, e) => {
                 var portal = System.Windows.Forms.Application.OpenForms["BorrowerPortal"];
@@ -29,20 +30,19 @@ namespace Ventrix.App
                 if (portal != null)
                 {
                     portal.Show();
-                    this.Close(); 
+                    Close(); 
                 }
                 else
                 {
                     var newPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
                     newPortal.Show();
-                    this.Close();
+                    Close();
                 }
             };
         }
 
-        private void BtnRegister_Click(object sender, EventArgs e)
+        private async Task BtnRegister_Click(object sender, EventArgs e)
         {
-            // 1. Validation
             if (string.IsNullOrWhiteSpace(txtFirstName.Text) || string.IsNullOrWhiteSpace(txtLastName.Text))
             {
                 MessageBox.Show("Please fill in all required fields.");
@@ -60,7 +60,7 @@ namespace Ventrix.App
 
             try
             {
-                _userService.RegisterNewBorrower(newUser);
+                await _userService.RegisterNewBorrowerAsync(newUser);
                 this.DialogResult = DialogResult.OK;
             }
             catch (Exception ex)

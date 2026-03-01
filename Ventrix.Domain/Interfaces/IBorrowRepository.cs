@@ -4,13 +4,10 @@ namespace Ventrix.Domain.Interfaces
 {
     public interface IBorrowRepository
     {
-        void AddRecord(BorrowRecord record);
-        BorrowRecord GetRecordById(int id);
-        void UpdateRecord(BorrowRecord record);
-        IEnumerable<BorrowRecord> GetAll();
-        IEnumerable<BorrowRecord> GetActiveRecords();
-        IEnumerable<BorrowRecord> GetReturnedHistory();
-
-        void ClearAllRecords();
+        Task AddRecordAsync(BorrowRecord record);
+        Task<BorrowRecord> GetRecordByIdAsync(int id);
+        Task UpdateRecordAsync(BorrowRecord record);
+        Task<IEnumerable<BorrowRecord>> GetAllAsync();
+        Task ClearAllRecordsAsync();
     }
 }
