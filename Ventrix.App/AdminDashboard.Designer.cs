@@ -123,7 +123,7 @@
             // 
             // btnClearActivity
             // 
-            btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnClearActivity.CustomizableEdges = customizableEdges1;
             btnClearActivity.Font = new Font("Segoe UI", 8F);
             btnClearActivity.ForeColor = Color.White;
@@ -136,7 +136,7 @@
             // 
             // lblUrgentHeader
             // 
-            lblUrgentHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblUrgentHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             lblUrgentHeader.BackColor = Color.Transparent;
             lblUrgentHeader.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             lblUrgentHeader.AutoSize = true;
@@ -148,7 +148,7 @@
             // 
             // flowRecentActivity
             // 
-            flowRecentActivity.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            flowRecentActivity.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             flowRecentActivity.AutoScroll = true;
             flowRecentActivity.FlowDirection = FlowDirection.TopDown;
             flowRecentActivity.Location = new Point(0, 95);

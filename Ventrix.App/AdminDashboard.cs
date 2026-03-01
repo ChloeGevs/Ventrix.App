@@ -78,7 +78,13 @@ namespace Ventrix.App
                 ApplyModernBranding();
                 RefreshLayout();
             };
-            this.Resize += (s, e) => RefreshLayout();
+            this.Resize += (s, e) =>
+            {
+                if (this.WindowState != FormWindowState.Minimized)
+                {
+                    RefreshLayout();
+                }
+            };
         }
 
         #region Navigation Logic
@@ -305,13 +311,18 @@ namespace Ventrix.App
             {
                 popup.StartPosition = FormStartPosition.CenterParent;
 
-                // This pauses the Dashboard logic here; no layout changes can happen.
+                SuspendLayout();
+
                 if (popup.ShowDialog() == DialogResult.OK)
                 {
-                    // Only refresh data, don't touch UI layout properties
                     LoadFromDatabase("All");
                     UpdateDashboardCounts();
                 }
+
+                ResumeLayout(true);
+
+                Refresh();
+                RefreshLayout();
             }
         }
 
@@ -330,11 +341,16 @@ namespace Ventrix.App
             {
                 popup.StartPosition = FormStartPosition.CenterParent;
 
+                this.SuspendLayout();
+
                 if (popup.ShowDialog() == DialogResult.OK)
                 {
                     LoadFromDatabase("All");
                     UpdateDashboardCounts();
                 }
+
+                ResumeLayout(true);
+                RefreshLayout();
             }
         }
 
@@ -373,19 +389,26 @@ namespace Ventrix.App
 
         private void ApplyModernBranding()
         {
+            // Force the Header
             ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
             lblDashboardHeader.Text = "INVENTORY OVERVIEW";
 
             ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont);
 
-            StyleNavButton(btnHistoryNav, "HISTORY", Color.Orange);
-            StyleNavButton(btnHome, "HOME PAGE", ThemeManager.VentrixLightBlue);
-            StyleNavButton(btnCreate, "ADD ITEM", Color.Teal);
-            StyleNavButton(btnEdit, "EDIT RECORD", ThemeManager.VentrixLightBlue);
-            StyleNavButton(btnDelete, "DELETE ITEM", ThemeManager.VentrixBlue);
-            StyleNavButton(btnClearActivity, "CLEAR ALL", Color.FromArgb(192, 0, 0));
+            // Re-assert fonts for every button explicitly
+            var buttons = new[] { btnHistoryNav, btnHome, btnCreate, btnEdit, btnDelete, btnClearActivity };
+            var colors = new[] { Color.Orange, ThemeManager.VentrixLightBlue, Color.Teal, ThemeManager.VentrixLightBlue, ThemeManager.VentrixBlue, Color.FromArgb(192, 0, 0) };
+            var texts = new[] { "HISTORY", "HOME PAGE", "ADD ITEM", "EDIT RECORD", "DELETE ITEM", "CLEAR ALL" };
 
-            Invalidate();
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                StyleNavButton(buttons[i], texts[i], colors[i]);
+                // Explicitly set the font AGAIN after the StyleNavButton call
+                buttons[i].Font = ThemeManager.ButtonFont;
+            }
+
+            this.Invalidate();
+            this.Update(); // Force immediate redraw
         }
         private void StyleNavButton(Guna.UI2.WinForms.Guna2Button btn, string text, Color hover)
         {
@@ -449,7 +472,7 @@ namespace Ventrix.App
 
         private void RefreshLayout()
         {
-            if (!ContainsFocus) return;
+            
             if (pnlMainContent == null || pnlSidebar == null || lblDashboardHeader == null) return;
 
             int rightMargin = 70;
@@ -506,46 +529,63 @@ namespace Ventrix.App
 
         private void UpdateSidebarInternalUI()
         {
+            // SuspendLayout prevents the control from redrawing until all items are moved
+            pnlSidebar.SuspendLayout();
+
             int currentWidth = pnlSidebar.Width;
             int contentWidth = currentWidth - 20;
-            bool expanded = currentWidth > 200; // Logic for "Expanded" state visuals
+            bool expanded = currentWidth > 200;
 
-            // User Profile Section
-            picUser.Location = new Point(expanded ? 15 : 12, 25);
-            picUser.Size = expanded ? new Size(45, 45) : new Size(40, 40);
+            // 1. User Profile Section - Use SetBounds for atomic movement
+            int picSize = expanded ? 45 : 40;
+            picUser.SetBounds(expanded ? 15 : 12, 25, picSize, picSize);
+
             lblOwnerRole.Visible = cmbAccountActions.Visible = expanded;
             if (expanded)
             {
                 lblOwnerRole.Location = new Point(70, 25);
-                cmbAccountActions.Location = new Point(65, 42);
-                cmbAccountActions.Size = new Size(160, 30);
+                cmbAccountActions.SetBounds(65, 42, 160, 30);
             }
 
-            // Navigation Buttons (Home & History)
-            btnHome.Location = new Point(10, 90);
-            btnHome.Size = new Size(contentWidth, 45);
-            btnHome.Visible = (currentWidth > 100);
+            // 2. Navigation Buttons - Ensure they only show when there is enough width
+            bool showNav = currentWidth > 100;
+            btnHome.Visible = showNav;
+            btnHistoryNav.Visible = showNav;
 
-            btnHistoryNav.Location = new Point(10, 140);
-            btnHistoryNav.Size = new Size(contentWidth, 45);
-            btnHistoryNav.Visible = (currentWidth > 100);
+            if (showNav)
+            {
+                btnHome.SetBounds(10, 90, contentWidth, 45);
+                btnHistoryNav.SetBounds(10, 140, contentWidth, 45);
+            }
 
-            // Metric Card Transitions
-            int cardY = 200; // Start below the nav buttons
+            // 3. Metric Card Transitions
+            // Use a fixed starting Y to prevent 'drifting' locations
+            int cardY = 200;
             var cards = new[] { cardTotal, cardAvailable, cardPending, cardBorrowers };
-            var titles = new[] { lblTotalTitle, lblAvailTitle, lblPendingTitle, lblBorrowersTitle };
-            var counts = new[] { lblTotalCount, lblAvailCount, lblPendingCount, lblBorrowersCount };
 
             for (int i = 0; i < cards.Length; i++)
             {
-                cards[i].Location = new Point(10, cardY);
-                cards[i].Size = new Size(contentWidth, 110);
-                cards[i].Width = contentWidth;
+                // SetBounds is much more stable than setting .Location and .Size separately
+                cards[i].SetBounds(10, cardY, contentWidth, 110);
 
-                // Sync label visibility with sidebar state
-                titles[i].Visible = counts[i].Visible = expanded;
+                // Internal label visibility is now managed by the card's Z-order fix
+                // so we don't need to manually toggle titles[i] and counts[i] here.
 
-                cardY += 120; // Maintain consistent vertical gap
+                cardY += 120;
+            }
+
+            // ResumeLayout(false) tells the sidebar to perform ONE single refresh pass
+            pnlSidebar.ResumeLayout(false);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            // If the manager forced 'Roboto' or 'Microsoft Sans Serif' while the popup was open
+            if (lblDashboardHeader.Font.Name != "Segoe UI")
+            {
+                ApplyModernBranding();
             }
         }
 

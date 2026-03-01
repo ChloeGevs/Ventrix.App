@@ -17,9 +17,13 @@
             lblCount = new Guna.UI2.WinForms.Guna2HtmlLabel();
             SuspendLayout();
 
+            // 1. Setup the Panel first but DO NOT use Dock.Fill
             pnlCard.BorderRadius = 15;
             pnlCard.FillColor = System.Drawing.Color.White;
-            pnlCard.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlCard.Location = new System.Drawing.Point(0, 0);
+            pnlCard.Size = new System.Drawing.Size(200, 110);
+            // Use Anchor instead of Dock to prevent the panel from fighting the Dashboard layout
+            pnlCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
 
             lblTitle.Font = new System.Drawing.Font("Sitka", 10F);
             lblTitle.ForeColor = System.Drawing.Color.Gray;
@@ -28,9 +32,14 @@
             lblCount.Font = new System.Drawing.Font("Sitka", 18F, System.Drawing.FontStyle.Bold);
             lblCount.Location = new System.Drawing.Point(20, 55);
 
-            Controls.Add(this.lblCount);
-            Controls.Add(this.lblTitle);
+            // 2. CRITICAL: Add the Panel FIRST so it is at the bottom (Z-order)
             Controls.Add(this.pnlCard);
+
+            // 3. Add labels TO THE PANEL, not the UserControl directly
+            // This ensures they move WITH the card and aren't hidden behind it
+            this.pnlCard.Controls.Add(this.lblCount);
+            this.pnlCard.Controls.Add(this.lblTitle);
+
             Size = new System.Drawing.Size(200, 110);
             ResumeLayout(false);
         }

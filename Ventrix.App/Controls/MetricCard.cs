@@ -12,12 +12,9 @@ namespace Ventrix.App.Controls
         {
             InitializeComponent();
 
-            // 2. Make every internal label/panel trigger the CardClicked event
             BindClickEvents(this);
         }
 
-        // This helper method loops through all labels inside the card
-        // and tells them: "If you are clicked, tell the parent CardClicked fired."
         private void BindClickEvents(Control container)
         {
             foreach (Control ctrl in container.Controls)
@@ -33,6 +30,9 @@ namespace Ventrix.App.Controls
             lblTitle.Text = title;
             lblCount.Text = count;
             lblCount.ForeColor = accentColor;
+
+            lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            lblCount.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
         }
     }
 }

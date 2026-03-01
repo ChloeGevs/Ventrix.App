@@ -18,20 +18,26 @@ namespace Ventrix.App
         {
             var manager = MaterialSkinManager.Instance;
             manager.AddFormToManage(form);
-            manager.Theme = MaterialSkinManager.Themes.LIGHT;
-            manager.ColorScheme = new ColorScheme(
-                VentrixBlue, Color.FromArgb(10, 50, 120),
-                VentrixLightBlue, Color.FromArgb(30, 136, 229),
-                TextShade.WHITE);
+            if (manager.Theme != MaterialSkinManager.Themes.LIGHT)
+            {
+                manager.Theme = MaterialSkinManager.Themes.LIGHT;
+                manager.ColorScheme = new ColorScheme(
+                    VentrixBlue, Color.FromArgb(10, 50, 120),
+                    VentrixLightBlue, Color.FromArgb(30, 136, 229),
+                    TextShade.WHITE);
+            }
         }
         public static void ApplyCustomFont(Control ctrl, Font font, Color? color = null)
         {
             ctrl.Font = font;
             if (color.HasValue) ctrl.ForeColor = color.Value;
+
             if (ctrl is MaterialLabel mLabel)
             {
-                mLabel.UseAccent = false; 
+                mLabel.UseAccent = false;
             }
+
+            ctrl.Tag = "LockedFont";
         }
     }
 }

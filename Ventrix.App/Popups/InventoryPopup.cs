@@ -19,13 +19,16 @@ namespace Ventrix.App.Popups
 
             InitializeComponent();
 
-            // --- THEME MANAGER INTEGRATION ---
-            ThemeManager.Initialize(this); // Replaces manual skin initialization
-            ApplyPopupBranding();          // Locks fonts for this specific popup
+            // 1. Add form to manager first
+            ThemeManager.Initialize(this);
 
+            // 2. Load data
             SetupDropdowns();
-
             if (_editId.HasValue) LoadItemData();
+
+            // 3. APPLY POPUP BRANDING LAST 
+            // This stops the manager's broadcast from hitting the Dashboard a second time
+            ApplyPopupBranding();
         }
 
         private void ApplyPopupBranding()
