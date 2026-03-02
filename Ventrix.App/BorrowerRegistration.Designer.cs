@@ -1,6 +1,6 @@
 ﻿namespace Ventrix.App
 {
-    partial class Form2
+    partial class BorrowerRegistration
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -43,7 +43,7 @@
             // 
             // regTableLayout
             // 
-            regTableLayout.BackgroundImage = Properties.Resources._5_imresizer__1_;
+            regTableLayout.BackgroundImage = Properties.Resources._5;
             regTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
             regTableLayout.ColumnCount = 3;
             regTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -74,12 +74,14 @@
             pnlRegCard.Controls.Add(txtSuffix);
             pnlRegCard.Controls.Add(chkNoSuffix);
             pnlRegCard.CustomizableEdges = customizableEdges13;
+            pnlRegCard.Dock = DockStyle.Fill;
             pnlRegCard.FillColor = Color.White;
             pnlRegCard.Location = new Point(350, 19);
             pnlRegCard.Name = "pnlRegCard";
+            pnlRegCard.ShadowDecoration.BorderRadius = 15;
             pnlRegCard.ShadowDecoration.CustomizableEdges = customizableEdges14;
             pnlRegCard.ShadowDecoration.Enabled = true;
-            pnlRegCard.Size = new Size(494, 730);
+            pnlRegCard.Size = new Size(494, 744);
             pnlRegCard.TabIndex = 0;
             // 
             // lblHeader
@@ -106,7 +108,7 @@
             cmbRole.Font = new Font("Segoe UI", 10F);
             cmbRole.ForeColor = Color.FromArgb(68, 88, 112);
             cmbRole.ItemHeight = 30;
-            cmbRole.Items.AddRange(new object[] { "Student", "Staff" });
+            cmbRole.Items.AddRange(new object[] { "Student", "Faculty" });
             cmbRole.Location = new Point(57, 126);
             cmbRole.Name = "cmbRole";
             cmbRole.ShadowDecoration.CustomizableEdges = customizableEdges2;
@@ -176,11 +178,11 @@
             // lblLoginLink
             // 
             lblLoginLink.BackColor = Color.Transparent;
-            lblLoginLink.Location = new Point(170, 605);
+            lblLoginLink.Location = new Point(130, 605);
             lblLoginLink.Name = "lblLoginLink";
-            lblLoginLink.Size = new Size(173, 22);
+            lblLoginLink.Size = new Size(240, 22);
             lblLoginLink.TabIndex = 8;
-            lblLoginLink.Text = "Already registered? <font color='#1565C0'><u>Login</u></font>";
+            lblLoginLink.Text = "Already registered? <font color='#1565C0'><u>Borrower Portal</u></font>";
             // 
             // txtSuffix
             // 
@@ -212,11 +214,11 @@
             chkNoSuffix.UncheckedState.BorderRadius = 0;
             chkNoSuffix.UncheckedState.BorderThickness = 0;
             // 
-            // Form2
+            // BorrowerRegistration
             // 
             ClientSize = new Size(1200, 850);
             Controls.Add(regTableLayout);
-            Name = "Form2";
+            Name = "BorrowerRegistration";
             Text = "Ventrix | Registration Portal";
             regTableLayout.ResumeLayout(false);
             pnlRegCard.ResumeLayout(false);

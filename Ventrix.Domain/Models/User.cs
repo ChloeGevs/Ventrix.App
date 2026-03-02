@@ -2,16 +2,18 @@
 
 namespace Ventrix.Domain.Models
 {
+    public enum UserRole { Student, Faculty, Staff, Admin }
+
     public class User
     {
-        public int Id { get; set; } // Database internal ID
-        public string UserId { get; set; } // The ID they type (e.g., "2024-0012" or "Admin")
+        public int Id { get; set; }
+        public string UserId { get; set; } 
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string MiddleName { get; set; }
         public string Suffix { get; set; }
-        public string Role { get; set; } // "Student" or "Staff"
-        public string Password { get; set; } // Only for Staff/Admin
+        public UserRole Role { get; set; } 
+        public string Password { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public string FullName => $"{FirstName} {LastName} {Suffix}".Trim();
