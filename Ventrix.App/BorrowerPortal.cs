@@ -34,12 +34,12 @@ namespace Ventrix.App
             btnBorrow.Click += BtnBorrow_Click;
             lblCreateAccount.Click += LblCreateAccount_Click;
             txtPassword.IconRightClick += TxtPassword_IconRightClick;
+            txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
 
-            // Initial State
+
             ToggleMode("Student");
 
-            // Seed the admin account and load equipments right when the app loads
             Load += async (s, e) =>
             {
                 await _userService.InitializeDefaultAdminAsync();
@@ -63,6 +63,19 @@ namespace Ventrix.App
                 txtPassword.PasswordChar = '●';
                 txtPassword.IconRight = Properties.Resources.eye;
             }
+            txtPassword.Cursor = Cursors.Hand;
+        }
+
+        private void txtPassword_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.X > txtPassword.Width - 40)
+            {
+                txtPassword.Cursor = Cursors.Hand;
+            }
+            else
+            {
+                txtPassword.Cursor = Cursors.IBeam;
+            }
         }
 
         private async Task LoadEquipmentListAsync()
@@ -75,6 +88,9 @@ namespace Ventrix.App
 
         private void ToggleMode(string mode)
         {
+            txtStudentId.Clear();
+            txtPassword.Clear();
+                
             if (mode == "Admin")
             {
                 // UI Changes for Admin
@@ -119,6 +135,7 @@ namespace Ventrix.App
                 lblCreateAccount.Visible = true;
                 lblQuantity.Visible = true;
                 lblSubject.Visible = true;
+                lblEquipmentList.Visible = true;
 
                 // Button Styling
                 btnStudentToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);

@@ -83,9 +83,9 @@
             // 
             pnlLoginCard.BackColor = Color.Transparent;
             pnlLoginCard.BorderRadius = 20;
+            pnlLoginCard.Controls.Add(lblEquipmentList);
             pnlLoginCard.Controls.Add(lblCreateAccount);
             pnlLoginCard.Controls.Add(txtPassword);
-            pnlLoginCard.Controls.Add(lblEquipmentList);
             pnlLoginCard.Controls.Add(btnAdminToggle);
             pnlLoginCard.Controls.Add(btnStudentToggle);
             pnlLoginCard.Controls.Add(lblLoginHeader);
@@ -123,6 +123,7 @@
             // txtPassword
             // 
             txtPassword.BorderRadius = 10;
+            txtPassword.Cursor = Cursors.IBeam;
             txtPassword.CustomizableEdges = customizableEdges1;
             txtPassword.DefaultText = "";
             txtPassword.Font = new Font("Segoe UI", 10F);

@@ -4,7 +4,6 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using TheArtOfDevHtmlRenderer.Adapters.Entities;
 using Ventrix.App.Controls;
 using Ventrix.App.Popups;
 using Ventrix.Application.Services;
@@ -28,71 +27,90 @@ namespace Ventrix.App
             _borrowService = borrowService;
 
             InitializeComponent();
-
             ThemeManager.Initialize(this);
-
             InitializeMaterialSkin();
+
             ConfigureRuntimeUI();
             ApplyModernBranding();
 
             Shown += async (s, e) => {
+                this.PerformLayout();
                 RefreshLayout();
                 await SwitchView("Home");
+                RefreshLayout();
             };
         }
 
         private void ConfigureRuntimeUI()
         {
-            // Enable Double Buffering for smooth UI
-            typeof(Panel).InvokeMember("DoubleBuffered",
-                System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                null, pnlMainContent, new object[] { true });
+            // Safely enable Double Buffering
+            if (pnlHomeSummary != null)
+            {
+                typeof(Control).InvokeMember("DoubleBuffered",
+                    System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                    null, pnlHomeSummary, new object[] { true });
+            }
 
-            pnlSidebar.BringToFront();
+            if (flowRecentActivity != null)
+            {
+                typeof(Control).InvokeMember("DoubleBuffered",
+                    System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                    null, flowRecentActivity, new object[] { true });
+            }
 
-            // --- WIRE UP EVENTS ---
-            btnCreate.Click += async (s, e) => await BtnCreate_Click(s, e);
-            btnEdit.Click += async (s, e) => await BtnEdit_Click(s, e);
-            btnDelete.Click += async (s, e) => await BtnDelete_Click(s, e);
+            pnlSidebar?.BringToFront();
 
-            btnHome.Click += async (s, e) => await SwitchView("Home");
-            btnHistoryNav.Click += async (s, e) => await SwitchView("History");
-            txtSearch.TextChanged += async (s, e) => await LoadFromDatabase("All");
-            btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
+            // --- SAFELY WIRE UP EVENTS ---
+            if (btnCreate != null) btnCreate.Click += async (s, e) => await BtnCreate_Click(s, e);
+            if (btnEdit != null) btnEdit.Click += async (s, e) => await BtnEdit_Click(s, e);
+            if (btnDelete != null) btnDelete.Click += async (s, e) => await BtnDelete_Click(s, e);
 
-            // Wire up the Urgent Header click logic
-            lblUrgentHeader.Click += async (s, e) => await LblUrgentHeader_Click(s, e);
+            if (btnHome != null) btnHome.Click += async (s, e) => await SwitchView("Home");
+            if (btnHistoryNav != null) btnHistoryNav.Click += async (s, e) => await SwitchView("History");
+            if (txtSearch != null) txtSearch.TextChanged += async (s, e) => await LoadFromDatabase("All");
+            if (btnClearActivity != null) btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
+            if (cmbAccountActions != null) cmbAccountActions.SelectedIndexChanged += CmbAccountActions_SelectedIndexChanged;
 
-            pnlHomeSummary.MouseMove += async (s, e) => {
-                if (lblUrgentHeader.Bounds.Contains(e.Location))
-                {
-                    var items = await _inventoryService.GetAllItemsAsync();
-                    if (items.Any(x => x.Condition == "Damaged"))
+            if (lblUrgentHeader != null)
+            {
+                lblUrgentHeader.Click += async (s, e) => await LblUrgentHeader_Click(s, e);
+            }
+
+            if (pnlHomeSummary != null && lblUrgentHeader != null)
+            {
+                pnlHomeSummary.MouseMove += async (s, e) => {
+                    if (lblUrgentHeader.Bounds.Contains(e.Location))
                     {
-                        Cursor = System.Windows.Forms.Cursors.Hand;
-                        return;
+                        var items = await _inventoryService.GetAllItemsAsync();
+                        if (items.Any(x => x.Condition == "Damaged"))
+                        {
+                            Cursor = Cursors.Hand;
+                            return;
+                        }
                     }
-                }
-                Cursor = System.Windows.Forms.Cursors.Default;
-            };
+                    Cursor = Cursors.Default;
+                };
 
-            pnlHomeSummary.MouseLeave += (s, e) => {
-                Cursor = System.Windows.Forms.Cursors.Default;
-            };
+                pnlHomeSummary.MouseLeave += (s, e) => {
+                    Cursor = Cursors.Default;
+                };
+            }
 
-            // Double-click to Borrow
-            dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
+            if (dgvInventory != null) dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
 
             // Sidebar Card Navigation
-            cardTotal.CardClicked += async (s, e) => await SwitchView("Inventory", "All");
-            cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
-            cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
-            cardBorrowers.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrower List");
+            if (cardTotal != null) cardTotal.CardClicked += async (s, e) => await SwitchView("Inventory", "All");
+            if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
+            if (cardPending != null) cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
+            if (cardBorrowers != null) cardBorrowers.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrower List");
 
             // Sidebar Animation
-            sidebarTimer.Interval = 1;
-            btnHamburger.Click += (s, e) => sidebarTimer.Start();
-            sidebarTimer.Tick += SidebarTimer_Tick;
+            if (sidebarTimer != null && btnHamburger != null)
+            {
+                sidebarTimer.Interval = 10;
+                btnHamburger.Click += (s, e) => sidebarTimer.Start();
+                sidebarTimer.Tick += SidebarTimer_Tick;
+            }
 
             this.Load += (s, e) =>
             {
@@ -108,46 +126,45 @@ namespace Ventrix.App
 
         private async Task SwitchView(string viewName, string filter = "All")
         {
-            pnlHomeSummary.Visible = (viewName == "Home");
-            pnlGridContainer.Visible = (viewName == "Inventory");
-            pnlHistory.Visible = (viewName == "History");
+            if (pnlHomeSummary != null) pnlHomeSummary.Visible = (viewName == "Home");
+            if (pnlGridContainer != null) pnlGridContainer.Visible = (viewName == "Inventory");
+            if (pnlHistory != null) pnlHistory.Visible = (viewName == "History");
 
-            // 2. Handle CRUD button visibility
-            btnCreate.Visible = btnEdit.Visible = btnDelete.Visible =
-                (viewName == "Inventory" && filter != "Borrowed" && filter != "Borrower List");
+            bool showCrud = (viewName == "Inventory" && filter != "Borrowed" && filter != "Borrower List");
+            if (btnCreate != null) btnCreate.Visible = showCrud;
+            if (btnEdit != null) btnEdit.Visible = showCrud;
+            if (btnDelete != null) btnDelete.Visible = showCrud;
 
             switch (viewName)
             {
                 case "Home":
-                    lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
-                    pnlHomeSummary.BringToFront();
+                    if (lblDashboardHeader != null) lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
+                    pnlHomeSummary?.BringToFront();
                     await LoadHomeContent();
                     break;
 
                 case "Inventory":
-                    pnlGridContainer.BringToFront();
-                    lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
+                    pnlGridContainer?.BringToFront();
+                    if (lblDashboardHeader != null) lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
                     await LoadFromDatabase(filter);
                     break;
 
                 case "History":
-                    pnlHistory.BringToFront();
-                    lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
+                    pnlHistory?.BringToFront();
+                    if (lblDashboardHeader != null) lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
                     await LoadHistoryData();
                     break;
             }
             await UpdateDashboardCounts();
-            pnlSidebar.BringToFront();
+            pnlSidebar?.BringToFront();
         }
 
         private async Task LblUrgentHeader_Click(object sender, EventArgs e)
         {
-            // 1. Get the current list of damaged items
             var damagedItems = (await _inventoryService.GetAllItemsAsync())
                 .Where(i => i.Condition == "Damaged")
                 .ToList();
 
-            // 2. Only show the popup if there are actually items to repair
             if (damagedItems.Any())
             {
                 using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, async () => await LoadHomeContent()))
@@ -165,13 +182,12 @@ namespace Ventrix.App
 
         private async Task DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
+            if (e.RowIndex < 0 || dgvInventory == null) return;
 
             int id = Convert.ToInt32(dgvInventory.Rows[e.RowIndex].Cells[0].Value);
-            string name = dgvInventory.Rows[e.RowIndex].Cells[1].Value.ToString();
-            string status = dgvInventory.Rows[e.RowIndex].Cells[3].Value.ToString();
+            string name = dgvInventory.Rows[e.RowIndex].Cells[1].Value?.ToString() ?? "";
+            string status = dgvInventory.Rows[e.RowIndex].Cells[3].Value?.ToString() ?? "";
 
-            // FIX: Using ToString() to safely compare DataGridView cell text to the Enum
             if (status == ItemStatus.Available.ToString())
             {
                 using (var popup = new BorrowPopup(_borrowService, id, name))
@@ -193,14 +209,36 @@ namespace Ventrix.App
 
         #region Data Loading
 
+        private void CmbAccountActions_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbAccountActions?.SelectedItem?.ToString() == "Sign out")
+            {
+                var result = MessageBox.Show("Are you sure you want to sign out?", "Ventrix System",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    BorrowerPortal loginPortal = new BorrowerPortal(_inventoryService, _borrowService, new UserService(new Ventrix.Infrastructure.Data.AppDbContext()));
+                    loginPortal.Show();
+                    this.Close();
+                }
+                else
+                {
+                    cmbAccountActions.SelectedIndex = -1;
+                }
+            }
+        }
+
         private async Task LoadFromDatabase(string statusFilter)
         {
+            if (dgvInventory == null) return;
+
             dgvInventory.Rows.Clear();
             dgvInventory.Columns.Clear();
 
             var items = await _inventoryService.GetAllItemsAsync();
 
-            if (!string.IsNullOrEmpty(txtSearch.Text))
+            if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text))
             {
                 string search = txtSearch.Text.ToLower();
                 items = items.Where(i => i.Name.ToLower().Contains(search)).ToList();
@@ -210,7 +248,6 @@ namespace Ventrix.App
             {
                 case "Available":
                     SetupColumns("ID", "Item Name", "Category", "Condition");
-                    // FIX: Replaced string "Available" with Enum ItemStatus.Available
                     foreach (var i in items.Where(x => x.Status == ItemStatus.Available))
                         dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Condition);
                     break;
@@ -218,7 +255,6 @@ namespace Ventrix.App
                 case "Borrowed":
                     SetupColumns("ID", "Item Name", "Borrower ID", "Status", "Date Borrowed", "Return Date");
                     var records = await _borrowService.GetAllBorrowRecordsAsync();
-                    // FIX: Replaced string "Active" with Enum BorrowStatus.Active
                     var active = records.Where(b => b.Status == BorrowStatus.Active);
                     foreach (var r in active)
                         dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
@@ -229,7 +265,6 @@ namespace Ventrix.App
                     var borrowerRecords = await _borrowService.GetAllBorrowRecordsAsync();
                     var students = borrowerRecords.GroupBy(b => b.BorrowerId);
                     foreach (var group in students)
-                        // FIX: Replaced string "Active" with Enum BorrowStatus.Active
                         dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown", group.First().GradeLevel, group.First().Purpose, group.Count(x => x.Status == BorrowStatus.Active));
                     break;
 
@@ -252,24 +287,27 @@ namespace Ventrix.App
 
             foreach (var log in recentLogs)
             {
-                // FIX: Use BorrowStatus Enum comparisons
                 string msg = log.Status == BorrowStatus.Active
                     ? $"{log.BorrowerId} borrowed {log.ItemName}"
                     : $"{log.ItemName} was returned by {log.BorrowerId}";
 
                 Color statusColor = log.Status == BorrowStatus.Active ? Color.FromArgb(33, 150, 243) : Color.Teal;
-
                 AddActivityCard(msg, log.BorrowDate, statusColor);
             }
         }
 
         private async Task LoadHomeContent()
         {
-            flowRecentActivity.Controls.Clear();
-            AddSectionHeader("URGENT SYSTEM ALERTS");
+            if (flowRecentActivity == null) return;
 
             var items = await _inventoryService.GetAllItemsAsync();
             var damagedItems = items.Where(i => i.Condition == "Damaged").ToList();
+            var recentLogs = (await _borrowService.GetAllBorrowRecordsAsync())
+                .OrderByDescending(b => b.BorrowDate)
+                .Take(10).ToList();
+
+            flowRecentActivity.SuspendLayout();
+            flowRecentActivity.Controls.Clear();
 
             if (!damagedItems.Any())
             {
@@ -282,11 +320,24 @@ namespace Ventrix.App
             }
 
             AddSectionHeader("RECENT ACTIVITY LOG");
+
+            foreach (var log in recentLogs)
+            {
+                string msg = log.Status == BorrowStatus.Active
+                    ? $"{log.BorrowerId} borrowed {log.ItemName}"
+                    : $"{log.ItemName} was returned by {log.BorrowerId}";
+
+                Color statusColor = log.Status == BorrowStatus.Active ? Color.FromArgb(33, 150, 243) : Color.Teal;
+                AddActivityCard(msg, log.BorrowDate, statusColor);
+            }
+
             await LoadRecentActivity();
+            flowRecentActivity.ResumeLayout(true);
         }
 
         private void AddDashboardAlert(string message, Color color)
         {
+            if (flowRecentActivity == null) return;
             var alert = new AlertTile(message, color);
 
             alert.AlertClicked += async (s, e) =>
@@ -307,6 +358,7 @@ namespace Ventrix.App
 
         private void AddActivityCard(string message, DateTime time, Color statusColor)
         {
+            if (flowRecentActivity == null) return;
             var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor);
             card.Width = flowRecentActivity.Width - 30;
             flowRecentActivity.Controls.Add(card);
@@ -314,11 +366,12 @@ namespace Ventrix.App
 
         private async Task LoadHistoryData()
         {
+            if (dgvHistory == null) return;
             dgvHistory.Rows.Clear();
             dgvHistory.Columns.Clear();
             SetupColumnsHistory();
+
             var logs = (await _borrowService.GetAllBorrowRecordsAsync())
-                // FIX: Replaced string "Returned" with Enum BorrowStatus.Returned
                 .Where(b => b.Status == BorrowStatus.Returned)
                 .OrderByDescending(b => b.ReturnDate);
 
@@ -328,37 +381,37 @@ namespace Ventrix.App
 
         private async Task UpdateDashboardCounts()
         {
-            var items = (await _inventoryService.GetAllItemsAsync()).ToList();
-            var records = (await _borrowService.GetAllBorrowRecordsAsync()).ToList();
+            var rawItems = await _inventoryService.GetAllItemsAsync();
+            var items = rawItems != null ? rawItems.ToList() : new List<InventoryItem>();
 
-            // 1. Update the Metric Cards
-            // FIX: Uses Enums for filtering statuses
-            cardTotal.UpdateMetrics("TOTAL ITEMS", items.Count().ToString("N0"), Color.FromArgb(13, 71, 161));
-            cardAvailable.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == ItemStatus.Available).ToString("N0"), Color.Teal);
-            cardPending.UpdateMetrics("BORROWED", items.Count(x => x.Status == ItemStatus.Borrowed).ToString("N0"), Color.FromArgb(192, 0, 0));
-            cardBorrowers.UpdateMetrics("RECORDS", records.Count().ToString("N0"), Color.Orange);
+            var rawRecords = await _borrowService.GetAllBorrowRecordsAsync();
+            var records = rawRecords != null ? rawRecords.ToList() : new List<BorrowRecord>();
 
-            // 2. Logic for lblUrgentHeader (Interactive Alert System)
-            int damagedCount = items.Count(x => x.Condition == "Damaged");
+            // SAFELY update metrics
+            cardTotal?.UpdateMetrics("TOTAL ITEMS", items.Count.ToString("N0"), Color.FromArgb(13, 71, 161));
+            cardAvailable?.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == ItemStatus.Available).ToString("N0"), Color.Teal);
+            cardPending?.UpdateMetrics("BORROWED", items.Count(x => x.Status == ItemStatus.Borrowed).ToString("N0"), Color.FromArgb(192, 0, 0));
+            cardBorrowers?.UpdateMetrics("RECORDS", records.Count.ToString("N0"), Color.Orange);
 
-            if (damagedCount > 0)
+            if (lblUrgentHeader != null)
             {
-                lblUrgentHeader.ForeColor = Color.DarkRed;
-                lblUrgentHeader.Text = $"URGENT SYSTEM ALERTS ({damagedCount} ISSUES)";
-                lblUrgentHeader.Cursor = System.Windows.Forms.Cursors.Hand;
-            }
-            else
-            {
-                lblUrgentHeader.ForeColor = Color.Teal;
-                lblUrgentHeader.Text = "URGENT SYSTEM ALERTS";
-                lblUrgentHeader.Cursor = System.Windows.Forms.Cursors.Default;
+                int damagedCount = items.Count(x => x.Condition == "Damaged");
+                string newHeaderText = damagedCount > 0 ? $"URGENT SYSTEM ALERTS ({damagedCount} ISSUES)" : "URGENT SYSTEM ALERTS";
+                Color newHeaderColor = damagedCount > 0 ? Color.DarkRed : Color.Teal;
+                Cursor newCursor = damagedCount > 0 ? Cursors.Hand : Cursors.Default;
+
+                if (lblUrgentHeader.Text != newHeaderText) lblUrgentHeader.Text = newHeaderText;
+                if (lblUrgentHeader.ForeColor != newHeaderColor) lblUrgentHeader.ForeColor = newHeaderColor;
+                if (lblUrgentHeader.Cursor != newCursor) lblUrgentHeader.Cursor = newCursor;
             }
 
-            // 3. Force Refresh to prevent "Black Labels"
-            cardTotal.Invalidate();
-            cardAvailable.Invalidate();
-            cardPending.Invalidate();
-            cardBorrowers.Invalidate();
+            if (this.Visible)
+            {
+                cardTotal?.Invalidate();
+                cardAvailable?.Invalidate();
+                cardPending?.Invalidate();
+                cardBorrowers?.Invalidate();
+            }
         }
 
         #endregion
@@ -386,7 +439,7 @@ namespace Ventrix.App
 
         private async Task BtnEdit_Click(object sender, EventArgs e)
         {
-            if (dgvInventory.SelectedRows.Count == 0)
+            if (dgvInventory == null || dgvInventory.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Please select a record to edit.", "Ventrix System");
                 return;
@@ -412,10 +465,9 @@ namespace Ventrix.App
 
         private async Task BtnDelete_Click(object sender, EventArgs e)
         {
-            if (dgvInventory.SelectedRows.Count == 0) return;
+            if (dgvInventory == null || dgvInventory.SelectedRows.Count == 0) return;
             int id = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value);
 
-            // FIX: Removed the invalid 'if' check to prevent "Cannot await 'void'" error
             if (MessageBox.Show($"Delete item #{id}?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 await _inventoryService.DeleteItemAsync(id);
@@ -428,6 +480,7 @@ namespace Ventrix.App
         #region UI Styling & Helpers
         private void SetupColumnsHistory()
         {
+            if (dgvHistory == null) return;
             dgvHistory.Columns.Add("ID", "ID");
             dgvHistory.Columns.Add("Item", "Item Name");
             dgvHistory.Columns.Add("Borrower", "Borrower");
@@ -435,7 +488,6 @@ namespace Ventrix.App
             dgvHistory.Columns.Add("RDate", "Returned");
             dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
-
 
         private void InitializeMaterialSkin()
         {
@@ -447,12 +499,18 @@ namespace Ventrix.App
 
         private void ApplyModernBranding()
         {
-            lblDashboardHeader.Font = null;
-            ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
-            lblDashboardHeader.Text = "INVENTORY OVERVIEW";
+            if (lblDashboardHeader != null)
+            {
+                lblDashboardHeader.Font = null;
+                ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
+                lblDashboardHeader.Text = "INVENTORY OVERVIEW";
+            }
 
-            lblUrgentHeader.Font = null;
-            ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont);
+            if (lblUrgentHeader != null)
+            {
+                lblUrgentHeader.Font = null;
+                ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont);
+            }
 
             var buttons = new[] { btnHistoryNav, btnHome, btnCreate, btnEdit, btnDelete, btnClearActivity };
             var colors = new[] { Color.Orange, ThemeManager.VentrixLightBlue, Color.Teal, ThemeManager.VentrixLightBlue, ThemeManager.VentrixBlue, Color.FromArgb(192, 0, 0) };
@@ -460,15 +518,18 @@ namespace Ventrix.App
 
             for (int i = 0; i < buttons.Length; i++)
             {
-                StyleNavButton(buttons[i], texts[i], colors[i]);
-                buttons[i].Font = null;
-                buttons[i].Font = ThemeManager.ButtonFont;
+                if (buttons[i] != null)
+                {
+                    StyleNavButton(buttons[i], texts[i], colors[i]);
+                    buttons[i].Font = null;
+                    buttons[i].Font = ThemeManager.ButtonFont;
+                }
             }
 
-            cardTotal.Invalidate();
-            cardAvailable.Invalidate();
-            cardPending.Invalidate();
-            cardBorrowers.Invalidate();
+            cardTotal?.Invalidate();
+            cardAvailable?.Invalidate();
+            cardPending?.Invalidate();
+            cardBorrowers?.Invalidate();
 
             Invalidate();
             Update();
@@ -476,6 +537,7 @@ namespace Ventrix.App
 
         private void StyleNavButton(Guna.UI2.WinForms.Guna2Button btn, string text, Color hover)
         {
+            if (btn == null) return;
             btn.Text = text;
             btn.Font = new Font("Sitka Banner", 11F, FontStyle.Bold);
             btn.FillColor = Color.Transparent;
@@ -487,18 +549,21 @@ namespace Ventrix.App
 
         private void SetupColumns(params string[] names)
         {
+            if (dgvInventory == null) return;
             foreach (var n in names) dgvInventory.Columns.Add(n.Replace(" ", ""), n);
             dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
         private void AddSectionHeader(string title)
         {
+            if (flowRecentActivity == null) return;
             Label lbl = new Label { Text = title, Font = new Font("Segoe UI", 12, FontStyle.Bold), AutoSize = true };
             flowRecentActivity.Controls.Add(lbl);
         }
 
         private void SidebarTimer_Tick(object sender, EventArgs e)
         {
+            if (pnlSidebar == null || sidebarTimer == null) return;
 
             if (!this.ContainsFocus)
             {
@@ -536,63 +601,78 @@ namespace Ventrix.App
         {
             if (pnlMainContent == null || pnlSidebar == null || lblDashboardHeader == null) return;
 
+            this.SuspendLayout();
+            pnlMainContent.SuspendLayout();
+            if (pnlHomeSummary != null) pnlHomeSummary.SuspendLayout();
+
             int rightMargin = 70;
             int contentStartX = 110;
 
-            btnHamburger.Location = new Point(20, 30);
-            lblDashboardHeader.Location = new Point(60, 22);
-            txtSearch.Location = new Point(this.Width - txtSearch.Width - rightMargin, 20);
+            if (btnHamburger != null) btnHamburger.Location = new Point(20, 30);
+            lblDashboardHeader.Location = new Point(65, 22);
+            if (txtSearch != null) txtSearch.Location = new Point(this.Width - txtSearch.Width - rightMargin, 20);
 
             pnlMainContent.Location = new Point(0, 64);
             pnlMainContent.Size = new Size(this.Width, this.Height - 64);
 
             int availableWidth = pnlMainContent.Width - contentStartX - rightMargin;
-            Size shiftedSize = new Size(availableWidth, pnlMainContent.Height - 160);
+            Size shiftedSize = new Size(availableWidth, pnlMainContent.Height - 250);
             Point shiftedLocation = new Point(contentStartX, 110);
 
-            pnlHomeSummary.Bounds = pnlGridContainer.Bounds = pnlHistory.Bounds = new Rectangle(shiftedLocation, shiftedSize); ;
-            dgvInventory.Anchor = dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            dgvInventory.Size = dgvHistory.Size = new Size(pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
-            dgvInventory.Location = dgvHistory.Location = new Point(5, 5);
+            if (pnlHomeSummary != null) pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+            if (pnlGridContainer != null) pnlGridContainer.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+            if (pnlHistory != null) pnlHistory.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+
+            if (dgvInventory != null && pnlGridContainer != null)
+            {
+                dgvInventory.Size = new Size(pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
+                dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                dgvInventory.Location = new Point(5, 5);
+            }
+            if (dgvHistory != null && pnlGridContainer != null)
+            {
+                dgvHistory.Size = new Size(pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
+                dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                dgvHistory.Location = new Point(5, 5);
+            }
 
             pnlSidebar.Location = new Point(0, 64);
             pnlSidebar.Height = this.Height - 64;
 
             int btnWidth = 150;
+            if (btnDelete != null) btnDelete.Location = new Point(this.Width - btnWidth - rightMargin, 30);
+            if (btnEdit != null && btnDelete != null) btnEdit.Location = new Point(btnDelete.Left - btnWidth - 40, 30);
+            if (btnCreate != null && btnEdit != null) btnCreate.Location = new Point(btnEdit.Left - btnWidth - 40, 30);
 
-            btnDelete.Location = new Point(this.Width - btnWidth - rightMargin, 30);
-            btnEdit.Location = new Point(btnDelete.Left - btnWidth - 40, 30);
-            btnCreate.Location = new Point(btnEdit.Left - btnWidth - 40, 30);
-
-            if (pnlHomeSummary.Visible)
+            if (btnClearActivity != null && pnlHomeSummary != null)
             {
-                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize);
-
-                // 1. FORCE the button into the panel so the coordinates calculate correctly
                 btnClearActivity.Parent = pnlHomeSummary;
-
-                // 2. Tell WinForms to keep it locked to the top right corner
                 btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-
-                // 3. Set the location (Panel Width - Button Width - 20px margin)
                 btnClearActivity.Location = new Point(pnlHomeSummary.Width - btnClearActivity.Width - 20, 20);
+            }
+            if (lblUrgentHeader != null) lblUrgentHeader.Location = new Point(20, 30);
 
-                // 4. Set the Urgent Header to the top left
-                lblUrgentHeader.Location = new Point(20, 30);
-
-                // 5. Place the activity feed safely below them
-                flowRecentActivity.Location = new Point(20, lblUrgentHeader.Bottom + 20);
-                flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
-
+            if (pnlHomeSummary != null && pnlHomeSummary.Visible)
+            {
+                if (flowRecentActivity != null && lblUrgentHeader != null)
+                {
+                    flowRecentActivity.Location = new Point(20, lblUrgentHeader.Bottom + 20);
+                    flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
+                }
                 pnlHomeSummary.BringToFront();
             }
 
             pnlSidebar.BringToFront();
             UpdateSidebarInternalUI();
+
+            if (pnlHomeSummary != null) pnlHomeSummary.ResumeLayout(false);
+            pnlMainContent.ResumeLayout(false);
+            this.ResumeLayout(true);
         }
 
         private void UpdateSidebarInternalUI()
         {
+            if (pnlSidebar == null) return;
             pnlSidebar.SuspendLayout();
 
             int currentWidth = pnlSidebar.Width;
@@ -600,23 +680,25 @@ namespace Ventrix.App
             bool expanded = currentWidth > 200;
 
             int picSize = expanded ? 45 : 40;
-            picUser.SetBounds(expanded ? 15 : 12, 25, picSize, picSize);
+            if (picUser != null) picUser.SetBounds(expanded ? 15 : 12, 25, picSize, picSize);
 
-            lblOwnerRole.Visible = cmbAccountActions.Visible = expanded;
+            if (lblOwnerRole != null) lblOwnerRole.Visible = expanded;
+            if (cmbAccountActions != null) cmbAccountActions.Visible = expanded;
+
             if (expanded)
             {
-                lblOwnerRole.Location = new Point(70, 25);
-                cmbAccountActions.SetBounds(65, 42, 160, 30);
+                if (lblOwnerRole != null) lblOwnerRole.Location = new Point(70, 25);
+                if (cmbAccountActions != null) cmbAccountActions.SetBounds(65, 42, 160, 30);
             }
 
             bool showNav = currentWidth > 100;
-            btnHome.Visible = showNav;
-            btnHistoryNav.Visible = showNav;
+            if (btnHome != null) btnHome.Visible = showNav;
+            if (btnHistoryNav != null) btnHistoryNav.Visible = showNav;
 
             if (showNav)
             {
-                btnHome.SetBounds(10, 90, contentWidth, 45);
-                btnHistoryNav.SetBounds(10, 140, contentWidth, 45);
+                if (btnHome != null) btnHome.SetBounds(10, 90, contentWidth, 45);
+                if (btnHistoryNav != null) btnHistoryNav.SetBounds(10, 140, contentWidth, 45);
             }
 
             int cardY = 200;
@@ -624,8 +706,11 @@ namespace Ventrix.App
 
             for (int i = 0; i < cards.Length; i++)
             {
-                cards[i].SetBounds(10, cardY, contentWidth, 110);
-                cardY += 120;
+                if (cards[i] != null)
+                {
+                    cards[i].SetBounds(10, cardY, contentWidth, 110);
+                    cardY += 120;
+                }
             }
 
             pnlSidebar.ResumeLayout(false);
@@ -634,10 +719,6 @@ namespace Ventrix.App
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            if (lblDashboardHeader.Font.Name != "Segoe UI")
-            {
-                ApplyModernBranding();
-            }
         }
 
         protected override void OnActivated(EventArgs e)
@@ -649,10 +730,7 @@ namespace Ventrix.App
         protected override void OnLayout(LayoutEventArgs levent)
         {
             base.OnLayout(levent);
-            if (lblDashboardHeader != null)
-            {
-                ApplyModernBranding();
-            }
+            // FIX: Removed ApplyModernBranding() from here as it creates an infinite layout loop causing UI freezes.
         }
 
         private async Task ClearRecentActivity()
@@ -669,16 +747,10 @@ namespace Ventrix.App
             {
                 try
                 {
-                    // 1. Delete from Database
                     await _borrowService.ClearAllActivityAsync();
-
-                    // 2. Clear the UI Flow Panel
                     flowRecentActivity.Controls.Clear();
-
-                    // 3. Refresh the UI to show the empty state or headers
                     await LoadHomeContent();
                     await UpdateDashboardCounts();
-
                     MessageBox.Show("All activity records have been cleared.", "Success");
                 }
                 catch (Exception ex)
@@ -688,6 +760,5 @@ namespace Ventrix.App
             }
         }
         #endregion
-
     }
 }

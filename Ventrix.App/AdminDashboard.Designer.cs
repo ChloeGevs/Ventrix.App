@@ -409,7 +409,7 @@
             // btnHamburger
             // 
             btnHamburger.BackColor = Color.Transparent;
-            btnHamburger.Image = (Image)resources.GetObject("btnHamburger.Image");
+            btnHamburger.Image = Properties.Resources.burger_icon;
             btnHamburger.ImageOffset = new Point(0, 0);
             btnHamburger.ImageRotate = 0F;
             btnHamburger.Location = new Point(35, 45);
@@ -480,6 +480,7 @@
             // 
             dataGridViewCellStyle1.BackColor = Color.White;
             dgvInventory.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = Color.FromArgb(100, 88, 255);
             dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
@@ -497,7 +498,6 @@
             dataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(71, 69, 94);
             dataGridViewCellStyle3.WrapMode = DataGridViewTriState.False;
             dgvInventory.DefaultCellStyle = dataGridViewCellStyle3;
-            dgvInventory.Dock = DockStyle.Fill;
             dgvInventory.GridColor = Color.FromArgb(231, 229, 255);
             dgvInventory.Location = new Point(0, 0);
             dgvInventory.Name = "dgvInventory";
@@ -543,6 +543,7 @@
             // 
             dataGridViewCellStyle4.BackColor = Color.White;
             dgvHistory.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle4;
+            dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             dataGridViewCellStyle5.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle5.BackColor = Color.FromArgb(13, 71, 161);
             dataGridViewCellStyle5.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
@@ -627,4 +628,4 @@
         private Ventrix.App.Controls.MetricCard cardTotal, cardAvailable, cardBorrowers, cardPending;
 
     }
-}   
+}
