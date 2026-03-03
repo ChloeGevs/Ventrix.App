@@ -13,7 +13,7 @@ namespace Ventrix.Domain.Models
         public string MiddleName { get; set; }
         public string Suffix { get; set; }
         public UserRole Role { get; set; } 
-        public string Password { get; set; }
+        public string? Password { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public string FullName => $"{FirstName} {LastName} {Suffix}".Trim();

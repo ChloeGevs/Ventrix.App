@@ -51,9 +51,10 @@ namespace Ventrix.Application.Services
                 UserId = new Random().Next(20240000, 20249999).ToString(),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
+                MiddleName = dto.MiddleName,
                 Suffix = dto.Suffix,
                 Role = Enum.TryParse<UserRole>(dto.Role, out var parsedRole) ? parsedRole : UserRole.Student,
-                Password = dto.Password, // Make sure your DTO is passing this!
+                Password = null,
                 CreatedAt = DateTime.Now
             };
 

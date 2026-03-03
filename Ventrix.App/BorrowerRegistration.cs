@@ -59,19 +59,15 @@ namespace Ventrix.App
 
                     LastName = txtLastName.Text,
                     Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text,
+                    Role = cmbRole.SelectedItem?.ToString() ?? "Student"
 
-                    // Grab the role from your dropdown (assuming it's named cmbRole)
-                    Role = cmbRole.SelectedItem?.ToString() ?? "Student",
-
-                    // WE MUST PROVIDE A PASSWORD! Let's default it to their last name lowercase
-                    Password = txtLastName.Text.ToLower() + "123"
                 };
 
                 // 2. Send the DTO to your EF Core service AND get the generated user back
                 var registeredUser = await _userService.RegisterNewBorrowerAsync(registrationData);
 
                 // 3. Success! Show them their new automatically generated ID
-                string successMessage = $"Registration successful!\n\nYour Student ID is: {registeredUser.UserId}\nYour Password is: {registrationData.Password}\n\nPlease write this down.";
+                string successMessage = $"Registration successful!\n\nYour Student ID is: {registeredUser.UserId}\n\nPlease write this down.";
                 MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // 4. Open the portal
