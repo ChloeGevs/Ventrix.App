@@ -195,6 +195,7 @@
             // 
             // cardTotal
             // 
+            cardTotal.Cursor = Cursors.Hand;
             cardTotal.Location = new Point(0, 0);
             cardTotal.Name = "cardTotal";
             cardTotal.Size = new Size(200, 110);
@@ -202,6 +203,7 @@
             // 
             // cardAvailable
             // 
+            cardAvailable.Cursor = Cursors.Hand;
             cardAvailable.Location = new Point(0, 0);
             cardAvailable.Name = "cardAvailable";
             cardAvailable.Size = new Size(200, 110);
@@ -209,6 +211,7 @@
             // 
             // cardBorrowers
             // 
+            cardBorrowers.Cursor = Cursors.Hand;
             cardBorrowers.Location = new Point(0, 0);
             cardBorrowers.Name = "cardBorrowers";
             cardBorrowers.Size = new Size(200, 110);
@@ -216,6 +219,7 @@
             // 
             // cardPending
             // 
+            cardPending.Cursor = Cursors.Hand;
             cardPending.Location = new Point(0, 0);
             cardPending.Name = "cardPending";
             cardPending.Size = new Size(200, 110);

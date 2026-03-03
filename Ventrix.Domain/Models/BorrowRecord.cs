@@ -17,8 +17,12 @@ namespace Ventrix.Domain.Models
 
         [ForeignKey("InventoryItemId")]
         public virtual InventoryItem Item { get; set; }
+        [NotMapped]
         public string BorrowerId { get; set; }
+
+        [NotMapped]
         public string ItemName { get; set; }
+
         public string GradeLevel { get; set; }
 
         public int Quantity { get; set; }

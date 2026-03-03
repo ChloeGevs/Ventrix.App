@@ -12,11 +12,11 @@ namespace Ventrix.Application.Services
     {
         private readonly AppDbContext _context;
 
-        // Inject the context once
         public InventoryService(AppDbContext context)
         {
             _context = context;
         }
+
         public async Task AddItemAsync(string name, string category, string status, string condition)
         {
             var newItem = new InventoryItem
@@ -29,10 +29,9 @@ namespace Ventrix.Application.Services
             };
 
             _context.InventoryItems.Add(newItem);
-            await _context.SaveChangesAsync(); // No need for the 'using' block anymore
+            await _context.SaveChangesAsync();
         }
 
-        // Notice: 'Task<List<...>>' instead of just 'List<...>'
         public async Task<List<InventoryItem>> GetAllItemsAsync()
         {
             return await _context.InventoryItems.ToListAsync();
@@ -40,60 +39,47 @@ namespace Ventrix.Application.Services
 
         public async Task<List<InventoryItem>> GetFilteredInventoryAsync(string statusFilter = "All", string searchTerm = "")
         {
-            using (var db = new AppDbContext())
+            var query = _context.InventoryItems.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                var query = db.InventoryItems.AsQueryable();
-
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    searchTerm = searchTerm.ToLower();
-                    query = query.Where(i => i.Name.ToLower().Contains(searchTerm));
-                }
-
-                if (statusFilter != "All" && Enum.TryParse(statusFilter, out ItemStatus filterEnum))
-                {
-                    query = query.Where(i => i.Status == filterEnum);
-                }
-
-                return await query.ToListAsync();
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(i => i.Name.ToLower().Contains(searchTerm));
             }
+
+            if (statusFilter != "All" && Enum.TryParse(statusFilter, out ItemStatus filterEnum))
+            {
+                query = query.Where(i => i.Status == filterEnum);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task<InventoryItem> GetItemByIdAsync(int id)
         {
-            using (var db = new AppDbContext())
-            {
-                return await db.InventoryItems.FindAsync(id);
-            }
+            return await _context.InventoryItems.FindAsync(id);
         }
 
         public async Task UpdateItemAsync(int id, string name, string category, string status, string condition)
         {
-            using (var db = new AppDbContext())
+            var item = await _context.InventoryItems.FindAsync(id);
+            if (item != null)
             {
-                var item = await db.InventoryItems.FindAsync(id);
-                if (item != null)
-                {
-                    item.Name = name;
-                    item.Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category);
-                    item.Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status);
-                    item.Condition = condition;
-                    await db.SaveChangesAsync();
-                }
+                item.Name = name;
+                item.Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category);
+                item.Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status);
+                item.Condition = condition;
+                await _context.SaveChangesAsync();
             }
         }
 
-        // Notice: 'Task' instead of 'void' (Fixes CS4008 Cannot await void)
         public async Task DeleteItemAsync(int id)
         {
-            using (var db = new AppDbContext())
+            var item = await _context.InventoryItems.FindAsync(id);
+            if (item != null)
             {
-                var item = await db.InventoryItems.FindAsync(id);
-                if (item != null)
-                {
-                    db.InventoryItems.Remove(item);
-                    await db.SaveChangesAsync();
-                }
+                _context.InventoryItems.Remove(item);
+                await _context.SaveChangesAsync();
             }
         }
     }
