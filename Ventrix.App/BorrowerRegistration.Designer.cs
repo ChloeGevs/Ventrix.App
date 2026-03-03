@@ -28,13 +28,13 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             regTableLayout = new TableLayoutPanel();
             pnlRegCard = new Guna.UI2.WinForms.Guna2Panel();
+            lblLoginLink = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             cmbRole = new Guna.UI2.WinForms.Guna2ComboBox();
             txtFirstName = new Guna.UI2.WinForms.Guna2TextBox();
             txtLastName = new Guna.UI2.WinForms.Guna2TextBox();
             txtMiddleName = new Guna.UI2.WinForms.Guna2TextBox();
             btnRegister = new Guna.UI2.WinForms.Guna2Button();
-            lblLoginLink = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtSuffix = new Guna.UI2.WinForms.Guna2TextBox();
             chkNoSuffix = new Guna.UI2.WinForms.Guna2CheckBox();
             regTableLayout.SuspendLayout();
@@ -51,38 +51,48 @@
             regTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             regTableLayout.Controls.Add(pnlRegCard, 1, 1);
             regTableLayout.Dock = DockStyle.Fill;
-            regTableLayout.Location = new Point(3, 64);
+            regTableLayout.Location = new Point(0, 0);
             regTableLayout.Name = "regTableLayout";
             regTableLayout.RowCount = 3;
             regTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             regTableLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 750F));
             regTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            regTableLayout.Size = new Size(1194, 783);
+            regTableLayout.Size = new Size(1200, 850);
             regTableLayout.TabIndex = 0;
             // 
             // pnlRegCard
             // 
             pnlRegCard.BackColor = Color.Transparent;
             pnlRegCard.BorderRadius = 15;
+            pnlRegCard.Controls.Add(lblLoginLink);
             pnlRegCard.Controls.Add(lblHeader);
             pnlRegCard.Controls.Add(cmbRole);
             pnlRegCard.Controls.Add(txtFirstName);
             pnlRegCard.Controls.Add(txtLastName);
             pnlRegCard.Controls.Add(txtMiddleName);
             pnlRegCard.Controls.Add(btnRegister);
-            pnlRegCard.Controls.Add(lblLoginLink);
             pnlRegCard.Controls.Add(txtSuffix);
             pnlRegCard.Controls.Add(chkNoSuffix);
             pnlRegCard.CustomizableEdges = customizableEdges13;
             pnlRegCard.Dock = DockStyle.Fill;
             pnlRegCard.FillColor = Color.White;
-            pnlRegCard.Location = new Point(350, 19);
+            pnlRegCard.Location = new Point(353, 53);
             pnlRegCard.Name = "pnlRegCard";
             pnlRegCard.ShadowDecoration.BorderRadius = 15;
             pnlRegCard.ShadowDecoration.CustomizableEdges = customizableEdges14;
             pnlRegCard.ShadowDecoration.Enabled = true;
             pnlRegCard.Size = new Size(494, 744);
             pnlRegCard.TabIndex = 0;
+            // 
+            // lblLoginLink
+            // 
+            lblLoginLink.BackColor = Color.Transparent;
+            lblLoginLink.Location = new Point(130, 605);
+            lblLoginLink.Name = "lblLoginLink";
+            lblLoginLink.Size = new Size(240, 22);
+            lblLoginLink.TabIndex = 8;
+            lblLoginLink.Text = "Already registered? <a href=\"#\" style=\"color: #1565C0; text-decoration: underline;\">Borrower Portal</a>";
+            lblLoginLink.MouseEnter += lblLoginLink_MouseEnter;
             // 
             // lblHeader
             // 
@@ -164,6 +174,7 @@
             // btnRegister
             // 
             btnRegister.BorderRadius = 10;
+            btnRegister.Cursor = Cursors.Hand;
             btnRegister.CustomizableEdges = customizableEdges9;
             btnRegister.FillColor = Color.FromArgb(13, 71, 161);
             btnRegister.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
@@ -174,15 +185,6 @@
             btnRegister.Size = new Size(380, 55);
             btnRegister.TabIndex = 7;
             btnRegister.Text = "REGISTER";
-            // 
-            // lblLoginLink
-            // 
-            lblLoginLink.BackColor = Color.Transparent;
-            lblLoginLink.Location = new Point(130, 605);
-            lblLoginLink.Name = "lblLoginLink";
-            lblLoginLink.Size = new Size(240, 22);
-            lblLoginLink.TabIndex = 8;
-            lblLoginLink.Text = "Already registered? <font color='#1565C0'><u>Borrower Portal</u></font>";
             // 
             // txtSuffix
             // 
@@ -213,12 +215,14 @@
             chkNoSuffix.Text = "None";
             chkNoSuffix.UncheckedState.BorderRadius = 0;
             chkNoSuffix.UncheckedState.BorderThickness = 0;
+            chkNoSuffix.CheckedChanged += chkNoSuffix_CheckedChanged;
             // 
             // BorrowerRegistration
             // 
             ClientSize = new Size(1200, 850);
             Controls.Add(regTableLayout);
             Name = "BorrowerRegistration";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Ventrix | Registration Portal";
             regTableLayout.ResumeLayout(false);
             pnlRegCard.ResumeLayout(false);

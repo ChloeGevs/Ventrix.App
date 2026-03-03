@@ -1,12 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.IO;
+using Ventrix.Application.Services;
 using Ventrix.Infrastructure;
-using Ventrix.Infrastructure.Repositories;
-using Ventrix.Application.Services;
-using Ventrix.Domain.Interfaces;
-using Ventrix.Application.Services;
+using Ventrix.Infrastructure.Data;
+// Notice we removed the Repositories and Interfaces 'using' statements here!
 
 namespace Ventrix.App
 {
@@ -30,13 +30,9 @@ namespace Ventrix.App
             // 3. Setup DI Container
             var services = new ServiceCollection();
 
-            // Infrastructure (Database & Repositories)
+            // Infrastructure (Database only - Repositories removed!)
             string connectionString = config.GetConnectionString("DefaultConnection");
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IInventoryRepository, InventoryRepository>();
-            services.AddScoped<IBorrowRepository, BorrowRepository>();
 
             // Application Services (Business Logic)
             services.AddScoped<UserService>();
@@ -46,6 +42,8 @@ namespace Ventrix.App
             // UI Forms
             services.AddTransient<InitializingApp>();
             services.AddTransient<AdminDashboard>();
+            services.AddTransient<BorrowerPortal>();       // Good practice to register all your forms
+            services.AddTransient<BorrowerRegistration>(); // Good practice to register all your forms
 
             var serviceProvider = services.BuildServiceProvider();
 

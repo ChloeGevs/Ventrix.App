@@ -113,7 +113,8 @@ namespace Ventrix.App
             pnlHistory.Visible = (viewName == "History");
 
             // 2. Handle CRUD button visibility
-            btnCreate.Visible = btnEdit.Visible = btnDelete.Visible = (viewName == "Inventory");
+            btnCreate.Visible = btnEdit.Visible = btnDelete.Visible =
+                (viewName == "Inventory" && filter != "Borrowed" && filter != "Borrower List");
 
             switch (viewName)
             {
@@ -567,8 +568,20 @@ namespace Ventrix.App
             {
                 pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize);
 
-                lblUrgentHeader.Location = new Point(20, btnClearActivity.Bottom + 15);
-                flowRecentActivity.Location = new Point(20, lblUrgentHeader.Bottom + 10);
+                // 1. FORCE the button into the panel so the coordinates calculate correctly
+                btnClearActivity.Parent = pnlHomeSummary;
+
+                // 2. Tell WinForms to keep it locked to the top right corner
+                btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+
+                // 3. Set the location (Panel Width - Button Width - 20px margin)
+                btnClearActivity.Location = new Point(pnlHomeSummary.Width - btnClearActivity.Width - 20, 20);
+
+                // 4. Set the Urgent Header to the top left
+                lblUrgentHeader.Location = new Point(20, 30);
+
+                // 5. Place the activity feed safely below them
+                flowRecentActivity.Location = new Point(20, lblUrgentHeader.Bottom + 20);
                 flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
 
                 pnlHomeSummary.BringToFront();

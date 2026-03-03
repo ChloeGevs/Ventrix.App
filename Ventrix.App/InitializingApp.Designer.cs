@@ -35,7 +35,7 @@
             // pnlBackground
             // 
             pnlBackground.BackgroundImage = Properties.Resources._5;
-            pnlBackground.BorderRadius = 30; // Matches form radius
+            pnlBackground.BorderRadius = 30;
             pnlBackground.Controls.Add(guna2HtmlLabel2);
             pnlBackground.Controls.Add(guna2HtmlLabel1);
             pnlBackground.Controls.Add(picLogo);
@@ -55,22 +55,22 @@
             // guna2HtmlLabel2
             // 
             guna2HtmlLabel2.BackColor = Color.Transparent;
-            guna2HtmlLabel2.Font = new Font("Sitka Banner", 11F);
+            guna2HtmlLabel2.Font = new Font("Sitka Banner", 12F);
             guna2HtmlLabel2.ForeColor = Color.White;
-            guna2HtmlLabel2.Location = new Point(204, 273);
+            guna2HtmlLabel2.Location = new Point(182, 284);
             guna2HtmlLabel2.Name = "guna2HtmlLabel2";
-            guna2HtmlLabel2.Size = new Size(300, 28);
+            guna2HtmlLabel2.Size = new Size(332, 31);
             guna2HtmlLabel2.TabIndex = 4;
             guna2HtmlLabel2.Text = "Computer Laboratory Management System";
             // 
             // guna2HtmlLabel1
             // 
             guna2HtmlLabel1.BackColor = Color.Transparent;
-            guna2HtmlLabel1.Font = new Font("Sitka Heading", 20F);
+            guna2HtmlLabel1.Font = new Font("Sitka Heading", 25.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             guna2HtmlLabel1.ForeColor = Color.White;
-            guna2HtmlLabel1.Location = new Point(289, 227);
+            guna2HtmlLabel1.Location = new Point(263, 227);
             guna2HtmlLabel1.Name = "guna2HtmlLabel1";
-            guna2HtmlLabel1.Size = new Size(131, 50);
+            guna2HtmlLabel1.Size = new Size(170, 64);
             guna2HtmlLabel1.TabIndex = 3;
             guna2HtmlLabel1.Text = "VENTRIX";
             // 
@@ -80,7 +80,7 @@
             picLogo.CustomizableEdges = customizableEdges1;
             picLogo.Image = Properties.Resources.Logo;
             picLogo.ImageRotate = 0F;
-            picLogo.Location = new Point(222, 30);
+            picLogo.Location = new Point(216, 30);
             picLogo.Name = "picLogo";
             picLogo.ShadowDecoration.CustomizableEdges = customizableEdges2;
             picLogo.Size = new Size(264, 191);
@@ -93,7 +93,7 @@
             lblStatus.BackColor = Color.Transparent;
             lblStatus.Font = new Font("Sitka Text", 11F);
             lblStatus.ForeColor = Color.White;
-            lblStatus.Location = new Point(54, 379);
+            lblStatus.Location = new Point(48, 379);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(600, 38);
             lblStatus.TabIndex = 1;
@@ -123,12 +123,12 @@
             // 
             // guna2ShadowForm1
             // 
-            guna2ShadowForm1.BorderRadius = 30; // Match the BorderlessForm radius
+            guna2ShadowForm1.BorderRadius = 30;
             guna2ShadowForm1.TargetForm = this;
             // 
             // guna2BorderlessForm1
             // 
-            guna2BorderlessForm1.BorderRadius = 30; // This creates the rounded corners
+            guna2BorderlessForm1.BorderRadius = 30;
             guna2BorderlessForm1.ContainerControl = this;
             guna2BorderlessForm1.DockIndicatorTransparencyValue = 0.6D;
             guna2BorderlessForm1.TransparentWhileDrag = true;

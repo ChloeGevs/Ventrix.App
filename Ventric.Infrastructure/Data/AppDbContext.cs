@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Ventrix.Domain.Models;
 
-namespace Ventrix.Infrastructure
+namespace Ventrix.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {

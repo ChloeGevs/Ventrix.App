@@ -38,10 +38,10 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             mainTableLayout = new TableLayoutPanel();
             pnlLoginCard = new Guna.UI2.WinForms.Guna2Panel();
+            lblCreateAccount = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
             lblEquipmentList = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            lblCreateAccount = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            btnStaffToggle = new Guna.UI2.WinForms.Guna2Button();
+            btnAdminToggle = new Guna.UI2.WinForms.Guna2Button();
             btnStudentToggle = new Guna.UI2.WinForms.Guna2Button();
             lblLoginHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtStudentId = new Guna.UI2.WinForms.Guna2TextBox();
@@ -83,10 +83,10 @@
             // 
             pnlLoginCard.BackColor = Color.Transparent;
             pnlLoginCard.BorderRadius = 20;
+            pnlLoginCard.Controls.Add(lblCreateAccount);
             pnlLoginCard.Controls.Add(txtPassword);
             pnlLoginCard.Controls.Add(lblEquipmentList);
-            pnlLoginCard.Controls.Add(lblCreateAccount);
-            pnlLoginCard.Controls.Add(btnStaffToggle);
+            pnlLoginCard.Controls.Add(btnAdminToggle);
             pnlLoginCard.Controls.Add(btnStudentToggle);
             pnlLoginCard.Controls.Add(lblLoginHeader);
             pnlLoginCard.Controls.Add(txtStudentId);
@@ -109,6 +109,16 @@
             pnlLoginCard.ShadowDecoration.Enabled = true;
             pnlLoginCard.Size = new Size(594, 744);
             pnlLoginCard.TabIndex = 0;
+            // 
+            // lblCreateAccount
+            // 
+            lblCreateAccount.BackColor = Color.Transparent;
+            lblCreateAccount.Font = new Font("Sitka Banner", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCreateAccount.Location = new Point(218, 630);
+            lblCreateAccount.Name = "lblCreateAccount";
+            lblCreateAccount.Size = new Size(172, 26);
+            lblCreateAccount.TabIndex = 12;
+            lblCreateAccount.Text = "No account? <a href=\"#\" style=\"color: #1565C0; text-decoration: underline;\">Register here</a>";
             // 
             // txtPassword
             // 
@@ -138,32 +148,24 @@
             lblEquipmentList.TabIndex = 16;
             lblEquipmentList.Text = "List of Equipments";
             // 
-            // lblCreateAccount
+            // btnAdminToggle
             // 
-            lblCreateAccount.BackColor = Color.Transparent;
-            lblCreateAccount.Font = new Font("Sitka Banner", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCreateAccount.Location = new Point(218, 630);
-            lblCreateAccount.Name = "lblCreateAccount";
-            lblCreateAccount.Size = new Size(180, 28);
-            lblCreateAccount.TabIndex = 12;
-            lblCreateAccount.Text = "No account? <font color=\"#1565C0\"><u>Register here</u></font>";
-            // 
-            // btnStaffToggle
-            // 
-            btnStaffToggle.BorderRadius = 10;
-            btnStaffToggle.CustomizableEdges = customizableEdges3;
-            btnStaffToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnStaffToggle.ForeColor = Color.White;
-            btnStaffToggle.Location = new Point(75, 116);
-            btnStaffToggle.Name = "btnStaffToggle";
-            btnStaffToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnStaffToggle.Size = new Size(186, 61);
-            btnStaffToggle.TabIndex = 0;
-            btnStaffToggle.Text = "ADMIN LOGIN";
+            btnAdminToggle.BorderRadius = 10;
+            btnAdminToggle.Cursor = Cursors.Hand;
+            btnAdminToggle.CustomizableEdges = customizableEdges3;
+            btnAdminToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnAdminToggle.ForeColor = Color.White;
+            btnAdminToggle.Location = new Point(75, 116);
+            btnAdminToggle.Name = "btnAdminToggle";
+            btnAdminToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            btnAdminToggle.Size = new Size(186, 61);
+            btnAdminToggle.TabIndex = 0;
+            btnAdminToggle.Text = "ADMIN";
             // 
             // btnStudentToggle
             // 
             btnStudentToggle.BorderRadius = 10;
+            btnStudentToggle.Cursor = Cursors.Hand;
             btnStudentToggle.CustomizableEdges = customizableEdges5;
             btnStudentToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnStudentToggle.ForeColor = Color.White;
@@ -272,6 +274,7 @@
             // btnReturn
             // 
             btnReturn.BorderRadius = 12;
+            btnReturn.Cursor = Cursors.Hand;
             btnReturn.CustomizableEdges = customizableEdges15;
             btnReturn.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnReturn.ForeColor = Color.White;
@@ -285,6 +288,7 @@
             // btnBorrow
             // 
             btnBorrow.BorderRadius = 12;
+            btnBorrow.Cursor = Cursors.Hand;
             btnBorrow.CustomizableEdges = customizableEdges17;
             btnBorrow.FillColor = Color.Teal;
             btnBorrow.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -346,7 +350,7 @@
 
         private System.Windows.Forms.TableLayoutPanel mainTableLayout;
         private Guna.UI2.WinForms.Guna2Panel pnlLoginCard;
-        private Guna.UI2.WinForms.Guna2Button btnStaffToggle;
+        private Guna.UI2.WinForms.Guna2Button btnAdminToggle;
         private Guna.UI2.WinForms.Guna2Button btnStudentToggle;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblLoginHeader;
         private Guna.UI2.WinForms.Guna2TextBox txtStudentId;

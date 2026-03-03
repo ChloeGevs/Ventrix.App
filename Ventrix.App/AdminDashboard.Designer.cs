@@ -593,6 +593,7 @@
             Controls.Add(pnlMainContent);
             Controls.Add(pnlTopBar);
             Name = "AdminDashboard";
+            StartPosition = FormStartPosition.CenterScreen;
             pnlHomeSummary.ResumeLayout(false);
             pnlHomeSummary.PerformLayout();
             pnlSidebar.ResumeLayout(false);

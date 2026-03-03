@@ -1,8 +1,9 @@
-﻿using System; // Required for Enum and Random
+﻿using System;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
+using Ventrix.Application.DTOs; // Added for RegisterDto
 
 namespace Ventrix.App
 {
@@ -23,9 +24,11 @@ namespace Ventrix.App
 
         private void InitializeEventHandlers()
         {
-            btnRegister.Click += async (s, e) => await BtnRegister_Click(s, e);
+            // Event wire-up works perfectly with the new async void method
+            btnRegister.Click += btnRegister_Click;
 
-            lblLoginLink.Click += (s, e) => {
+            lblLoginLink.Click += (s, e) =>
+            {
                 var portal = System.Windows.Forms.Application.OpenForms["BorrowerPortal"];
 
                 if (portal != null)
@@ -42,32 +45,69 @@ namespace Ventrix.App
             };
         }
 
-        private async Task BtnRegister_Click(object sender, EventArgs e)
+        // Changed to 'async void' so we can await the EF Core service
+        private async void btnRegister_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtFirstName.Text) || string.IsNullOrWhiteSpace(txtLastName.Text))
-            {
-                MessageBox.Show("Please fill in all required fields.");
-                return;
-            }
-
-            // 1. Package the UI text into the DTO (No need to create random IDs or parse Enums here anymore!)
-            var dto = new Ventrix.Application.DTOs.RegisterDto
-            {
-                FirstName = txtFirstName.Text,
-                LastName = txtLastName.Text,
-                Role = cmbRole.Text, // Pass the raw string from the dropdown
-                Password = "123"     // Default password for now
-            };
-
             try
             {
-                // 2. Pass the DTO to the service
-                await _userService.RegisterNewBorrowerAsync(dto);
-                this.DialogResult = DialogResult.OK;
+                // 1. Package ALL the form data into your DTO
+                var registrationData = new Ventrix.Application.DTOs.RegisterDto
+                {
+                    FirstName = txtFirstName.Text,
+
+                    MiddleName = txtMiddleName.Text,
+
+                    LastName = txtLastName.Text,
+                    Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text,
+
+                    // Grab the role from your dropdown (assuming it's named cmbRole)
+                    Role = cmbRole.SelectedItem?.ToString() ?? "Student",
+
+                    // WE MUST PROVIDE A PASSWORD! Let's default it to their last name lowercase
+                    Password = txtLastName.Text.ToLower() + "123"
+                };
+
+                // 2. Send the DTO to your EF Core service AND get the generated user back
+                var registeredUser = await _userService.RegisterNewBorrowerAsync(registrationData);
+
+                // 3. Success! Show them their new automatically generated ID
+                string successMessage = $"Registration successful!\n\nYour Student ID is: {registeredUser.UserId}\nYour Password is: {registrationData.Password}\n\nPlease write this down.";
+                MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // 4. Open the portal
+                BorrowerPortal portal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+                portal.Show();
+                this.Hide();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                // THIS WILL SHOW YOU THE EXACT DATABASE ERROR!
+                string errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += "\n\nInner Details: " + ex.InnerException.Message;
+                }
+
+                MessageBox.Show(errorMessage, "Registration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void lblLoginLink_MouseEnter(object sender, EventArgs e)
+        {
+            lblLoginLink.Cursor = Cursors.Hand;
+        }
+
+        private void chkNoSuffix_CheckedChanged(object sender, EventArgs e)
+        {
+            // If the "None" box is checked
+            if (chkNoSuffix.Checked)
+            {
+                txtSuffix.Enabled = false;
+                txtSuffix.Clear();
+            }
+            else
+            {
+                txtSuffix.Enabled = true;
             }
         }
     }

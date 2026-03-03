@@ -1,54 +1,66 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Ventrix.Domain.Interfaces;
-using Ventrix.Domain.Models; // Ensure we have the Enums
-using Ventrix.Application.DTOs; // Your new DTO namespace
+using Microsoft.EntityFrameworkCore;
+using Ventrix.Domain.Models;
+using Ventrix.Application.DTOs;
+using Ventrix.Infrastructure.Data;
 
 namespace Ventrix.Application.Services
 {
     public class UserService
     {
-        private readonly IUserRepository _userRepo;
+        private readonly AppDbContext _context;
 
-        public UserService(IUserRepository userRepo)
+        public UserService(AppDbContext context)
         {
-            _userRepo = userRepo;
+            _context = context;
         }
 
         public async Task InitializeDefaultAdminAsync()
         {
-            await _userRepo.SeedAdminUserAsync();
+            var adminExists = await _context.Users.AnyAsync(u => u.Role == UserRole.Admin);
+            if (!adminExists)
+            {
+                var admin = new User
+                {
+                    UserId = "admin",
+                    Password = "password", // Remember to hash in a real app!
+                    FirstName = "System",
+                    LastName = "Admin",
+                    Role = UserRole.Admin
+                };
+                _context.Users.Add(admin);
+                await _context.SaveChangesAsync();
+            }
         }
 
-        // Updated to accept the LoginDto
         public async Task<User> LoginAsync(LoginDto dto)
         {
-            // Pass the DTO's properties down to your existing repository method
-            return await _userRepo.GetByCredentialsAsync(dto.UserId, dto.Password);
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.UserId == dto.UserId && u.Password == dto.Password);
         }
 
-        // Updated to accept the RegisterDto
-        public async Task RegisterNewBorrowerAsync(RegisterDto dto)
+        // Notice we changed Task to Task<User>
+        public async Task<User> RegisterNewBorrowerAsync(RegisterDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.LastName))
                 throw new ArgumentException("Names are required for registration.");
 
-            // Map the lightweight DTO into your full Domain Model
             var newUser = new User
             {
                 UserId = new Random().Next(20240000, 20249999).ToString(),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
-
-                // Parse the string from the DTO into the Enum securely
+                Suffix = dto.Suffix,
                 Role = Enum.TryParse<UserRole>(dto.Role, out var parsedRole) ? parsedRole : UserRole.Student,
-
-                Password = dto.Password,
+                Password = dto.Password, // Make sure your DTO is passing this!
                 CreatedAt = DateTime.Now
             };
 
-            // Send the fully formed entity to the repository
-            await _userRepo.AddAsync(newUser);
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+
+            return newUser; // Return the user so the form can see the ID!
         }
     }
 }

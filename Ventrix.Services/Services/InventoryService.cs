@@ -1,40 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks; // REQUIRED FOR TASK
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Ventrix.Infrastructure;
 using Ventrix.Domain.Models;
+using Ventrix.Infrastructure.Data;
 
 namespace Ventrix.Application.Services
 {
     public class InventoryService
     {
-        // Notice: 'Task' instead of 'void'
+        private readonly AppDbContext _context;
+
+        // Inject the context once
+        public InventoryService(AppDbContext context)
+        {
+            _context = context;
+        }
         public async Task AddItemAsync(string name, string category, string status, string condition)
         {
-            using (var db = new AppDbContext())
+            var newItem = new InventoryItem
             {
-                var newItem = new InventoryItem
-                {
-                    Name = name,
-                    Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category),
-                    Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status),
-                    Condition = condition,
-                    DateAdded = DateTime.Now
-                };
-                db.InventoryItems.Add(newItem);
-                await db.SaveChangesAsync();
-            }
+                Name = name,
+                Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category),
+                Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status),
+                Condition = condition,
+                DateAdded = DateTime.Now
+            };
+
+            _context.InventoryItems.Add(newItem);
+            await _context.SaveChangesAsync(); // No need for the 'using' block anymore
         }
 
         // Notice: 'Task<List<...>>' instead of just 'List<...>'
         public async Task<List<InventoryItem>> GetAllItemsAsync()
         {
-            using (var db = new AppDbContext())
-            {
-                return await db.InventoryItems.ToListAsync();
-            }
+            return await _context.InventoryItems.ToListAsync();
         }
 
         public async Task<List<InventoryItem>> GetFilteredInventoryAsync(string statusFilter = "All", string searchTerm = "")
