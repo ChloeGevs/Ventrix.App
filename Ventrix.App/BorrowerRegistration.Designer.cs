@@ -128,7 +128,6 @@
             // 
             // txtFirstName
             // 
-            txtFirstName.BorderRadius = 10;
             txtFirstName.CustomizableEdges = customizableEdges3;
             txtFirstName.DefaultText = "";
             txtFirstName.Font = new Font("Segoe UI Variable Text", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -139,11 +138,11 @@
             txtFirstName.SelectedText = "";
             txtFirstName.ShadowDecoration.CustomizableEdges = customizableEdges4;
             txtFirstName.Size = new Size(380, 51);
+            txtFirstName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtFirstName.TabIndex = 2;
             // 
             // txtLastName
             // 
-            txtLastName.BorderRadius = 10;
             txtLastName.CustomizableEdges = customizableEdges5;
             txtLastName.DefaultText = "";
             txtLastName.Font = new Font("Segoe UI Variable Text", 10F);
@@ -154,11 +153,11 @@
             txtLastName.SelectedText = "";
             txtLastName.ShadowDecoration.CustomizableEdges = customizableEdges6;
             txtLastName.Size = new Size(380, 52);
+            txtLastName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtLastName.TabIndex = 3;
             // 
             // txtMiddleName
             // 
-            txtMiddleName.BorderRadius = 10;
             txtMiddleName.CustomizableEdges = customizableEdges7;
             txtMiddleName.DefaultText = "";
             txtMiddleName.Font = new Font("Segoe UI Variable Text", 10F);
@@ -169,6 +168,7 @@
             txtMiddleName.SelectedText = "";
             txtMiddleName.ShadowDecoration.CustomizableEdges = customizableEdges8;
             txtMiddleName.Size = new Size(380, 55);
+            txtMiddleName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtMiddleName.TabIndex = 4;
             // 
             // btnRegister
@@ -188,7 +188,6 @@
             // 
             // txtSuffix
             // 
-            txtSuffix.BorderRadius = 10;
             txtSuffix.CustomizableEdges = customizableEdges11;
             txtSuffix.DefaultText = "";
             txtSuffix.Font = new Font("Segoe UI Variable Text", 10F);
@@ -199,6 +198,7 @@
             txtSuffix.SelectedText = "";
             txtSuffix.ShadowDecoration.CustomizableEdges = customizableEdges12;
             txtSuffix.Size = new Size(200, 54);
+            txtSuffix.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtSuffix.TabIndex = 5;
             // 
             // chkNoSuffix
@@ -208,7 +208,7 @@
             chkNoSuffix.CheckedState.BorderThickness = 0;
             chkNoSuffix.CheckedState.FillColor = Color.FromArgb(13, 71, 161);
             chkNoSuffix.Font = new Font("Segoe UI Variable Text", 10F);
-            chkNoSuffix.Location = new Point(273, 424);
+            chkNoSuffix.Location = new Point(275, 428);
             chkNoSuffix.Name = "chkNoSuffix";
             chkNoSuffix.Size = new Size(121, 28);
             chkNoSuffix.TabIndex = 6;

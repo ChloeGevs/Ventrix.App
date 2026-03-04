@@ -38,9 +38,9 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             mainTableLayout = new TableLayoutPanel();
             pnlLoginCard = new Guna.UI2.WinForms.Guna2Panel();
+            lblEquipmentList = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblCreateAccount = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
-            lblEquipmentList = new Guna.UI2.WinForms.Guna2HtmlLabel();
             btnAdminToggle = new Guna.UI2.WinForms.Guna2Button();
             btnStudentToggle = new Guna.UI2.WinForms.Guna2Button();
             lblLoginHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
@@ -110,6 +110,15 @@
             pnlLoginCard.Size = new Size(594, 744);
             pnlLoginCard.TabIndex = 0;
             // 
+            // lblEquipmentList
+            // 
+            lblEquipmentList.BackColor = Color.Transparent;
+            lblEquipmentList.Location = new Point(61, 279);
+            lblEquipmentList.Name = "lblEquipmentList";
+            lblEquipmentList.Size = new Size(125, 22);
+            lblEquipmentList.TabIndex = 16;
+            lblEquipmentList.Text = "List of Equipments";
+            // 
             // lblCreateAccount
             // 
             lblCreateAccount.BackColor = Color.Transparent;
@@ -122,7 +131,6 @@
             // 
             // txtPassword
             // 
-            txtPassword.BorderRadius = 10;
             txtPassword.Cursor = Cursors.IBeam;
             txtPassword.CustomizableEdges = customizableEdges1;
             txtPassword.DefaultText = "";
@@ -136,18 +144,10 @@
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges2;
             txtPassword.Size = new Size(479, 50);
+            txtPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtPassword.TabIndex = 4;
             txtPassword.UseSystemPasswordChar = true;
             txtPassword.Visible = false;
-            // 
-            // lblEquipmentList
-            // 
-            lblEquipmentList.BackColor = Color.Transparent;
-            lblEquipmentList.Location = new Point(61, 279);
-            lblEquipmentList.Name = "lblEquipmentList";
-            lblEquipmentList.Size = new Size(125, 22);
-            lblEquipmentList.TabIndex = 16;
-            lblEquipmentList.Text = "List of Equipments";
             // 
             // btnAdminToggle
             // 
@@ -192,10 +192,10 @@
             // 
             // txtStudentId
             // 
-            txtStudentId.BorderRadius = 10;
             txtStudentId.CustomizableEdges = customizableEdges7;
             txtStudentId.DefaultText = "";
             txtStudentId.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.IconLeft = Properties.Resources.user;
             txtStudentId.Location = new Point(61, 211);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
@@ -203,6 +203,7 @@
             txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges8;
             txtStudentId.Size = new Size(479, 50);
+            txtStudentId.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtStudentId.TabIndex = 3;
             // 
             // cmbListEquipments
@@ -259,7 +260,6 @@
             // 
             // txtSubject
             // 
-            txtSubject.BorderRadius = 10;
             txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
             txtSubject.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -270,6 +270,7 @@
             txtSubject.SelectedText = "";
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges14;
             txtSubject.Size = new Size(317, 56);
+            txtSubject.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtSubject.TabIndex = 8;
             // 
             // btnReturn

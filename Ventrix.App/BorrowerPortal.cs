@@ -54,7 +54,7 @@ namespace Ventrix.App
                 // Show the password
                 txtPassword.UseSystemPasswordChar = false;
                 txtPassword.PasswordChar = '\0';
-                txtPassword.IconRight = Properties.Resources.hide; // Ensure you have these images in Resources
+                txtPassword.IconRight = Properties.Resources.hide;
             }
             else
             {

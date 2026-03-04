@@ -409,7 +409,7 @@
             // btnHamburger
             // 
             btnHamburger.BackColor = Color.Transparent;
-            btnHamburger.Image = Properties.Resources.burger_icon;
+            btnHamburger.Image = (Image)resources.GetObject("btnHamburger.Image");
             btnHamburger.ImageOffset = new Point(0, 0);
             btnHamburger.ImageRotate = 0F;
             btnHamburger.Location = new Point(35, 45);
