@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Ventrix.Application.Services;
@@ -25,11 +26,13 @@ namespace Ventrix.App
 
         private void SetupEvents()
         {
+            FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
+
             // Toggles
             btnAdminToggle.Click += (s, e) => ToggleMode("Admin");
             btnStudentToggle.Click += (s, e) => ToggleMode("Student");
 
-            // Actions - Wired cleanly now!
+            // Actions
             btnLogin.Click += BtnLogin_Click;
             btnBorrow.Click += BtnBorrow_Click;
             lblCreateAccount.Click += LblCreateAccount_Click;
@@ -37,6 +40,10 @@ namespace Ventrix.App
             txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
 
+            // Enter Key Support
+            txtPassword.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnLogin.PerformClick(); };
+            txtStudentId.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter && btnBorrow.Visible) btnBorrow.PerformClick(); else if (e.KeyCode == Keys.Enter && btnLogin.Visible) txtPassword.Focus(); };
+            txtSubject.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnBorrow.PerformClick(); };
 
             ToggleMode("Student");
 
@@ -45,37 +52,20 @@ namespace Ventrix.App
                 await _userService.InitializeDefaultAdminAsync();
                 await LoadEquipmentListAsync();
             };
+
         }
 
         private void TxtPassword_IconRightClick(object sender, EventArgs e)
         {
-            if (txtPassword.UseSystemPasswordChar)
-            {
-                // Show the password
-                txtPassword.UseSystemPasswordChar = false;
-                txtPassword.PasswordChar = '\0';
-                txtPassword.IconRight = Properties.Resources.hide;
-            }
-            else
-            {
-                // Hide the password
-                txtPassword.UseSystemPasswordChar = true;
-                txtPassword.PasswordChar = '●';
-                txtPassword.IconRight = Properties.Resources.eye;
-            }
+            txtPassword.UseSystemPasswordChar = !txtPassword.UseSystemPasswordChar;
+            txtPassword.PasswordChar = txtPassword.UseSystemPasswordChar ? '●' : '\0';
+            txtPassword.IconRight = txtPassword.UseSystemPasswordChar ? Properties.Resources.eye : Properties.Resources.hide;
             txtPassword.Cursor = Cursors.Hand;
         }
 
         private void txtPassword_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.X > txtPassword.Width - 40)
-            {
-                txtPassword.Cursor = Cursors.Hand;
-            }
-            else
-            {
-                txtPassword.Cursor = Cursors.IBeam;
-            }
+            txtPassword.Cursor = (e.X > txtPassword.Width - 40) ? Cursors.Hand : Cursors.IBeam;
         }
 
         private async Task LoadEquipmentListAsync()
@@ -83,71 +73,66 @@ namespace Ventrix.App
             cmbListEquipments.Items.Clear();
             var items = await _inventoryService.GetFilteredInventoryAsync("Available", "");
             var names = items.Select(i => i.Name).Distinct().ToArray();
-            cmbListEquipments.Items.AddRange(names);
+            if (names.Any()) cmbListEquipments.Items.AddRange(names);
         }
 
-        private void ToggleMode(string mode)
+        public void ToggleMode(string mode)
         {
             txtStudentId.Clear();
             txtPassword.Clear();
-                
-            if (mode == "Admin")
-            {
-                // UI Changes for Admin
-                lblLoginHeader.Text = "ADMIN LOGIN";
-                txtPassword.Visible = true;
-                btnLogin.Visible = true;
-                txtStudentId.PlaceholderText = "Username / Admin ID";
+            txtSubject.Clear();
 
-                // Hide Borrower UI
-                cmbListEquipments.Visible = false;
-                numQuantity.Visible = false;
-                txtSubject.Visible = false;
-                cmbGradeLevel.Visible = false;
-                btnBorrow.Visible = false;
-                btnReturn.Visible = false;
-                lblQuantity.Visible = false;
-                lblSubject.Visible = false;
-                lblCreateAccount.Visible = false;
-                lblEquipmentList.Visible = false;
+            bool isAdmin = mode == "Admin";
 
-                // Button Styling
-                btnAdminToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
-                btnStudentToggle.FillColor = System.Drawing.Color.Gray;
+            // Header & Placeholders
+            lblLoginHeader.Text = isAdmin ? "ADMIN LOGIN" : "BORROWING PORTAL";
+            txtStudentId.PlaceholderText = isAdmin ? "Username / Admin ID" : "Student/Faculty ID Number";
 
-                numQuantity.Maximum = 10;
-            }
-            else
-            {
-                // UI Changes for Borrower
-                lblLoginHeader.Text = "BORROWING PORTAL";
-                txtPassword.Visible = false;
-                btnLogin.Visible = false;
-                txtStudentId.PlaceholderText = "Student/Faculty ID Number";
+            // Visibility
+            txtPassword.Visible = isAdmin;
+            btnLogin.Visible = isAdmin;
 
-                // Show Borrower UI
-                cmbListEquipments.Visible = true;
-                numQuantity.Visible = true;
-                txtSubject.Visible = true;
-                cmbGradeLevel.Visible = true;
-                btnBorrow.Visible = true;
-                btnReturn.Visible = true;
-                lblCreateAccount.Visible = true;
-                lblQuantity.Visible = true;
-                lblSubject.Visible = true;
-                lblEquipmentList.Visible = true;
+            cmbListEquipments.Visible = !isAdmin;
+            numQuantity.Visible = !isAdmin;
+            txtSubject.Visible = !isAdmin;
+            cmbGradeLevel.Visible = !isAdmin;
+            btnBorrow.Visible = !isAdmin;
+            btnReturn.Visible = !isAdmin;
+            lblQuantity.Visible = !isAdmin;
+            lblSubject.Visible = !isAdmin;
+            lblCreateAccount.Visible = !isAdmin;
+            lblEquipmentList.Visible = !isAdmin;
 
-                // Button Styling
-                btnStudentToggle.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
-                btnAdminToggle.FillColor = System.Drawing.Color.Gray;
+            // Active/Inactive Button Styling
+            btnAdminToggle.FillColor = isAdmin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(240, 240, 240);
+            btnAdminToggle.ForeColor = isAdmin ? Color.White : Color.Gray;
 
-                numQuantity.Maximum = 2;
-            }
+            btnStudentToggle.FillColor = !isAdmin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(240, 240, 240);
+            btnStudentToggle.ForeColor = !isAdmin ? Color.White : Color.Gray;
+
+            numQuantity.Maximum = isAdmin ? 10 : 2;
+
+            // Smart Focus
+            txtStudentId.Focus();
         }
 
-        // Changed to async void for WinForms event handling
+        private void SetLoadingState(bool isLoading)
+        {
+            this.Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
+            btnLogin.Enabled = !isLoading;
+            btnBorrow.Enabled = !isLoading;
+            btnReturn.Enabled = !isLoading;
+        }
+
         private async void BtnLogin_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtStudentId.Text) || string.IsNullOrWhiteSpace(txtPassword.Text))
+            {
+                MessageBox.Show("Please enter both ID and Password.", "Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            SetLoadingState(true);
             try
             {
                 var loginDto = new Ventrix.Application.DTOs.LoginDto
@@ -168,7 +153,7 @@ namespace Ventrix.App
                     }
                     else
                     {
-                        MessageBox.Show($"Welcome, {user.FirstName}! Student portal features coming soon.");
+                        MessageBox.Show($"Welcome, {user.FirstName}! Student portal features coming soon.", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
                 else
@@ -180,29 +165,36 @@ namespace Ventrix.App
             {
                 MessageBox.Show($"Login error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                SetLoadingState(false);
+            }
         }
 
-        // Changed to async void for WinForms event handling
         private async void BtnBorrow_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtStudentId.Text) || cmbListEquipments.SelectedIndex == -1)
+            if (string.IsNullOrWhiteSpace(txtStudentId.Text) ||
+                cmbListEquipments.SelectedIndex == -1 ||
+                string.IsNullOrWhiteSpace(txtSubject.Text) ||
+                cmbGradeLevel.SelectedIndex == -1)
             {
-                MessageBox.Show("Please enter Student ID and select an item.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please fill out all fields and select a Grade Level before borrowing.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            var record = new BorrowRecord
-            {
-                BorrowerId = txtStudentId.Text,
-                ItemName = cmbListEquipments.Text,
-                Quantity = (int)numQuantity.Value,
-                Purpose = txtSubject.Text,
-                GradeLevel = cmbGradeLevel.Text,
-                Status = BorrowStatus.Active
-            };
-
+            SetLoadingState(true);
             try
             {
+                var record = new BorrowRecord
+                {
+                    BorrowerId = txtStudentId.Text,
+                    ItemName = cmbListEquipments.Text,
+                    Quantity = (int)numQuantity.Value,
+                    Purpose = txtSubject.Text,
+                    GradeLevel = cmbGradeLevel.Text,
+                    Status = BorrowStatus.Active
+                };
+
                 var items = await _inventoryService.GetFilteredInventoryAsync("Available", record.ItemName);
                 var itemToBorrow = items.FirstOrDefault();
 
@@ -210,7 +202,8 @@ namespace Ventrix.App
                 {
                     await _borrowService.ProcessBorrowAsync(record, itemToBorrow.Id);
                     MessageBox.Show("Item Borrowed Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    await LoadEquipmentListAsync(); // Refresh the dropdown list!
+                    txtSubject.Clear(); // Clear subject to prep for next action
+                    await LoadEquipmentListAsync();
                 }
                 else
                 {
@@ -219,7 +212,17 @@ namespace Ventrix.App
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error borrowing item: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += "\n\nInner Details: " + ex.InnerException.Message;
+                }
+
+                MessageBox.Show($"Error borrowing item: {errorMessage}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                SetLoadingState(false);
             }
         }
 
@@ -239,10 +242,7 @@ namespace Ventrix.App
             else
             {
                 numQuantity.Maximum = 2;
-                if (numQuantity.Value > 2)
-                {
-                    numQuantity.Value = 2;
-                }
+                if (numQuantity.Value > 2) numQuantity.Value = 2;
             }
         }
     }

@@ -70,11 +70,16 @@ namespace Ventrix.Application.Services
 
         public async Task ProcessBorrowAsync(BorrowRecord record, int itemId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == record.BorrowerId);
+            // 1. CLEAN THE INPUT: Remove accidental spaces and force it to UPPERCASE
+            string cleanBorrowerId = record.BorrowerId?.Trim().ToUpper() ?? "";
+
+            // 2. SEARCH SMARTLY: Compare it against the database in uppercase
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId.ToUpper() == cleanBorrowerId);
 
             if (user == null)
             {
-                throw new Exception("Borrower ID not found in the system. Please register first.");
+                // Added the ID they typed into the error message so they can see if they made a typo!
+                throw new Exception($"Borrower ID '{record.BorrowerId}' not found in the system. Please check your ID and try again.");
             }
 
             if (user.Role == UserRole.Student && record.Quantity > 2)
@@ -90,16 +95,19 @@ namespace Ventrix.Application.Services
             record.UserId = user.Id;
             record.InventoryItemId = itemId;
             record.BorrowDate = DateTime.Now;
+            
 
             var item = await _context.InventoryItems.FindAsync(itemId);
             if (item != null)
             {
                 item.Status = ItemStatus.Borrowed;
+                _context.InventoryItems.Update(item);
             }
 
             _context.BorrowRecords.Add(record);
             await _context.SaveChangesAsync();
         }
+
 
         public async Task ClearAllActivityAsync()
         {

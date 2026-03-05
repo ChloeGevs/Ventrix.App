@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
-using Ventrix.Application.DTOs; // Added for RegisterDto
+using Ventrix.Application.DTOs;
 
 namespace Ventrix.App
 {
@@ -13,71 +14,127 @@ namespace Ventrix.App
         private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
 
+        // Store default border color for resets
+        private readonly Color DefaultBorderColor = Color.FromArgb(213, 218, 223);
+        private readonly Color ErrorBorderColor = Color.Red;
+
         public BorrowerRegistration(InventoryService inventoryService, BorrowService borrowService, UserService userService)
         {
             _inventoryService = inventoryService;
             _borrowService = borrowService;
             _userService = userService;
+
             InitializeComponent();
-            InitializeEventHandlers();
+            SetupEvents();
+
+            // Fade in effect
+            this.Opacity = 0;
+            this.Load += BorrowerRegistration_Load;
         }
 
-        private void InitializeEventHandlers()
+        private async void BorrowerRegistration_Load(object sender, EventArgs e)
         {
-            // Event wire-up works perfectly with the new async void method
-            btnRegister.Click += btnRegister_Click;
-
-            lblLoginLink.Click += (s, e) =>
+            // Subtle fade-in animation
+            for (double i = 0; i <= 1; i += 0.1)
             {
-                var portal = System.Windows.Forms.Application.OpenForms["BorrowerPortal"];
-
-                if (portal != null)
-                {
-                    portal.Show();
-                    Close();
-                }
-                else
-                {
-                    var newPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
-                    newPortal.Show();
-                    Close();
-                }
-            };
+                this.Opacity = i;
+                await Task.Delay(15);
+            }
         }
 
-        // Changed to 'async void' so we can await the EF Core service
-        private async void btnRegister_Click(object sender, EventArgs e)
+        private void SetupEvents()
         {
+            FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
+
+            // Button and Checkbox Actions
+            btnRegister.Click += BtnRegister_Click;
+            chkNoSuffix.CheckedChanged += ChkNoSuffix_CheckedChanged;
+
+            // Link Actions
+            lblLoginLink.Click += LblLoginLink_Click;
+            lblLoginLink.MouseEnter += (s, e) => lblLoginLink.Cursor = Cursors.Hand;
+
+            // Enter Key Support 
+            KeyEventHandler enterKeyHandler = (s, e) => { if (e.KeyCode == Keys.Enter) btnRegister.PerformClick(); };
+            txtFirstName.KeyDown += enterKeyHandler;
+            txtLastName.KeyDown += enterKeyHandler;
+            txtMiddleName.KeyDown += enterKeyHandler;
+            txtSuffix.KeyDown += enterKeyHandler;
+
+            // Reset validation colors when typing
+            txtFirstName.TextChanged += (s, e) => ResetValidation(txtFirstName);
+            txtLastName.TextChanged += (s, e) => ResetValidation(txtLastName);
+
+            // Defaults
+            cmbRole.SelectedIndex = 0;
+            txtFirstName.Focus();
+
+        }
+
+        private void ResetValidation(Guna.UI2.WinForms.Guna2TextBox textBox)
+        {
+            textBox.BorderColor = DefaultBorderColor;
+            textBox.HoverState.BorderColor = Color.FromArgb(13, 71, 161);
+        }
+
+        private bool ValidateInputs()
+        {
+            bool isValid = true;
+
+            if (string.IsNullOrWhiteSpace(txtFirstName.Text))
+            {
+                txtFirstName.BorderColor = ErrorBorderColor;
+                txtFirstName.HoverState.BorderColor = ErrorBorderColor;
+                isValid = false;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtLastName.Text))
+            {
+                txtLastName.BorderColor = ErrorBorderColor;
+                txtLastName.HoverState.BorderColor = ErrorBorderColor;
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        private void SetLoadingState(bool isLoading)
+        {
+            this.Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
+            btnRegister.Enabled = !isLoading;
+            pnlRegCard.Enabled = !isLoading;
+        }
+
+        private async void BtnRegister_Click(object sender, EventArgs e)
+        {
+            if (!ValidateInputs())
+            {
+                MessageBox.Show("Please fill in the highlighted required fields.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            SetLoadingState(true);
+
             try
             {
-                // 1. Package ALL the form data into your DTO
-                var registrationData = new Ventrix.Application.DTOs.RegisterDto
+                var registrationData = new RegisterDto
                 {
-                    FirstName = txtFirstName.Text,
-
-                    MiddleName = txtMiddleName.Text,
-
-                    LastName = txtLastName.Text,
-                    Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text,
+                    FirstName = txtFirstName.Text.Trim(),
+                    MiddleName = txtMiddleName.Text.Trim(),
+                    LastName = txtLastName.Text.Trim(),
+                    Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text.Trim(),
                     Role = cmbRole.SelectedItem?.ToString() ?? "Student"
-
                 };
 
-                // 2. Send the DTO to your EF Core service AND get the generated user back
                 var registeredUser = await _userService.RegisterNewBorrowerAsync(registrationData);
 
-                // 3. Success! Show them their new automatically generated ID
-                string successMessage = $"Registration successful!\n\nYour Student ID is: {registeredUser.UserId}\n\nPlease write this down.";
-                MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string successMessage = $"Registration successful!\n\nYour Student ID is: {registeredUser.UserId}\n\nPlease write this down and use it to log in.";
+                MessageBox.Show(successMessage, "Account Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // 4. Open the portal
-                BorrowerPortal portal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
-                portal.Show();
-                this.Hide();
+                NavigateToPortal();
             }
             catch (Exception ex)
             {
-                // THIS WILL SHOW YOU THE EXACT DATABASE ERROR!
                 string errorMessage = ex.Message;
                 if (ex.InnerException != null)
                 {
@@ -86,25 +143,50 @@ namespace Ventrix.App
 
                 MessageBox.Show(errorMessage, "Registration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                SetLoadingState(false);
+            }
         }
 
-        private void lblLoginLink_MouseEnter(object sender, EventArgs e)
+        private void ChkNoSuffix_CheckedChanged(object sender, EventArgs e)
         {
-            lblLoginLink.Cursor = Cursors.Hand;
-        }
-
-        private void chkNoSuffix_CheckedChanged(object sender, EventArgs e)
-        {
-            // If the "None" box is checked
             if (chkNoSuffix.Checked)
             {
                 txtSuffix.Enabled = false;
                 txtSuffix.Clear();
+                txtSuffix.FillColor = Color.FromArgb(245, 245, 245); // Visual cue that it's disabled
             }
             else
             {
                 txtSuffix.Enabled = true;
+                txtSuffix.FillColor = Color.White;
+                txtSuffix.Focus();
             }
+        }
+
+        private void LblLoginLink_Click(object sender, EventArgs e)
+        {
+            NavigateToPortal();
+        }
+
+        private void NavigateToPortal()
+        {
+            // Find the hidden portal
+            var portal = System.Windows.Forms.Application.OpenForms.OfType<BorrowerPortal>().FirstOrDefault();
+
+            if (portal != null)
+            {
+                portal.ToggleMode("Student");
+                portal.Show();
+            }
+            else
+            {
+                var newPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+                newPortal.Show();
+            }
+
+            this.Hide();
         }
     }
 }

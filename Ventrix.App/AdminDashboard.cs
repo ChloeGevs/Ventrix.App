@@ -53,14 +53,15 @@ namespace Ventrix.App
             get
             {
                 CreateParams cp = base.CreateParams;
-                // Turn on WS_EX_COMPOSITED to double-buffer the entire form to eliminate tearing
                 cp.ExStyle |= 0x02000000;
                 return cp;
             }
         }
-
+                
         private void ConfigureRuntimeUI()
         {
+            FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
+
             // Remove built-in docking so we can manually animate bounds flawlessly
             if (pnlSidebar != null) pnlSidebar.Dock = DockStyle.None;
             if (pnlTopBar != null) pnlTopBar.Dock = DockStyle.None;
@@ -253,7 +254,7 @@ namespace Ventrix.App
                 customScroll.BringToFront();
             }
 
-            // --- NEW: SLEEK CUSTOM DATAGRID SCROLLBAR ---
+            // --- SLEEK CUSTOM DATAGRID SCROLLBAR ---
             if (dgvInventory != null && pnlGridContainer != null)
             {
                 dgvInventory.ScrollBars = ScrollBars.None;
@@ -272,7 +273,7 @@ namespace Ventrix.App
                 gridScroll.BringToFront();
             }
 
-            // --- NEW: MODERN RIGHT-CLICK CONTEXT MENU ---
+            // --- MODERN RIGHT-CLICK CONTEXT MENU ---
             Guna.UI2.WinForms.Guna2ContextMenuStrip gridMenu = new Guna.UI2.WinForms.Guna2ContextMenuStrip();
             gridMenu.RenderStyle.SelectionBackColor = ThemeManager.VentrixLightBlue;
             gridMenu.RenderStyle.SelectionForeColor = Color.White;
@@ -307,8 +308,8 @@ namespace Ventrix.App
                 RefreshLayout();
             };
 
-            this.Resize += (s, e) => {
-                if (this.WindowState != FormWindowState.Minimized) RefreshLayout();
+            Resize += (s, e) => {
+                if (WindowState != FormWindowState.Minimized) RefreshLayout();
             };
         }
 
@@ -408,7 +409,7 @@ namespace Ventrix.App
 
                 int cardSpacing = 20;
                 int startX = 20;
-                int startY = 80;
+                int startY = 120;
 
                 int totalAvailableWidth = pnlHomeSummary.Width - (startX * 2) - (cardSpacing * 3);
                 int exactCardWidth = totalAvailableWidth / 4;
@@ -532,7 +533,7 @@ namespace Ventrix.App
             bool showNav = currentWidth > 100;
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
 
-            int btnY = 90;
+            int btnY = 120;
             foreach (var btn in navBtns)
             {
                 if (btn != null)
@@ -541,7 +542,7 @@ namespace Ventrix.App
                     if (showNav)
                     {
                         btn.SetBounds(10, btnY, contentWidth, 45);
-                        btnY += 50; // Spacing between buttons
+                        btnY += 80; // Spacing between buttons
                     }
                 }
             }

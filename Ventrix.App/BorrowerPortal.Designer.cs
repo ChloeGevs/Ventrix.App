@@ -1,4 +1,7 @@
-﻿namespace Ventrix.App
+﻿using System.Drawing;
+using System.Windows.Forms;
+
+namespace Ventrix.App
 {
     partial class BorrowerPortal
     {
@@ -104,28 +107,33 @@
             pnlLoginCard.FillColor = Color.White;
             pnlLoginCard.Location = new Point(303, 28);
             pnlLoginCard.Name = "pnlLoginCard";
-            pnlLoginCard.ShadowDecoration.BorderRadius = 20;
+            pnlLoginCard.ShadowDecoration.BorderRadius = 24;
+            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(40, 0, 0, 0);
             pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges24;
             pnlLoginCard.ShadowDecoration.Enabled = true;
+            pnlLoginCard.ShadowDecoration.Shadow = new Padding(0, 0, 10, 10);
             pnlLoginCard.Size = new Size(594, 744);
             pnlLoginCard.TabIndex = 0;
             // 
             // lblEquipmentList
             // 
             lblEquipmentList.BackColor = Color.Transparent;
-            lblEquipmentList.Location = new Point(61, 279);
+            lblEquipmentList.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            lblEquipmentList.ForeColor = Color.DimGray;
+            lblEquipmentList.Location = new Point(60, 275);
             lblEquipmentList.Name = "lblEquipmentList";
-            lblEquipmentList.Size = new Size(125, 22);
+            lblEquipmentList.Size = new Size(144, 25);
             lblEquipmentList.TabIndex = 16;
             lblEquipmentList.Text = "List of Equipments";
             // 
             // lblCreateAccount
             // 
             lblCreateAccount.BackColor = Color.Transparent;
-            lblCreateAccount.Font = new Font("Sitka Banner", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCreateAccount.Location = new Point(218, 630);
+            lblCreateAccount.Cursor = Cursors.Hand;
+            lblCreateAccount.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCreateAccount.Location = new Point(205, 630);
             lblCreateAccount.Name = "lblCreateAccount";
-            lblCreateAccount.Size = new Size(172, 26);
+            lblCreateAccount.Size = new Size(205, 25);
             lblCreateAccount.TabIndex = 12;
             lblCreateAccount.Text = "No account? <a href=\"#\" style=\"color: #1565C0; text-decoration: underline;\">Register here</a>";
             // 
@@ -134,16 +142,17 @@
             txtPassword.Cursor = Cursors.IBeam;
             txtPassword.CustomizableEdges = customizableEdges1;
             txtPassword.DefaultText = "";
-            txtPassword.Font = new Font("Segoe UI", 10F);
+            txtPassword.Font = new Font("Segoe UI", 11F);
+            txtPassword.IconLeft = Properties.Resources.locked;
             txtPassword.IconRight = Properties.Resources.eye;
-            txtPassword.Location = new Point(63, 293);
+            txtPassword.Location = new Point(60, 290);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '●';
             txtPassword.PlaceholderText = "Password";
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            txtPassword.Size = new Size(479, 50);
+            txtPassword.Size = new Size(480, 50);
             txtPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtPassword.TabIndex = 4;
             txtPassword.UseSystemPasswordChar = true;
@@ -151,29 +160,29 @@
             // 
             // btnAdminToggle
             // 
-            btnAdminToggle.BorderRadius = 10;
+            btnAdminToggle.BorderRadius = 12;
             btnAdminToggle.Cursor = Cursors.Hand;
             btnAdminToggle.CustomizableEdges = customizableEdges3;
-            btnAdminToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnAdminToggle.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             btnAdminToggle.ForeColor = Color.White;
-            btnAdminToggle.Location = new Point(75, 116);
+            btnAdminToggle.Location = new Point(60, 116);
             btnAdminToggle.Name = "btnAdminToggle";
             btnAdminToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnAdminToggle.Size = new Size(186, 61);
+            btnAdminToggle.Size = new Size(230, 55);
             btnAdminToggle.TabIndex = 0;
             btnAdminToggle.Text = "ADMIN";
             // 
             // btnStudentToggle
             // 
-            btnStudentToggle.BorderRadius = 10;
+            btnStudentToggle.BorderRadius = 12;
             btnStudentToggle.Cursor = Cursors.Hand;
             btnStudentToggle.CustomizableEdges = customizableEdges5;
-            btnStudentToggle.Font = new Font("Sitka Banner", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnStudentToggle.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             btnStudentToggle.ForeColor = Color.White;
-            btnStudentToggle.Location = new Point(327, 116);
+            btnStudentToggle.Location = new Point(310, 116);
             btnStudentToggle.Name = "btnStudentToggle";
             btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            btnStudentToggle.Size = new Size(195, 61);
+            btnStudentToggle.Size = new Size(230, 55);
             btnStudentToggle.TabIndex = 1;
             btnStudentToggle.Text = "BORROWER";
             // 
@@ -181,9 +190,9 @@
             // 
             lblLoginHeader.AutoSize = false;
             lblLoginHeader.BackColor = Color.Transparent;
-            lblLoginHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+            lblLoginHeader.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
             lblLoginHeader.ForeColor = Color.FromArgb(13, 71, 161);
-            lblLoginHeader.Location = new Point(0, 20);
+            lblLoginHeader.Location = new Point(0, 25);
             lblLoginHeader.Name = "lblLoginHeader";
             lblLoginHeader.Size = new Size(594, 90);
             lblLoginHeader.TabIndex = 13;
@@ -194,67 +203,70 @@
             // 
             txtStudentId.CustomizableEdges = customizableEdges7;
             txtStudentId.DefaultText = "";
-            txtStudentId.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtStudentId.IconLeft = Properties.Resources.user;
-            txtStudentId.Location = new Point(61, 211);
+            txtStudentId.Location = new Point(60, 205);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
             txtStudentId.PlaceholderText = "";
             txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            txtStudentId.Size = new Size(479, 50);
+            txtStudentId.Size = new Size(480, 50);
             txtStudentId.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtStudentId.TabIndex = 3;
             // 
             // cmbListEquipments
             // 
             cmbListEquipments.BackColor = Color.Transparent;
-            cmbListEquipments.BorderRadius = 10;
+            cmbListEquipments.BorderRadius = 8;
             cmbListEquipments.CustomizableEdges = customizableEdges9;
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbListEquipments.FocusedColor = Color.Empty;
-            cmbListEquipments.Font = new Font("Sitka Banner", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cmbListEquipments.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cmbListEquipments.ForeColor = Color.FromArgb(68, 88, 112);
             cmbListEquipments.ItemHeight = 30;
-            cmbListEquipments.Location = new Point(63, 307);
+            cmbListEquipments.Location = new Point(60, 305);
             cmbListEquipments.Name = "cmbListEquipments";
             cmbListEquipments.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            cmbListEquipments.Size = new Size(477, 36);
+            cmbListEquipments.Size = new Size(480, 36);
             cmbListEquipments.TabIndex = 4;
             // 
             // lblQuantity
             // 
             lblQuantity.BackColor = Color.Transparent;
-            lblQuantity.Font = new Font("Sitka Text", 12F);
-            lblQuantity.Location = new Point(68, 358);
+            lblQuantity.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            lblQuantity.ForeColor = Color.DimGray;
+            lblQuantity.Location = new Point(60, 360);
             lblQuantity.Name = "lblQuantity";
-            lblQuantity.Size = new Size(42, 31);
+            lblQuantity.Size = new Size(35, 25);
             lblQuantity.TabIndex = 14;
             lblQuantity.Text = "QTY";
             // 
             // numQuantity
             // 
             numQuantity.BackColor = Color.Transparent;
-            numQuantity.BorderRadius = 10;
+            numQuantity.BorderRadius = 8;
             numQuantity.CustomizableEdges = customizableEdges11;
-            numQuantity.Font = new Font("Sitka Text", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            numQuantity.Location = new Point(68, 396);
+            numQuantity.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            numQuantity.Location = new Point(60, 390);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
             numQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQuantity.Name = "numQuantity";
             numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            numQuantity.Size = new Size(117, 56);
+            numQuantity.Size = new Size(117, 50);
             numQuantity.TabIndex = 6;
+            numQuantity.UpDownButtonFillColor = Color.FromArgb(240, 240, 240);
             numQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // lblSubject
             // 
             lblSubject.BackColor = Color.Transparent;
-            lblSubject.Font = new Font("Sitka Text", 12F);
-            lblSubject.Location = new Point(230, 358);
+            lblSubject.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            lblSubject.ForeColor = Color.DimGray;
+            lblSubject.Location = new Point(223, 360);
             lblSubject.Name = "lblSubject";
-            lblSubject.Size = new Size(199, 31);
+            lblSubject.Size = new Size(161, 25);
             lblSubject.TabIndex = 15;
             lblSubject.Text = "SUBJECT / PURPOSE";
             // 
@@ -262,14 +274,14 @@
             // 
             txtSubject.CustomizableEdges = customizableEdges13;
             txtSubject.DefaultText = "";
-            txtSubject.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtSubject.Location = new Point(230, 396);
+            txtSubject.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtSubject.Location = new Point(223, 390);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
             txtSubject.PlaceholderText = "e.g., IT 211";
             txtSubject.SelectedText = "";
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            txtSubject.Size = new Size(317, 56);
+            txtSubject.Size = new Size(317, 50);
             txtSubject.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtSubject.TabIndex = 8;
             // 
@@ -278,12 +290,14 @@
             btnReturn.BorderRadius = 12;
             btnReturn.Cursor = Cursors.Hand;
             btnReturn.CustomizableEdges = customizableEdges15;
-            btnReturn.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnReturn.ForeColor = Color.White;
-            btnReturn.Location = new Point(110, 562);
+            btnReturn.FillColor = Color.FromArgb(230, 230, 230);
+            btnReturn.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            btnReturn.ForeColor = Color.FromArgb(64, 64, 64);
+            btnReturn.HoverState.FillColor = Color.FromArgb(210, 210, 210);
+            btnReturn.Location = new Point(60, 555);
             btnReturn.Name = "btnReturn";
             btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            btnReturn.Size = new Size(182, 62);
+            btnReturn.Size = new Size(230, 55);
             btnReturn.TabIndex = 9;
             btnReturn.Text = "RETURN";
             // 
@@ -292,13 +306,14 @@
             btnBorrow.BorderRadius = 12;
             btnBorrow.Cursor = Cursors.Hand;
             btnBorrow.CustomizableEdges = customizableEdges17;
-            btnBorrow.FillColor = Color.Teal;
-            btnBorrow.Font = new Font("Sitka Display", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnBorrow.FillColor = Color.FromArgb(13, 71, 161);
+            btnBorrow.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             btnBorrow.ForeColor = Color.White;
-            btnBorrow.Location = new Point(312, 562);
+            btnBorrow.HoverState.FillColor = Color.FromArgb(9, 50, 115);
+            btnBorrow.Location = new Point(310, 555);
             btnBorrow.Name = "btnBorrow";
             btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            btnBorrow.Size = new Size(180, 62);
+            btnBorrow.Size = new Size(230, 55);
             btnBorrow.TabIndex = 10;
             btnBorrow.Text = "BORROW";
             // 
@@ -307,12 +322,13 @@
             btnLogin.BorderRadius = 12;
             btnLogin.CustomizableEdges = customizableEdges19;
             btnLogin.FillColor = Color.FromArgb(13, 71, 161);
-            btnLogin.Font = new Font("Sitka Display", 12F, FontStyle.Bold);
+            btnLogin.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
-            btnLogin.Location = new Point(63, 569);
+            btnLogin.HoverState.FillColor = Color.FromArgb(9, 50, 115);
+            btnLogin.Location = new Point(60, 555);
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges20;
-            btnLogin.Size = new Size(477, 55);
+            btnLogin.Size = new Size(480, 55);
             btnLogin.TabIndex = 13;
             btnLogin.Text = "LOGIN";
             btnLogin.Visible = false;
@@ -320,16 +336,16 @@
             // cmbGradeLevel
             // 
             cmbGradeLevel.BackColor = Color.Transparent;
-            cmbGradeLevel.BorderRadius = 10;
+            cmbGradeLevel.BorderRadius = 8;
             cmbGradeLevel.CustomizableEdges = customizableEdges21;
             cmbGradeLevel.DrawMode = DrawMode.OwnerDrawFixed;
             cmbGradeLevel.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbGradeLevel.FocusedColor = Color.Empty;
-            cmbGradeLevel.Font = new Font("Sitka Text", 11F);
+            cmbGradeLevel.Font = new Font("Segoe UI", 11F);
             cmbGradeLevel.ForeColor = Color.FromArgb(68, 88, 112);
             cmbGradeLevel.ItemHeight = 30;
             cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Faculty" });
-            cmbGradeLevel.Location = new Point(230, 459);
+            cmbGradeLevel.Location = new Point(223, 460);
             cmbGradeLevel.Name = "cmbGradeLevel";
             cmbGradeLevel.ShadowDecoration.CustomizableEdges = customizableEdges22;
             cmbGradeLevel.Size = new Size(317, 36);

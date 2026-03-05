@@ -1,4 +1,7 @@
-﻿namespace Ventrix.App
+﻿using System.Drawing;
+using System.Windows.Forms;
+
+namespace Ventrix.App
 {
     partial class BorrowerRegistration
     {
@@ -43,6 +46,7 @@
             // 
             // regTableLayout
             // 
+            regTableLayout.BackColor = Color.Transparent;
             regTableLayout.BackgroundImage = Properties.Resources._5;
             regTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
             regTableLayout.ColumnCount = 3;
@@ -63,7 +67,7 @@
             // pnlRegCard
             // 
             pnlRegCard.BackColor = Color.Transparent;
-            pnlRegCard.BorderRadius = 15;
+            pnlRegCard.BorderRadius = 24;
             pnlRegCard.Controls.Add(lblLoginLink);
             pnlRegCard.Controls.Add(lblHeader);
             pnlRegCard.Controls.Add(cmbRole);
@@ -78,48 +82,53 @@
             pnlRegCard.FillColor = Color.White;
             pnlRegCard.Location = new Point(353, 53);
             pnlRegCard.Name = "pnlRegCard";
-            pnlRegCard.ShadowDecoration.BorderRadius = 15;
+            pnlRegCard.ShadowDecoration.BorderRadius = 24;
+            pnlRegCard.ShadowDecoration.Color = Color.FromArgb(40, 0, 0, 0);
             pnlRegCard.ShadowDecoration.CustomizableEdges = customizableEdges14;
             pnlRegCard.ShadowDecoration.Enabled = true;
+            pnlRegCard.ShadowDecoration.Shadow = new Padding(0, 0, 10, 10);
             pnlRegCard.Size = new Size(494, 744);
             pnlRegCard.TabIndex = 0;
             // 
             // lblLoginLink
             // 
             lblLoginLink.BackColor = Color.Transparent;
-            lblLoginLink.Location = new Point(130, 605);
+            lblLoginLink.Cursor = Cursors.Hand;
+            lblLoginLink.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblLoginLink.Location = new Point(115, 620);
             lblLoginLink.Name = "lblLoginLink";
-            lblLoginLink.Size = new Size(240, 22);
+            lblLoginLink.Size = new Size(273, 25);
             lblLoginLink.TabIndex = 8;
             lblLoginLink.Text = "Already registered? <a href=\"#\" style=\"color: #1565C0; text-decoration: underline;\">Borrower Portal</a>";
-            lblLoginLink.MouseEnter += lblLoginLink_MouseEnter;
             // 
             // lblHeader
             // 
             lblHeader.AutoSize = false;
             lblHeader.BackColor = Color.Transparent;
-            lblHeader.Font = new Font("Sitka Heading", 22F, FontStyle.Bold);
+            lblHeader.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
             lblHeader.ForeColor = Color.FromArgb(13, 71, 161);
-            lblHeader.Location = new Point(0, 20);
+            lblHeader.Location = new Point(0, 45);
             lblHeader.Name = "lblHeader";
-            lblHeader.Size = new Size(494, 70);
+            lblHeader.Size = new Size(494, 90);
             lblHeader.TabIndex = 0;
             lblHeader.Text = "STUDENT REGISTRATION";
-            lblHeader.TextAlignment = ContentAlignment.MiddleCenter;
+            lblHeader.TextAlignment = ContentAlignment.TopCenter;
             // 
             // cmbRole
             // 
             cmbRole.BackColor = Color.Transparent;
-            cmbRole.BorderRadius = 10;
+            cmbRole.BorderRadius = 8;
             cmbRole.CustomizableEdges = customizableEdges1;
             cmbRole.DrawMode = DrawMode.OwnerDrawFixed;
             cmbRole.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbRole.FocusedColor = Color.Empty;
-            cmbRole.Font = new Font("Segoe UI", 10F);
+            cmbRole.FocusedColor = Color.FromArgb(13, 71, 161);
+            cmbRole.FocusedState.BorderColor = Color.FromArgb(13, 71, 161);
+            cmbRole.Font = new Font("Segoe UI", 11F);
             cmbRole.ForeColor = Color.FromArgb(68, 88, 112);
+            cmbRole.HoverState.BorderColor = Color.FromArgb(13, 71, 161);
             cmbRole.ItemHeight = 30;
             cmbRole.Items.AddRange(new object[] { "Student", "Faculty" });
-            cmbRole.Location = new Point(57, 126);
+            cmbRole.Location = new Point(57, 130);
             cmbRole.Name = "cmbRole";
             cmbRole.ShadowDecoration.CustomizableEdges = customizableEdges2;
             cmbRole.Size = new Size(380, 36);
@@ -130,14 +139,16 @@
             // 
             txtFirstName.CustomizableEdges = customizableEdges3;
             txtFirstName.DefaultText = "";
-            txtFirstName.Font = new Font("Segoe UI Variable Text", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtFirstName.Location = new Point(57, 197);
+            txtFirstName.FocusedState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtFirstName.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtFirstName.HoverState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtFirstName.Location = new Point(57, 195);
             txtFirstName.Margin = new Padding(3, 4, 3, 4);
             txtFirstName.Name = "txtFirstName";
             txtFirstName.PlaceholderText = "First Name";
             txtFirstName.SelectedText = "";
             txtFirstName.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            txtFirstName.Size = new Size(380, 51);
+            txtFirstName.Size = new Size(380, 50);
             txtFirstName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtFirstName.TabIndex = 2;
             // 
@@ -145,14 +156,16 @@
             // 
             txtLastName.CustomizableEdges = customizableEdges5;
             txtLastName.DefaultText = "";
-            txtLastName.Font = new Font("Segoe UI Variable Text", 10F);
-            txtLastName.Location = new Point(57, 273);
+            txtLastName.FocusedState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtLastName.Font = new Font("Segoe UI", 11F);
+            txtLastName.HoverState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtLastName.Location = new Point(57, 270);
             txtLastName.Margin = new Padding(3, 4, 3, 4);
             txtLastName.Name = "txtLastName";
             txtLastName.PlaceholderText = "Last Name";
             txtLastName.SelectedText = "";
             txtLastName.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            txtLastName.Size = new Size(380, 52);
+            txtLastName.Size = new Size(380, 50);
             txtLastName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtLastName.TabIndex = 3;
             // 
@@ -160,26 +173,29 @@
             // 
             txtMiddleName.CustomizableEdges = customizableEdges7;
             txtMiddleName.DefaultText = "";
-            txtMiddleName.Font = new Font("Segoe UI Variable Text", 10F);
-            txtMiddleName.Location = new Point(57, 350);
+            txtMiddleName.FocusedState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtMiddleName.Font = new Font("Segoe UI", 11F);
+            txtMiddleName.HoverState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtMiddleName.Location = new Point(57, 345);
             txtMiddleName.Margin = new Padding(3, 4, 3, 4);
             txtMiddleName.Name = "txtMiddleName";
-            txtMiddleName.PlaceholderText = "Middle Name";
+            txtMiddleName.PlaceholderText = "Middle Name (Optional)";
             txtMiddleName.SelectedText = "";
             txtMiddleName.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            txtMiddleName.Size = new Size(380, 55);
+            txtMiddleName.Size = new Size(380, 50);
             txtMiddleName.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtMiddleName.TabIndex = 4;
             // 
             // btnRegister
             // 
-            btnRegister.BorderRadius = 10;
+            btnRegister.BorderRadius = 12;
             btnRegister.Cursor = Cursors.Hand;
             btnRegister.CustomizableEdges = customizableEdges9;
             btnRegister.FillColor = Color.FromArgb(13, 71, 161);
-            btnRegister.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnRegister.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             btnRegister.ForeColor = Color.White;
-            btnRegister.Location = new Point(57, 544);
+            btnRegister.HoverState.FillColor = Color.FromArgb(9, 50, 115);
+            btnRegister.Location = new Point(57, 540);
             btnRegister.Name = "btnRegister";
             btnRegister.ShadowDecoration.CustomizableEdges = customizableEdges10;
             btnRegister.Size = new Size(380, 55);
@@ -190,14 +206,16 @@
             // 
             txtSuffix.CustomizableEdges = customizableEdges11;
             txtSuffix.DefaultText = "";
-            txtSuffix.Font = new Font("Segoe UI Variable Text", 10F);
-            txtSuffix.Location = new Point(57, 412);
+            txtSuffix.FocusedState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtSuffix.Font = new Font("Segoe UI", 11F);
+            txtSuffix.HoverState.BorderColor = Color.FromArgb(13, 71, 161);
+            txtSuffix.Location = new Point(57, 420);
             txtSuffix.Margin = new Padding(3, 4, 3, 4);
             txtSuffix.Name = "txtSuffix";
             txtSuffix.PlaceholderText = "Suffix (e.g. Jr., III)";
             txtSuffix.SelectedText = "";
             txtSuffix.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            txtSuffix.Size = new Size(200, 54);
+            txtSuffix.Size = new Size(200, 50);
             txtSuffix.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
             txtSuffix.TabIndex = 5;
             // 
@@ -207,15 +225,18 @@
             chkNoSuffix.CheckedState.BorderRadius = 2;
             chkNoSuffix.CheckedState.BorderThickness = 0;
             chkNoSuffix.CheckedState.FillColor = Color.FromArgb(13, 71, 161);
-            chkNoSuffix.Font = new Font("Segoe UI Variable Text", 10F);
-            chkNoSuffix.Location = new Point(275, 428);
+            chkNoSuffix.Cursor = Cursors.Hand;
+            chkNoSuffix.Font = new Font("Segoe UI Semibold", 10.5F);
+            chkNoSuffix.ForeColor = Color.DimGray;
+            chkNoSuffix.Location = new Point(285, 435);
             chkNoSuffix.Name = "chkNoSuffix";
             chkNoSuffix.Size = new Size(121, 28);
             chkNoSuffix.TabIndex = 6;
-            chkNoSuffix.Text = "None";
-            chkNoSuffix.UncheckedState.BorderRadius = 0;
-            chkNoSuffix.UncheckedState.BorderThickness = 0;
-            chkNoSuffix.CheckedChanged += chkNoSuffix_CheckedChanged;
+            chkNoSuffix.Text = "No Suffix";
+            chkNoSuffix.UncheckedState.BorderColor = Color.DarkGray;
+            chkNoSuffix.UncheckedState.BorderRadius = 2;
+            chkNoSuffix.UncheckedState.BorderThickness = 1;
+            chkNoSuffix.UncheckedState.FillColor = Color.White;
             // 
             // BorrowerRegistration
             // 

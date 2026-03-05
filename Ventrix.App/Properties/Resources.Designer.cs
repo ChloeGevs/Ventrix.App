@@ -96,18 +96,6 @@ namespace Ventrix.App.Properties
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap burger_bar
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("burger-bar", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap close
         {
             get
@@ -220,6 +208,90 @@ namespace Ventrix.App.Properties
             get
             {
                 object obj = ResourceManager.GetObject("hide", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap burger_icon
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("burger_icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap borrowed
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("borrowed", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap checklist
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("checklist", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap available
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("available", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap item
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("item", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap locked
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("locked", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+
+        }
+        ///<summary>
+        /// looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap user__1_
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("user__1_", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
 

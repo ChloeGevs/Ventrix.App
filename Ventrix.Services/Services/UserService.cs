@@ -74,15 +74,27 @@ namespace Ventrix.Application.Services
             if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.LastName))
                 throw new ArgumentException("Names are required for registration.");
 
+            // 1. Determine the Role Prefix ('S' for Student, 'F' for Faculty)
+            string rolePrefix = dto.Role == "Faculty" ? "F" : "S";
+
+            // 2. Get the current year
+            string currentYear = DateTime.Now.Year.ToString();
+
+            // 3. Count how many users ALREADY exist to create the next sequential number
+            int userCount = await _context.Users.CountAsync() + 1;
+
+            // 4. Format the ID (D4 pads the number with zeros until it is 4 digits long)
+            string generatedUserId = $"{currentYear}-{rolePrefix}-{userCount:D4}";
+
             var newUser = new User
             {
-                UserId = new Random().Next(20240000, 20249999).ToString(),
+                UserId = generatedUserId, 
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 MiddleName = dto.MiddleName,
                 Suffix = dto.Suffix,
                 Role = Enum.TryParse<UserRole>(dto.Role, out var parsedRole) ? parsedRole : UserRole.Student,
-                Password = " ",
+                Password = " ", 
                 CreatedAt = DateTime.Now
             };
 
