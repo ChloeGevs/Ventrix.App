@@ -5,6 +5,7 @@ using Ventrix.Domain.Models;
 using System.Threading.Tasks;
 using System;
 using System.Windows.Forms;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.App.Popups
 {

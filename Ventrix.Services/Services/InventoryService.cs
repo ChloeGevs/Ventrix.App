@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Ventrix.Domain.Models;
 using Ventrix.Infrastructure.Data;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.Application.Services
 {

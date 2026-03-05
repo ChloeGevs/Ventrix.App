@@ -1,8 +1,8 @@
 ﻿using System;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.Domain.Models
 {
-    public enum UserRole { Student, Faculty, Staff, Admin }
 
     public class User
     {

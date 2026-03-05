@@ -1,10 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.Domain.Models
 {
-    public enum BorrowStatus { Active, Returned, Overdue }
-
     public class BorrowRecord
     {
         public int Id { get; set; }
@@ -23,7 +22,7 @@ namespace Ventrix.Domain.Models
         [NotMapped]
         public string ItemName { get; set; }
 
-        public string GradeLevel { get; set; }
+        public GradeLevel GradeLevel { get; set; }
 
         public int Quantity { get; set; }
         public string Purpose { get; set; }

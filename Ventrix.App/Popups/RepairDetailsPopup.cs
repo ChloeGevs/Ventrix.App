@@ -6,6 +6,7 @@ using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using System.Threading.Tasks;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.App.Popups
 {

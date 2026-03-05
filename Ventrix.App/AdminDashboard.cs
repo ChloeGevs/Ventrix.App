@@ -15,6 +15,7 @@ using Ventrix.App.Controls;
 using Ventrix.App.Popups;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.App
 {

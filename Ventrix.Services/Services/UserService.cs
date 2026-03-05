@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Ventrix.Domain.Models;
 using Ventrix.Application.DTOs;
 using Ventrix.Infrastructure.Data;
+using Ventrix.Domain.Enums;
 
 namespace Ventrix.Application.Services
 {
