@@ -1,15 +1,20 @@
-﻿using MaterialSkin;
+﻿using ClosedXML.Excel;
+using Guna.UI2.WinForms;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Ventrix.App.Controls;
 using Ventrix.App.Popups;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Ventrix.App
 {
@@ -33,11 +38,12 @@ namespace Ventrix.App
 
             ConfigureRuntimeUI();
             ApplyModernBranding();
+            StyleDataGrids();
 
             Shown += async (s, e) => {
                 this.PerformLayout();
                 RefreshLayout();
-                SetupInitialInnerLayout(); // Setup native anchors once
+                SetupInitialInnerLayout();
                 await SwitchView("Home");
             };
         }
@@ -80,19 +86,32 @@ namespace Ventrix.App
             pnlSidebar?.BringToFront();
 
             // --- WIRE UP EVENTS ---
-            if (btnCreate != null) btnCreate.Click += async (s, e) => await BtnCreate_Click(s, e);
-            if (btnEdit != null) btnEdit.Click += async (s, e) => await BtnEdit_Click(s, e);
+            if (btnCreate != null) btnCreate.Click += async (s, e) => await btnCreate_Click(s, e);
+            if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
             if (btnDelete != null) btnDelete.Click += async (s, e) => await BtnDelete_Click(s, e);
 
+            if (btnExportExcel != null) btnExportExcel.Click += (s, e) => ExportToExcel();
+            if (btnExportPDF != null) btnExportPDF.Click += (s, e) => ExportToPDF();
+
+            // --- SIDEBAR NAVIGATION CLICKS ---
             if (btnHome != null) btnHome.Click += async (s, e) => await SwitchView("Home");
             if (btnHistoryNav != null) btnHistoryNav.Click += async (s, e) => await SwitchView("History");
-            if (txtSearch != null) txtSearch.TextChanged += async (s, e) => await LoadFromDatabase("All");
+            if (btnNavAllItems != null) btnNavAllItems.Click += async (s, e) => await SwitchView("Inventory", "All");
+            if (btnNavAvailable != null) btnNavAvailable.Click += async (s, e) => await SwitchView("Inventory", "Available");
+            if (btnNavBorrowed != null) btnNavBorrowed.Click += async (s, e) => await SwitchView("Inventory", "Borrowed");
+            if (btnNavBorrowers != null) btnNavBorrowers.Click += async (s, e) => await SwitchView("Inventory", "Borrower List");
+
             if (btnClearActivity != null) btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
             if (cmbAccountActions != null) cmbAccountActions.SelectedIndexChanged += CmbAccountActions_SelectedIndexChanged;
 
             if (lblUrgentHeader != null)
             {
                 lblUrgentHeader.Click += async (s, e) => await LblUrgentHeader_Click(s, e);
+            }
+
+            if (pnlMainContent != null)
+            {
+                pnlMainContent.UseTransparentBackground = true;
             }
 
             if (pnlHomeSummary != null && lblUrgentHeader != null)
@@ -112,8 +131,13 @@ namespace Ventrix.App
                 pnlHomeSummary.MouseLeave += (s, e) => Cursor = Cursors.Default;
             }
 
-            if (dgvInventory != null) dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
+            if (dgvInventory != null)
+            {
+                dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
+                dgvInventory.CellFormatting += DgvInventory_CellFormatting;
+            }
 
+            // Cards now click to switch view too
             if (cardTotal != null) cardTotal.CardClicked += async (s, e) => await SwitchView("Inventory", "All");
             if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
             if (cardPending != null) cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
@@ -124,11 +148,157 @@ namespace Ventrix.App
                 sidebarTimer.Interval = 10;
                 btnHamburger.Click += (s, e) =>
                 {
-                    // Disable heavy shadow effect during slide to prevent container drag/lag
                     if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = false;
+                    if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = false;
+                    if (pnlHistory != null) pnlHistory.ShadowDecoration.Enabled = false;
+
                     sidebarTimer.Start();
                 };
                 sidebarTimer.Tick += SidebarTimer_Tick;
+            }
+
+            if (txtSearch != null)
+            {
+                txtSearch.IconRightCursor = Cursors.Hand;
+                txtSearch.IconRightSize = new Size(0, 0);
+
+                if (searchTimer != null)
+                {
+                    searchTimer.Interval = 300;
+                    searchTimer.Tick += async (sender, args) =>
+                    {
+                        searchTimer.Stop();
+                        await LoadFromDatabase("All");
+                    };
+                }
+
+                txtSearch.TextChanged += (s, e) =>
+                {
+                    txtSearch.IconRightSize = string.IsNullOrEmpty(txtSearch.Text) ? new Size(0, 0) : new Size(15, 15);
+                    searchTimer?.Stop();
+                    searchTimer?.Start();
+                };
+
+                txtSearch.KeyDown += async (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Enter)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        searchTimer?.Stop();
+                        await LoadFromDatabase("All");
+                    }
+                    else if (e.KeyCode == Keys.Escape)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        txtSearch.Clear();
+                        this.Focus();
+                    }
+                };
+
+                txtSearch.IconRightClick += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(txtSearch.Text))
+                    {
+                        txtSearch.Clear();
+                        txtSearch.Focus();
+                    }
+                };
+            }
+
+            // --- ULTRA-SOFT "GLASS" DROP SHADOWS FOR CONTAINERS ---
+            var containers = new[] { pnlGridContainer, pnlHomeSummary, pnlHistory };
+
+            foreach (var container in containers)
+            {
+                if (container != null)
+                {
+                    container.BorderRadius = 12;
+                    container.FillColor = Color.White;
+                    container.ShadowDecoration.Enabled = true;
+                    container.ShadowDecoration.BorderRadius = 12;
+                    container.ShadowDecoration.Color = Color.FromArgb(15, 0, 0, 0);
+                    container.ShadowDecoration.Depth = 10;
+                    container.ShadowDecoration.Shadow = new Padding(4, 4, 10, 10);
+                }
+            }
+
+            var metricCards = new[] { cardTotal, cardAvailable, cardPending, cardBorrowers };
+            foreach (var card in metricCards)
+            {
+                if (card != null)
+                {
+                    card.MouseEnter += (s, e) => { card.Location = new Point(card.Location.X, card.Location.Y - 4); };
+                    card.MouseLeave += (s, e) => { card.Location = new Point(card.Location.X, card.Location.Y + 4); };
+                }
+            }
+
+            // --- CUSTOM MODERN SCROLLBAR FOR RECENT ACTIVITY ---
+            if (flowRecentActivity != null && pnlHomeSummary != null)
+            {
+                flowRecentActivity.AutoScroll = false;
+                Guna.UI2.WinForms.Guna2VScrollBar customScroll = new Guna.UI2.WinForms.Guna2VScrollBar
+                {
+                    BindingContainer = flowRecentActivity,
+                    BorderRadius = 4,
+                    ThumbColor = Color.FromArgb(200, 200, 200),
+                    FillColor = Color.Transparent,
+                    Width = 8,
+                    Margin = new Padding(0, 10, 5, 10),
+                    Dock = DockStyle.Right
+                };
+                customScroll.HoverState.ThumbColor = ThemeManager.VentrixLightBlue;
+                pnlHomeSummary.Controls.Add(customScroll);
+                customScroll.BringToFront();
+            }
+
+            // --- NEW: SLEEK CUSTOM DATAGRID SCROLLBAR ---
+            if (dgvInventory != null && pnlGridContainer != null)
+            {
+                dgvInventory.ScrollBars = ScrollBars.None;
+                Guna.UI2.WinForms.Guna2VScrollBar gridScroll = new Guna.UI2.WinForms.Guna2VScrollBar
+                {
+                    BindingContainer = dgvInventory,
+                    BorderRadius = 4,
+                    ThumbColor = Color.FromArgb(200, 200, 200),
+                    FillColor = Color.Transparent,
+                    Width = 8,
+                    Margin = new Padding(0, 10, 5, 10),
+                    Dock = DockStyle.Right
+                };
+                gridScroll.HoverState.ThumbColor = ThemeManager.VentrixLightBlue;
+                pnlGridContainer.Controls.Add(gridScroll);
+                gridScroll.BringToFront();
+            }
+
+            // --- NEW: MODERN RIGHT-CLICK CONTEXT MENU ---
+            Guna.UI2.WinForms.Guna2ContextMenuStrip gridMenu = new Guna.UI2.WinForms.Guna2ContextMenuStrip();
+            gridMenu.RenderStyle.SelectionBackColor = ThemeManager.VentrixLightBlue;
+            gridMenu.RenderStyle.SelectionForeColor = Color.White;
+            gridMenu.Font = new System.Drawing.Font("Segoe UI", 10F);
+
+            ToolStripMenuItem editOption = new ToolStripMenuItem("✏️ Edit Record");
+            ToolStripMenuItem deleteOption = new ToolStripMenuItem("🗑️ Delete Item");
+            deleteOption.ForeColor = Color.IndianRed;
+
+            gridMenu.Items.Add(editOption);
+            gridMenu.Items.Add(deleteOption);
+
+            if (btnEdit != null) editOption.Click += (s, e) => btnEdit.PerformClick();
+            if (btnDelete != null) deleteOption.Click += (s, e) => btnDelete.PerformClick();
+
+            if (dgvInventory != null)
+            {
+                dgvInventory.CellMouseDown += (s, e) =>
+                {
+                    if (e.Button == MouseButtons.Right && e.RowIndex >= 0)
+                    {
+                        dgvInventory.ClearSelection();
+                        dgvInventory.Rows[e.RowIndex].Selected = true;
+                        gridMenu.Show(Cursor.Position);
+                    }
+                };
             }
 
             this.Load += (s, e) =>
@@ -136,70 +306,90 @@ namespace Ventrix.App
                 ApplyModernBranding();
                 RefreshLayout();
             };
+
             this.Resize += (s, e) => {
                 if (this.WindowState != FormWindowState.Minimized) RefreshLayout();
             };
         }
 
-        // Sets up WinForms Native Anchors ONCE so controls automatically stretch alongside the Main Panel
         private void SetupInitialInnerLayout()
         {
             if (pnlMainContent == null) return;
 
-            int innerMargin = 20;
-            int availableWidth = pnlMainContent.Width - (innerMargin * 2);
-            Size shiftedSize = new Size(availableWidth, pnlMainContent.Height - 100);
-            Point shiftedLocation = new Point(innerMargin, 80);
+            int horizontalMargin = 30;
+            int topMargin = 85;
+            int bottomMargin = 40;
+
+            int availableWidth = pnlMainContent.Width - (horizontalMargin * 2);
+            int availableHeight = pnlMainContent.Height - topMargin - bottomMargin;
+
+            Size shiftedSize = new Size(availableWidth, availableHeight);
+            Point shiftedLocation = new Point(horizontalMargin, topMargin);
 
             var fillAnchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
             if (pnlHomeSummary != null)
             {
-                pnlHomeSummary.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+                pnlHomeSummary.Bounds = new System.Drawing.Rectangle(shiftedLocation, shiftedSize);
                 pnlHomeSummary.Anchor = fillAnchor;
             }
             if (pnlGridContainer != null)
             {
-                pnlGridContainer.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+                pnlGridContainer.Bounds = new System.Drawing.Rectangle(shiftedLocation, shiftedSize);
                 pnlGridContainer.Anchor = fillAnchor;
             }
             if (pnlHistory != null)
             {
-                pnlHistory.Bounds = new Rectangle(shiftedLocation, shiftedSize);
+                pnlHistory.Bounds = new System.Drawing.Rectangle(shiftedLocation, shiftedSize);
                 pnlHistory.Anchor = fillAnchor;
             }
 
             if (dgvInventory != null && pnlGridContainer != null)
             {
-                dgvInventory.Bounds = new Rectangle(5, 5, pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
+                dgvInventory.Bounds = new System.Drawing.Rectangle(5, 5, pnlGridContainer.Width - 10, pnlGridContainer.Height - 10);
                 dgvInventory.Anchor = fillAnchor;
             }
             if (dgvHistory != null && pnlHistory != null)
             {
-                dgvHistory.Bounds = new Rectangle(5, 5, pnlHistory.Width - 10, pnlHistory.Height - 10);
+                dgvHistory.Bounds = new System.Drawing.Rectangle(5, 5, pnlHistory.Width - 10, pnlHistory.Height - 10);
                 dgvHistory.Anchor = fillAnchor;
             }
 
-            int btnWidth = 150;
-            int rightEdgeMargin = 50;
+            int spacing = 15;
+            int rightEdgeMargin = horizontalMargin;
+            int buttonY = 25;
+
+            if (btnExportExcel != null)
+            {
+                btnExportExcel.Location = new Point(horizontalMargin, buttonY);
+                btnExportExcel.BringToFront();
+            }
+            if (btnExportPDF != null && btnExportExcel != null)
+            {
+                btnExportPDF.Location = new Point(btnExportExcel.Right + spacing, buttonY);
+                btnExportPDF.BringToFront();
+            }
 
             if (btnDelete != null)
             {
-                btnDelete.Location = new Point(pnlMainContent.Width - btnWidth - rightEdgeMargin, 20);
+                btnDelete.Location = new Point(pnlMainContent.Width - btnDelete.Width - rightEdgeMargin, buttonY);
                 btnDelete.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnDelete.BringToFront();
             }
             if (btnEdit != null && btnDelete != null)
             {
-                btnEdit.Location = new Point(btnDelete.Left - btnWidth - 20, 20);
-                btnEdit.Anchor = AnchorStyles.Top | AnchorStyles.Right; 
+                btnEdit.Location = new Point(btnDelete.Left - btnEdit.Width - spacing, buttonY);
+                btnEdit.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnEdit.BringToFront();
             }
             if (btnCreate != null && btnEdit != null)
             {
-                btnCreate.Location = new Point(btnEdit.Left - btnWidth - 20, 20);
+                btnCreate.Location = new Point(btnEdit.Left - btnCreate.Width - spacing, buttonY);
                 btnCreate.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnCreate.BringToFront();
             }
 
-            if (lblUrgentHeader != null) lblUrgentHeader.Location = new Point(innerMargin, 35);
+            if (lblUrgentHeader != null) lblUrgentHeader.Location = new Point(horizontalMargin, 35);
 
             if (btnClearActivity != null && pnlHomeSummary != null)
             {
@@ -208,11 +398,31 @@ namespace Ventrix.App
                 btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             }
 
-            if (flowRecentActivity != null && lblUrgentHeader != null && pnlHomeSummary != null)
+            // --- ARRANGE METRIC CARDS HORIZONTALLY ON THE HOME PAGE ---
+            if (pnlHomeSummary != null && cardTotal != null && cardAvailable != null && cardPending != null && cardBorrowers != null)
             {
-                flowRecentActivity.Location = new Point(20, lblUrgentHeader.Bottom + 20);
-                flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
-                flowRecentActivity.Anchor = fillAnchor;
+                cardTotal.Parent = pnlHomeSummary;
+                cardAvailable.Parent = pnlHomeSummary;
+                cardPending.Parent = pnlHomeSummary;
+                cardBorrowers.Parent = pnlHomeSummary;
+
+                int cardSpacing = 20;
+                int startX = 20;
+                int startY = 80;
+
+                int totalAvailableWidth = pnlHomeSummary.Width - (startX * 2) - (cardSpacing * 3);
+                int exactCardWidth = totalAvailableWidth / 4;
+
+                cardTotal.Bounds = new System.Drawing.Rectangle(startX, startY, exactCardWidth, 110);
+                cardAvailable.Bounds = new System.Drawing.Rectangle(cardTotal.Right + cardSpacing, startY, exactCardWidth, 110);
+                cardPending.Bounds = new System.Drawing.Rectangle(cardAvailable.Right + cardSpacing, startY, exactCardWidth, 110);
+                cardBorrowers.Bounds = new System.Drawing.Rectangle(cardPending.Right + cardSpacing, startY, exactCardWidth, 110);
+
+                if (flowRecentActivity != null)
+                {
+                    flowRecentActivity.Location = new Point(startX, cardTotal.Bottom + 30);
+                    flowRecentActivity.Size = new Size(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
+                }
             }
         }
 
@@ -220,73 +430,81 @@ namespace Ventrix.App
         {
             if (pnlSidebar == null || sidebarTimer == null) return;
 
+            Action finalizeAnimation = () => {
+                if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = true;
+                if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = true;
+                if (pnlHistory != null) pnlHistory.ShadowDecoration.Enabled = true;
+                RefreshLayout();
+            };
+
             if (!this.ContainsFocus)
             {
                 sidebarTimer.Stop();
-                if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = true;
+                finalizeAnimation();
                 return;
             }
 
-            int speed = 25;
+            int targetWidth = isSidebarExpanded ? sidebarMinWidth : sidebarMaxWidth;
+            int distanceRemaining = Math.Abs(targetWidth - pnlSidebar.Width);
+            int easingFactor = 4;
 
-            if (isSidebarExpanded)
+            if (distanceRemaining <= 2)
             {
-                pnlSidebar.Width -= speed;
-                if (pnlSidebar.Width <= sidebarMinWidth)
-                {
-                    pnlSidebar.Width = sidebarMinWidth;
-                    isSidebarExpanded = false;
-                    sidebarTimer.Stop();
-                    // Restore container shadow
-                    if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = true;
-                }
+                pnlSidebar.Width = targetWidth;
+                isSidebarExpanded = !isSidebarExpanded;
+                sidebarTimer.Stop();
+                finalizeAnimation();
             }
             else
             {
-                pnlSidebar.Width += speed;
-                if (pnlSidebar.Width >= sidebarMaxWidth)
-                {
-                    pnlSidebar.Width = sidebarMaxWidth;
-                    isSidebarExpanded = true;
-                    sidebarTimer.Stop();
-                    // Restore container shadow
-                    if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = true;
-                }
-            }
+                int step = (distanceRemaining / easingFactor) + 1;
 
-            RefreshLayout();
+                if (isSidebarExpanded) pnlSidebar.Width -= step;
+                else pnlSidebar.Width += step;
+
+                pnlMainContent.Location = new Point(pnlSidebar.Width, pnlMainContent.Location.Y);
+                pnlMainContent.Width = this.Width - pnlSidebar.Width;
+            }
         }
 
         private void RefreshLayout()
         {
             if (pnlMainContent == null || pnlSidebar == null) return;
 
+            int formWidth = this.ClientSize.Width;
+            int formHeight = this.ClientSize.Height;
             int topMargin = 64;
+            int topBarHeight = 80;
 
-            // 1. Position TopBar
             if (pnlTopBar != null)
             {
-                pnlTopBar.Location = new Point(0, topMargin);
-                pnlTopBar.Size = new Size(this.Width, 80);
+                pnlTopBar.SetBounds(0, topMargin, formWidth, topBarHeight);
 
-                if (btnHamburger != null) btnHamburger.Location = new Point(20, 22);
-                if (lblDashboardHeader != null) lblDashboardHeader.Location = new Point(75, 22);
-                if (txtSearch != null) txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 40, 20);
+                if (btnHamburger != null) btnHamburger.Location = new Point(20, (pnlTopBar.Height - btnHamburger.Height) / 2);
+                if (lblDashboardHeader != null) lblDashboardHeader.Location = new Point(75, (pnlTopBar.Height - lblDashboardHeader.Height) / 2);
+
+                if (txtSearch != null)
+                {
+                    txtSearch.Location = new Point(pnlTopBar.Width - txtSearch.Width - 40, (pnlTopBar.Height - txtSearch.Height) / 2);
+                }
             }
 
             int contentY = topMargin + (pnlTopBar != null ? pnlTopBar.Height : 0);
-            int remainingHeight = this.Height - contentY;
+            int remainingHeight = formHeight - contentY;
 
-            // 2. Position Sidebar
-            pnlSidebar.Location = new Point(0, contentY);
-            pnlSidebar.Height = remainingHeight;
+            pnlSidebar.SetBounds(0, contentY, pnlSidebar.Width, remainingHeight);
 
-            // 3. Position Main Content perfectly next to the Sidebar
-            // Note: Since SetupInitialInnerLayout() anchored the child controls, adjusting this Width resizes everything inside automatically!
-            pnlMainContent.Location = new Point(pnlSidebar.Width, contentY);
-            pnlMainContent.Size = new Size(this.Width - pnlSidebar.Width, remainingHeight);
+            int mainContentWidth = formWidth - pnlSidebar.Width;
+            pnlMainContent.SetBounds(pnlSidebar.Width, contentY, mainContentWidth, remainingHeight);
 
             UpdateSidebarInternalUI();
+
+            lblDashboardHeader?.Invalidate();
+
+            if (badgeHealth != null && txtSearch != null)
+            {
+                badgeHealth.Location = new Point(txtSearch.Left - badgeHealth.Width - 20, (pnlTopBar.Height - badgeHealth.Height) / 2);
+            }
         }
 
         private void UpdateSidebarInternalUI()
@@ -310,32 +528,44 @@ namespace Ventrix.App
                 if (cmbAccountActions != null) cmbAccountActions.SetBounds(65, 42, 160, 30);
             }
 
+            // --- STACK THE NAVIGATION BUTTONS ---
             bool showNav = currentWidth > 100;
-            if (btnHome != null) btnHome.Visible = showNav;
-            if (btnHistoryNav != null) btnHistoryNav.Visible = showNav;
+            var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
 
-            if (showNav)
+            int btnY = 90;
+            foreach (var btn in navBtns)
             {
-                if (btnHome != null) btnHome.SetBounds(10, 90, contentWidth, 45);
-                if (btnHistoryNav != null) btnHistoryNav.SetBounds(10, 140, contentWidth, 45);
-            }
-
-            int cardY = 200;
-            var cards = new[] { cardTotal, cardAvailable, cardPending, cardBorrowers };
-
-            for (int i = 0; i < cards.Length; i++)
-            {
-                if (cards[i] != null)
+                if (btn != null)
                 {
-                    cards[i].SetBounds(10, cardY, contentWidth, 110);
-                    cardY += 120;
+                    btn.Visible = showNav;
+                    if (showNav)
+                    {
+                        btn.SetBounds(10, btnY, contentWidth, 45);
+                        btnY += 50; // Spacing between buttons
+                    }
                 }
             }
 
             pnlSidebar.ResumeLayout(false);
         }
 
+        private string GetGreeting()
+        {
+            int hour = DateTime.Now.Hour;
+            if (hour < 12) return "GOOD MORNING";
+            if (hour < 17) return "GOOD AFTERNOON";
+            return "GOOD EVENING";
+        }
+
         #region Navigation & Data Loading
+
+        private void HighlightNavButton(Guna.UI2.WinForms.Guna2Button activeBtn)
+        {
+            if (activeBtn == null) return;
+            activeBtn.FillColor = Color.FromArgb(40, 255, 255, 255);
+            activeBtn.CustomBorderColor = Color.Orange;
+            activeBtn.CustomBorderThickness = new Padding(4, 0, 0, 0);
+        }
 
         private async Task SwitchView(string viewName, string filter = "All")
         {
@@ -344,30 +574,110 @@ namespace Ventrix.App
             if (pnlHistory != null) pnlHistory.Visible = (viewName == "History");
 
             bool showCrud = (viewName == "Inventory" && filter != "Borrowed" && filter != "Borrower List");
+
             if (btnCreate != null) btnCreate.Visible = showCrud;
             if (btnEdit != null) btnEdit.Visible = showCrud;
             if (btnDelete != null) btnDelete.Visible = showCrud;
 
+            if (txtSearch != null)
+            {
+                if (viewName == "Inventory")
+                    txtSearch.PlaceholderText = "Search by item name, category, or ID...";
+                else if (viewName == "History")
+                    txtSearch.PlaceholderText = "Search by borrower name or action...";
+                else
+                    txtSearch.PlaceholderText = "Search records...";
+            }
+
+            // Reset all nav button highlights
+            var navButtons = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
+            foreach (var btn in navButtons)
+            {
+                if (btn != null)
+                {
+                    btn.FillColor = Color.Transparent;
+                    btn.CustomBorderThickness = new Padding(0);
+                }
+            }
+
             switch (viewName)
             {
                 case "Home":
-                    if (lblDashboardHeader != null) lblDashboardHeader.Text = "SYSTEM EXECUTIVE SUMMARY";
+                    if (lblDashboardHeader != null) lblDashboardHeader.Text = $"{GetGreeting()}, ADMIN";
                     pnlHomeSummary?.BringToFront();
+                    HighlightNavButton(btnHome);
                     await LoadHomeContent();
                     break;
+
                 case "Inventory":
                     pnlGridContainer?.BringToFront();
                     if (lblDashboardHeader != null) lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
+
+                    if (filter == "All") HighlightNavButton(btnNavAllItems);
+                    else if (filter == "Available") HighlightNavButton(btnNavAvailable);
+                    else if (filter == "Borrowed") HighlightNavButton(btnNavBorrowed);
+                    else if (filter == "Borrower List") HighlightNavButton(btnNavBorrowers);
+
                     await LoadFromDatabase(filter);
                     break;
+
                 case "History":
                     pnlHistory?.BringToFront();
                     if (lblDashboardHeader != null) lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
+                    HighlightNavButton(btnHistoryNav);
                     await LoadHistoryData();
                     break;
             }
+
+            bool isInventory = (viewName == "Inventory");
+            if (btnExportExcel != null) btnExportExcel.Visible = isInventory;
+            if (btnExportPDF != null) btnExportPDF.Visible = isInventory;
+
+            if (showCrud)
+            {
+                btnCreate?.BringToFront();
+                btnEdit?.BringToFront();
+                btnDelete?.BringToFront();
+            }
+
             await UpdateDashboardCounts();
             pnlSidebar?.BringToFront();
+        }
+
+        private async Task UpdateSystemHealthBadge()
+        {
+            var items = await _inventoryService.GetAllItemsAsync();
+            int damagedCount = items.Count(x => x.Condition == "Damaged");
+
+            if (badgeHealth != null)
+            {
+                if (damagedCount > 0)
+                {
+                    badgeHealth.Text = $"SYSTEM ALERTS: {damagedCount} ISSUES";
+                    badgeHealth.FillColor = Color.FromArgb(255, 235, 238);
+                    badgeHealth.ForeColor = Color.Red;
+                }
+                else
+                {
+                    badgeHealth.Text = "ALL SYSTEMS OPERATIONAL";
+                    badgeHealth.FillColor = Color.FromArgb(232, 245, 233);
+                    badgeHealth.ForeColor = Color.MediumSeaGreen;
+                }
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.F))
+            {
+                if (txtSearch != null && txtSearch.Visible)
+                {
+                    txtSearch.Focus();
+                    txtSearch.SelectAll();
+                    return true;
+                }
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         private async Task LblUrgentHeader_Click(object sender, EventArgs e)
@@ -425,8 +735,10 @@ namespace Ventrix.App
         private async Task LoadFromDatabase(string statusFilter)
         {
             if (dgvInventory == null) return;
+
             dgvInventory.Rows.Clear();
             dgvInventory.Columns.Clear();
+
             var items = await _inventoryService.GetAllItemsAsync();
 
             if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text))
@@ -435,24 +747,78 @@ namespace Ventrix.App
                 items = items.Where(i => i.Name.ToLower().Contains(search)).ToList();
             }
 
+            var filteredItems = items;
+            if (statusFilter == "Available")
+            {
+                filteredItems = items.Where(x => x.Status == ItemStatus.Available).ToList();
+            }
+
+            if (lblEmptyState != null)
+            {
+                bool isEmpty = (statusFilter == "Borrowed" || statusFilter == "Borrower List")
+                    ? !(await _borrowService.GetAllBorrowRecordsAsync()).Any()
+                    : !filteredItems.Any();
+
+                lblEmptyState.Visible = isEmpty;
+
+                if (txtSearch != null)
+                {
+                    if (isEmpty && !string.IsNullOrEmpty(txtSearch.Text))
+                    {
+                        txtSearch.FocusedState.BorderColor = Color.IndianRed;
+                        txtSearch.BorderColor = Color.FromArgb(255, 200, 200);
+                    }
+                    else
+                    {
+                        txtSearch.FocusedState.BorderColor = ThemeManager.VentrixBlue;
+                        txtSearch.BorderColor = Color.Transparent;
+                    }
+                }
+            }
+
             switch (statusFilter)
             {
                 case "Available":
                     SetupColumns("ID", "Item Name", "Category", "Condition");
-                    foreach (var i in items.Where(x => x.Status == ItemStatus.Available)) dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Condition);
+                    foreach (var i in filteredItems)
+                    {
+                        dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Condition);
+                        if (filteredItems.Count < 30) await Task.Delay(15);
+                    }
                     break;
+
                 case "Borrowed":
-                    SetupColumns("ID", "Item Name", "Borrower ID", "Status", "Date Borrowed", "Return Date");
-                    foreach (var r in (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Active)) dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
+                    SetupColumns("ID", "Item Name", "Borrower ID", "Status", "Date Borrowed");
+                    var borrowedRecords = (await _borrowService.GetAllBorrowRecordsAsync())
+                        .Where(b => b.Status == BorrowStatus.Active).ToList();
+
+                    foreach (var r in borrowedRecords)
+                    {
+                        dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
+                        if (borrowedRecords.Count < 30) await Task.Delay(15);
+                    }
                     break;
+
                 case "Borrower List":
-                    SetupColumns("Borrower ID", "Borrower Name", "Grade Level", "Subject/Purpose", "Items Held");
-                    foreach (var group in (await _borrowService.GetAllBorrowRecordsAsync()).GroupBy(b => b.BorrowerId))
-                        dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown", group.First().GradeLevel, group.First().Purpose, group.Count(x => x.Status == BorrowStatus.Active));
+                    SetupColumns("Borrower ID", "Borrower Name", "Grade Level", "Purpose", "Items Held");
+                    var groups = (await _borrowService.GetAllBorrowRecordsAsync())
+                        .GroupBy(b => b.BorrowerId).ToList();
+
+                    foreach (var group in groups)
+                    {
+                        dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown",
+                            group.First().GradeLevel, group.First().Purpose, group.Count(x => x.Status == BorrowStatus.Active));
+                        if (groups.Count < 30) await Task.Delay(15);
+                    }
                     break;
+
                 default:
                     SetupColumns("ID", "Item Name", "Category", "Status", "Condition");
-                    foreach (var i in items) dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Status, i.Condition);
+                    foreach (var i in filteredItems)
+                    {
+                        dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Status, i.Condition);
+                        if (filteredItems.Count < 30) await Task.Delay(15);
+                    }
                     break;
             }
         }
@@ -502,6 +868,7 @@ namespace Ventrix.App
 
         private async Task UpdateDashboardCounts()
         {
+            UpdateSystemHealthBadge();
             var items = (await _inventoryService.GetAllItemsAsync())?.ToList() ?? new List<InventoryItem>();
             var records = (await _borrowService.GetAllBorrowRecordsAsync())?.ToList() ?? new List<BorrowRecord>();
 
@@ -525,33 +892,179 @@ namespace Ventrix.App
 
         #region CRUD Actions
 
-        private async Task BtnCreate_Click(object sender, EventArgs e)
+        private async Task btnCreate_Click(object sender, EventArgs e)
         {
-            using (var popup = new InventoryPopup(_inventoryService)) { popup.StartPosition = FormStartPosition.CenterParent; if (popup.ShowDialog() == DialogResult.OK) { await LoadFromDatabase("All"); await UpdateDashboardCounts(); } RefreshLayout(); }
+            using (var popup = new InventoryPopup(_inventoryService))
+            {
+                popup.StartPosition = FormStartPosition.CenterParent;
+                if (popup.ShowDialog() == DialogResult.OK)
+                {
+                    await LoadFromDatabase("All");
+                    await UpdateDashboardCounts();
+                    ToastNotification.Show(this, "New item added to inventory!", ToastType.Success);
+                }
+                RefreshLayout();
+            }
         }
 
-        private async Task BtnEdit_Click(object sender, EventArgs e)
+        private async Task btnEdit_Click(object sender, EventArgs e)
         {
-            if (dgvInventory?.SelectedRows.Count == 0) { MessageBox.Show("Please select a record to edit.", "Ventrix System"); return; }
-            using (var popup = new InventoryPopup(_inventoryService, Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value))) { popup.StartPosition = FormStartPosition.CenterParent; if (popup.ShowDialog() == DialogResult.OK) { await LoadFromDatabase("All"); await UpdateDashboardCounts(); } RefreshLayout(); }
+            if (dgvInventory?.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a record to edit.", "Ventrix System");
+                return;
+            }
+
+            using (var popup = new InventoryPopup(_inventoryService, Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value)))
+            {
+                popup.StartPosition = FormStartPosition.CenterParent;
+                if (popup.ShowDialog() == DialogResult.OK)
+                {
+                    await LoadFromDatabase("All");
+                    await UpdateDashboardCounts();
+                    ToastNotification.Show(this, "Item updated successfully!", ToastType.Success);
+                }
+                RefreshLayout();
+            }
         }
 
         private async Task BtnDelete_Click(object sender, EventArgs e)
         {
-            if (dgvInventory?.SelectedRows.Count > 0 && MessageBox.Show($"Delete item #{dgvInventory.SelectedRows[0].Cells[0].Value}?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes) { await _inventoryService.DeleteItemAsync(Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value)); await SwitchView("Inventory", "All"); }
+            if (dgvInventory?.SelectedRows.Count > 0 && MessageBox.Show($"Delete item #{dgvInventory.SelectedRows[0].Cells[0].Value}?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                await _inventoryService.DeleteItemAsync(Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value));
+                await SwitchView("Inventory", "All");
+                ToastNotification.Show(this, "Item deleted from inventory.", ToastType.Info);
+            }
         }
 
         private async Task ClearRecentActivity()
         {
-            if (MessageBox.Show("Delete all activity logs?", "Critical Action", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) { await _borrowService.ClearAllActivityAsync(); flowRecentActivity?.Controls.Clear(); await LoadHomeContent(); await UpdateDashboardCounts(); MessageBox.Show("Records cleared."); }
+            if (MessageBox.Show("Delete all activity logs?", "Critical Action", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                await _borrowService.ClearAllActivityAsync();
+                flowRecentActivity?.Controls.Clear();
+                await LoadHomeContent();
+                await UpdateDashboardCounts();
+                ToastNotification.Show(this, "Activity records cleared successfully.", ToastType.Info);
+            }
         }
 
+        #endregion
+
+        #region Export Methods
+        private void ExportToExcel()
+        {
+            if (dgvInventory == null || dgvInventory.Rows.Count == 0)
+            {
+                MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = "Ventrix_Inventory_Report.xlsx" })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (XLWorkbook workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add("Inventory Report");
+
+                            for (int i = 0; i < dgvInventory.Columns.Count; i++)
+                            {
+                                worksheet.Cell(1, i + 1).Value = dgvInventory.Columns[i].HeaderText;
+                                worksheet.Cell(1, i + 1).Style.Font.Bold = true;
+                                worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#0D47A1");
+                                worksheet.Cell(1, i + 1).Style.Font.FontColor = XLColor.White;
+                            }
+
+                            for (int i = 0; i < dgvInventory.Rows.Count; i++)
+                            {
+                                for (int j = 0; j < dgvInventory.Columns.Count; j++)
+                                {
+                                    worksheet.Cell(i + 2, j + 1).Value = dgvInventory.Rows[i].Cells[j].Value?.ToString() ?? "";
+                                }
+                            }
+
+                            worksheet.Columns().AdjustToContents();
+                            workbook.SaveAs(sfd.FileName);
+                            ToastNotification.Show(this, "Excel report exported successfully!", ToastType.Success);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error exporting to Excel: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void ExportToPDF()
+        {
+            if (dgvInventory == null || dgvInventory.Rows.Count == 0)
+            {
+                MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = "Ventrix_Inventory_Report.pdf" })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        iTextSharp.text.Document pdfDoc = new iTextSharp.text.Document(PageSize.A4.Rotate(), 20f, 20f, 20f, 20f);
+                        PdfWriter.GetInstance(pdfDoc, new FileStream(sfd.FileName, FileMode.Create));
+                        pdfDoc.Open();
+
+                        iTextSharp.text.Font titleFont = FontFactory.GetFont("Arial", 16, iTextSharp.text.Font.BOLD);
+                        Paragraph title = new Paragraph("VENTRIX SYSTEM - INVENTORY REPORT\n\n", titleFont);
+                        title.Alignment = Element.ALIGN_CENTER;
+                        pdfDoc.Add(title);
+
+                        PdfPTable pdfTable = new PdfPTable(dgvInventory.Columns.Count);
+                        pdfTable.WidthPercentage = 100;
+
+                        foreach (DataGridViewColumn column in dgvInventory.Columns)
+                        {
+                            PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, FontFactory.GetFont("Arial", 10, iTextSharp.text.Font.BOLD)));
+                            cell.BackgroundColor = new BaseColor(13, 71, 161);
+                            cell.Padding = 5;
+                            cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            pdfTable.AddCell(cell);
+                        }
+
+                        foreach (DataGridViewRow row in dgvInventory.Rows)
+                        {
+                            foreach (DataGridViewCell cell in row.Cells)
+                            {
+                                PdfPCell pdfCell = new PdfPCell(new Phrase(cell.Value?.ToString() ?? "", FontFactory.GetFont("Arial", 9)));
+                                pdfCell.Padding = 5;
+                                pdfCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                                pdfTable.AddCell(pdfCell);
+                            }
+                        }
+
+                        pdfDoc.Add(pdfTable);
+                        pdfDoc.Close();
+
+                        ToastNotification.Show(this, "PDF report exported successfully!", ToastType.Success);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
         #endregion
 
         #region UI Styling
         private void SetupColumnsHistory() { dgvHistory.Columns.Add("ID", "ID"); dgvHistory.Columns.Add("Item", "Item Name"); dgvHistory.Columns.Add("Borrower", "Borrower"); dgvHistory.Columns.Add("BDate", "Borrowed"); dgvHistory.Columns.Add("RDate", "Returned"); dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; }
         private void SetupColumns(params string[] names) { foreach (var n in names) dgvInventory.Columns.Add(n.Replace(" ", ""), n); dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; }
-        private void AddSectionHeader(string title) { flowRecentActivity?.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI", 12, FontStyle.Bold), AutoSize = true }); }
+
+        private void AddSectionHeader(string title) { flowRecentActivity?.Controls.Add(new Label { Text = title, Font = new System.Drawing.Font("Segoe UI", 12, FontStyle.Bold), AutoSize = true }); }
 
         private void InitializeMaterialSkin()
         {
@@ -560,10 +1073,190 @@ namespace Ventrix.App
 
         private void ApplyModernBranding()
         {
-            if (lblDashboardHeader != null) { lblDashboardHeader.Font = null; ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue); lblDashboardHeader.Text = "INVENTORY OVERVIEW"; }
-            if (lblUrgentHeader != null) { lblUrgentHeader.Font = null; ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont); }
-            var btns = new[] { btnHistoryNav, btnHome, btnCreate, btnEdit, btnDelete, btnClearActivity }; var clrs = new[] { Color.Orange, ThemeManager.VentrixLightBlue, Color.Teal, ThemeManager.VentrixLightBlue, ThemeManager.VentrixBlue, Color.FromArgb(192, 0, 0) }; var txts = new[] { "HISTORY", "HOME PAGE", "ADD ITEM", "EDIT RECORD", "DELETE ITEM", "CLEAR ALL" };
-            for (int i = 0; i < btns.Length; i++) if (btns[i] != null) { btns[i].Text = txts[i]; btns[i].Font = ThemeManager.ButtonFont; btns[i].FillColor = Color.Transparent; btns[i].HoverState.FillColor = clrs[i]; btns[i].TextAlign = HorizontalAlignment.Center; btns[i].TextOffset = new Point(15, 0); btns[i].BorderRadius = 10; }
+            if (lblDashboardHeader != null)
+            {
+                lblDashboardHeader.Font = null;
+                ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
+                lblDashboardHeader.Text = "INVENTORY OVERVIEW";
+            }
+
+            if (lblUrgentHeader != null)
+            {
+                lblUrgentHeader.Font = null;
+                ThemeManager.ApplyCustomFont(lblUrgentHeader, ThemeManager.SubHeaderFont);
+            }
+
+            // 1. Style the Sidebar Navigation Buttons
+            var sideBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
+            var sideTxts = new[] { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "BORROWERS" };
+
+            for (int i = 0; i < sideBtns.Length; i++)
+            {
+                if (sideBtns[i] != null)
+                {
+                    sideBtns[i].Text = sideTxts[i];
+                    sideBtns[i].Font = ThemeManager.ButtonFont;
+                    sideBtns[i].FillColor = Color.Transparent;
+                    sideBtns[i].HoverState.FillColor = Color.FromArgb(40, 255, 255, 255); // White glow
+                    sideBtns[i].HoverState.ForeColor = Color.White;
+                    sideBtns[i].TextAlign = HorizontalAlignment.Left;
+                    sideBtns[i].TextOffset = new Point(10, 0);
+                    sideBtns[i].BorderRadius = 8;
+                    sideBtns[i].Animated = true;
+                }
+            }
+
+            // 2. Style the Main Action Buttons
+            var actionBtns = new[] { btnCreate, btnEdit, btnDelete, btnClearActivity };
+            var actionTxts = new[] { "ADD ITEM", "EDIT RECORD", "DELETE ITEM", "CLEAR ALL" };
+            var actionClrs = new[] { Color.Teal, ThemeManager.VentrixLightBlue, Color.IndianRed, Color.IndianRed };
+
+            for (int i = 0; i < actionBtns.Length; i++)
+            {
+                if (actionBtns[i] != null)
+                {
+                    actionBtns[i].Text = actionTxts[i];
+                    actionBtns[i].Font = ThemeManager.ButtonFont;
+                    actionBtns[i].FillColor = Color.Transparent;
+                    actionBtns[i].HoverState.FillColor = actionClrs[i];
+                    actionBtns[i].HoverState.ForeColor = Color.White;
+                    actionBtns[i].TextAlign = HorizontalAlignment.Left;
+                    actionBtns[i].TextOffset = new Point(10, 0);
+                    actionBtns[i].BorderRadius = 8;
+                    actionBtns[i].Animated = true;
+                }
+            }
+
+            if (txtSearch != null)
+            {
+                txtSearch.BorderRadius = txtSearch.Height / 2;
+                txtSearch.Font = new System.Drawing.Font("Segoe UI", 10.5F, FontStyle.Regular);
+                txtSearch.ForeColor = Color.FromArgb(64, 64, 64);
+                txtSearch.TextOffset = new Point(5, 0);
+
+                txtSearch.FillColor = Color.FromArgb(245, 248, 252);
+                txtSearch.BorderColor = Color.Transparent;
+                txtSearch.HoverState.FillColor = Color.FromArgb(250, 252, 255);
+                txtSearch.HoverState.BorderColor = Color.FromArgb(200, 210, 230);
+                txtSearch.FocusedState.FillColor = Color.White;
+                txtSearch.FocusedState.BorderColor = ThemeManager.VentrixBlue;
+                txtSearch.PlaceholderForeColor = Color.FromArgb(160, 160, 160);
+                txtSearch.Animated = true;
+                txtSearch.IconLeftOffset = new Point(10, 0);
+                txtSearch.IconRightOffset = new Point(10, 0);
+            }
+
+            if (pnlTopBar != null)
+            {
+                pnlTopBar.FillColor = Color.White;
+                pnlTopBar.ShadowDecoration.Enabled = false;
+                pnlTopBar.CustomBorderColor = Color.FromArgb(230, 235, 240);
+                pnlTopBar.CustomBorderThickness = new Padding(0, 0, 0, 1);
+            }
+
+            if (btnHamburger != null)
+            {
+                btnHamburger.HoverState.ImageSize = new Size(btnHamburger.ImageSize.Width - 2, btnHamburger.ImageSize.Height - 2);
+            }
+        }
+
+        private void StyleDataGrids()
+        {
+            var grids = new[] { dgvInventory, dgvHistory };
+
+            foreach (var grid in grids)
+            {
+                if (grid == null) continue;
+
+                grid.BackgroundColor = Color.White;
+                grid.BorderStyle = BorderStyle.None;
+                grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+                grid.GridColor = Color.FromArgb(230, 235, 240);
+                grid.RowHeadersVisible = false;
+                grid.AllowUserToAddRows = false;
+                grid.AllowUserToDeleteRows = false;
+                grid.AllowUserToResizeRows = false;
+                grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                grid.MultiSelect = false;
+                grid.ReadOnly = true;
+
+                grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+                grid.ColumnHeadersHeight = 50;
+                grid.ThemeStyle.HeaderStyle.BackColor = ThemeManager.VentrixBlue;
+                grid.ThemeStyle.HeaderStyle.ForeColor = Color.White;
+
+                grid.ThemeStyle.HeaderStyle.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, FontStyle.Regular);
+                grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+                grid.RowTemplate.Height = 45;
+                grid.ThemeStyle.RowsStyle.BackColor = Color.White;
+                grid.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(64, 64, 64);
+
+                grid.ThemeStyle.RowsStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Regular);
+                grid.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(240, 245, 255);
+                grid.ThemeStyle.RowsStyle.SelectionForeColor = ThemeManager.VentrixBlue;
+
+                grid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                grid.DefaultCellStyle.Padding = new Padding(5, 0, 5, 0);
+
+                grid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.FromArgb(250, 252, 255);
+                grid.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.FromArgb(64, 64, 64);
+                grid.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.FromArgb(240, 245, 255);
+                grid.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = ThemeManager.VentrixBlue;
+
+                grid.CellPainting += (s, e) =>
+                {
+                    if (e.RowIndex >= 0 && (e.State & DataGridViewElementStates.Selected) == DataGridViewElementStates.Selected)
+                    {
+                        e.Paint(e.ClipBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Focus);
+                        e.Handled = true;
+                    }
+                };
+
+                grid.CellMouseEnter += (s, e) =>
+                {
+                    if (e.RowIndex >= 0)
+                    {
+                        grid.Cursor = Cursors.Hand;
+                        grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(245, 248, 255);
+                    }
+                };
+
+                grid.CellMouseLeave += (s, e) =>
+                {
+                    if (e.RowIndex >= 0)
+                    {
+                        grid.Cursor = Cursors.Default;
+                        if (e.RowIndex % 2 == 0)
+                            grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.White;
+                        else
+                            grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = grid.ThemeStyle.AlternatingRowsStyle.BackColor;
+                    }
+                };
+            }
+        }
+
+        private void DgvInventory_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && e.Value != null)
+            {
+                DataGridView dgv = sender as DataGridView;
+                string colName = dgv.Columns[e.ColumnIndex].Name;
+                string value = e.Value.ToString();
+
+                if (!string.IsNullOrEmpty(txtSearch.Text) && value.ToLower().Contains(txtSearch.Text.ToLower()))
+                {
+                    e.CellStyle.BackColor = Color.FromArgb(255, 255, 200);
+                }
+
+                if (colName == "Status" || colName == "Condition")
+                {
+                    e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+                    if (value == "Available" || value == "Good") e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                    else if (value == "Borrowed") e.CellStyle.ForeColor = Color.DarkOrange;
+                    else if (value == "Damaged" || value == "Missing") e.CellStyle.ForeColor = Color.IndianRed;
+                }
+            }
         }
 
         protected override void OnActivated(EventArgs e) { base.OnActivated(e); ApplyModernBranding(); }

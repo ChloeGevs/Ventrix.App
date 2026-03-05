@@ -10,9 +10,12 @@ namespace Ventrix.App
         public static readonly Color VentrixBlue = Color.FromArgb(13, 71, 161);
         public static readonly Color VentrixLightBlue = Color.FromArgb(33, 150, 243);
 
-        public static readonly Font HeaderFont = new Font("Segoe UI", 22F, FontStyle.Bold);
-        public static readonly Font SubHeaderFont = new Font("Segoe UI", 12F, FontStyle.Bold);
-        public static readonly Font ButtonFont = new Font("Sitka Banner", 11F, FontStyle.Bold);
+        // In ThemeManager.cs
+        public static readonly Font HeaderFont = new Font("Segoe UI", 20F, FontStyle.Bold);
+
+        // Use "Segoe UI Semibold" as the string, and FontStyle.Regular
+        public static readonly Font SubHeaderFont = new Font("Segoe UI Semibold", 12F, FontStyle.Regular);
+        public static readonly Font ButtonFont = new Font("Segoe UI Semibold", 10F, FontStyle.Regular);
 
         public static void Initialize(MaterialForm form)
         {
