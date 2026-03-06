@@ -122,7 +122,7 @@ namespace Ventrix.App
                     if (lblUrgentHeader.Bounds.Contains(e.Location))
                     {
                         var items = await _inventoryService.GetAllItemsAsync();
-                        if (items.Any(x => x.Condition == "Damaged"))
+                        if (items.Any(x => x.Condition == Condition.Damaged))
                         {
                             Cursor = Cursors.Hand;
                             return;
@@ -649,7 +649,7 @@ namespace Ventrix.App
         private async Task UpdateSystemHealthBadge()
         {
             var items = await _inventoryService.GetAllItemsAsync();
-            int damagedCount = items.Count(x => x.Condition == "Damaged");
+            int damagedCount = items.Count(x => x.Condition == Condition.Damaged);
 
             if (badgeHealth != null)
             {
@@ -684,7 +684,7 @@ namespace Ventrix.App
 
         private async Task LblUrgentHeader_Click(object sender, EventArgs e)
         {
-            var damagedItems = (await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == "Damaged").ToList();
+            var damagedItems = (await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList();
             if (damagedItems.Any())
             {
                 using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, async () => await LoadHomeContent()))
@@ -836,7 +836,7 @@ namespace Ventrix.App
         private async Task LoadHomeContent()
         {
             if (flowRecentActivity == null) return;
-            var damagedItems = (await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == "Damaged").ToList();
+            var damagedItems = (await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList();
 
             flowRecentActivity.SuspendLayout();
             flowRecentActivity.Controls.Clear();
@@ -852,7 +852,7 @@ namespace Ventrix.App
         private void AddDashboardAlert(string message, Color color)
         {
             var alert = new AlertTile(message, color);
-            alert.AlertClicked += async (s, e) => { if (message.Contains("REPAIR")) { using (var popup = new RepairDetailsPopup((await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == "Damaged").ToList(), _inventoryService, async () => await LoadHomeContent())) popup.ShowDialog(); } };
+            alert.AlertClicked += async (s, e) => { if (message.Contains("REPAIR")) { using (var popup = new RepairDetailsPopup((await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList(), _inventoryService, async () => await LoadHomeContent())) popup.ShowDialog(); } };
             flowRecentActivity?.Controls.Add(alert);
             alert.BringToFront();
         }
@@ -881,7 +881,7 @@ namespace Ventrix.App
 
             if (lblUrgentHeader != null)
             {
-                int damagedCount = items.Count(x => x.Condition == "Damaged");
+                int damagedCount = items.Count(x => x.Condition == Condition.Damaged);
                 lblUrgentHeader.Text = damagedCount > 0 ? $"URGENT SYSTEM ALERTS ({damagedCount} ISSUES)" : "URGENT SYSTEM ALERTS";
                 lblUrgentHeader.ForeColor = damagedCount > 0 ? Color.DarkRed : Color.Teal;
                 lblUrgentHeader.Cursor = damagedCount > 0 ? Cursors.Hand : Cursors.Default;

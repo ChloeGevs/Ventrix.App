@@ -51,7 +51,7 @@ namespace Ventrix.App.Popups
                 BorrowerId = txtBorrower.Text,
                 ItemName = _itemName,
                 Purpose = txtPurpose.Text,
-                GradeLevel = cmbGrade.Text,
+                GradeLevel = Enum.Parse<GradeLevel>(cmbGrade.Text),
                 BorrowDate = DateTime.Now,
                 Status = BorrowStatus.Active
             };

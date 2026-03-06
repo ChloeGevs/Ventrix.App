@@ -1,10 +1,11 @@
-﻿using System;
-using System.Windows.Forms;
-using MaterialSkin;
+﻿using MaterialSkin;
 using MaterialSkin.Controls;
-using Ventrix.Application.Services;
-using Ventrix.Domain.Models;
+using System;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using Ventrix.Application.Services;
+using Ventrix.Domain.Enums;
+using Ventrix.Domain.Models;
 
 namespace Ventrix.App.Popups
 {
@@ -61,7 +62,7 @@ namespace Ventrix.App.Popups
                 // FIX: Convert Enums to Strings to display in the UI
                 cmbCategory.Text = item.Category.ToString();
                 cmbStatus.Text = item.Status.ToString();
-                cmbCondition.Text = item.Condition;
+                cmbCondition.Text = item.Condition.ToString();
             }
         }
 
@@ -73,13 +74,18 @@ namespace Ventrix.App.Popups
                 return;
             }
 
+            var category = Enum.Parse<ItemCategory>(cmbCategory.Text);
+            var status = Enum.Parse<ItemStatus>(cmbStatus.Text);
+            var condition = Enum.Parse<Condition>(cmbCondition.Text);
+
+
             if (_editId.HasValue)
             {
-                await _inventoryService.UpdateItemAsync(_editId.Value, txtName.Text, cmbCategory.Text, cmbStatus.Text, cmbCondition.Text);
+                await _inventoryService.UpdateItemAsync(_editId.Value, txtName.Text, cmbCategory.Text, cmbStatus.Text, condition);
             }
             else
             {
-                await _inventoryService.AddItemAsync(txtName.Text, cmbCategory.Text, cmbStatus.Text, cmbCondition.Text);
+                await _inventoryService.AddItemAsync(txtName.Text, cmbCategory.Text, cmbStatus.Text, condition);
             }
 
             DialogResult = DialogResult.OK;

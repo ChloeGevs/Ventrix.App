@@ -67,7 +67,7 @@ namespace Ventrix.App.Popups
                 };
 
                 btnRepair.Click += async (s, e) => {
-                    item.Condition = "Good";
+                    item.Condition = Condition.Good;
                     // FIX: Use the Enum instead of a string
                     item.Status = ItemStatus.Available;
 

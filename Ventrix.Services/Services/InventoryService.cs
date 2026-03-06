@@ -18,7 +18,7 @@ namespace Ventrix.Application.Services
             _context = context;
         }
 
-        public async Task AddItemAsync(string name, string category, string status, string condition)
+        public async Task AddItemAsync(string name, string category, string status, Condition condition)
         {
             var newItem = new InventoryItem
             {
@@ -61,7 +61,7 @@ namespace Ventrix.Application.Services
             return await _context.InventoryItems.FindAsync(id);
         }
 
-        public async Task UpdateItemAsync(int id, string name, string category, string status, string condition)
+        public async Task UpdateItemAsync(int id, string name, string category, string status, Condition condition)
         {
             var item = await _context.InventoryItems.FindAsync(id);
             if (item != null)

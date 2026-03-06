@@ -192,7 +192,7 @@ namespace Ventrix.App
                     ItemName = cmbListEquipments.Text,
                     Quantity = (int)numQuantity.Value,
                     Purpose = txtSubject.Text,
-                    GradeLevel = cmbGradeLevel.Text,
+                    GradeLevel = Enum.Parse<GradeLevel>(cmbGradeLevel.Text),
                     Status = BorrowStatus.Active
                 };
 

@@ -26,7 +26,7 @@ namespace Ventrix.Application.Services
                 .ToListAsync();
         }
 
-        public async Task AddBorrowRecordAsync(int userId, int itemId, int quantity, string purpose, string gradeLevel)
+        public async Task AddBorrowRecordAsync(int userId, int itemId, int quantity, string purpose, GradeLevel gradeLevel)
         {
             var record = new BorrowRecord
             {
