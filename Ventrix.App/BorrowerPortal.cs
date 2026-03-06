@@ -53,7 +53,6 @@ namespace Ventrix.App
                 await _userService.InitializeDefaultAdminAsync();
                 await LoadEquipmentListAsync();
             };
-
         }
 
         private void TxtPassword_IconRightClick(object sender, EventArgs e)
@@ -72,9 +71,23 @@ namespace Ventrix.App
         private async Task LoadEquipmentListAsync()
         {
             cmbListEquipments.Items.Clear();
-            var items = await _inventoryService.GetFilteredInventoryAsync("Available", "");
-            var names = items.Select(i => i.Name).Distinct().ToArray();
-            if (names.Any()) cmbListEquipments.Items.AddRange(names);
+            var availableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
+
+            // Extract the base name (remove " #1", " #2") and get unique names
+            var distinctItemNames = availableItems
+                .Select(item =>
+                {
+                    int hashIndex = item.Name.LastIndexOf(" #");
+                    return hashIndex > 0 ? item.Name.Substring(0, hashIndex).Trim() : item.Name.Trim();
+                })
+                .Distinct()
+                .OrderBy(name => name) // Sort alphabetically A-Z
+                .ToArray();
+
+            if (distinctItemNames.Any())
+            {
+                cmbListEquipments.Items.AddRange(distinctItemNames);
+            }
         }
 
         public void ToggleMode(string mode)
@@ -189,26 +202,37 @@ namespace Ventrix.App
                 var record = new BorrowRecord
                 {
                     BorrowerId = txtStudentId.Text,
-                    ItemName = cmbListEquipments.Text,
+                    ItemName = cmbListEquipments.Text, // This will just say "Laptop" or "Mouse"
                     Quantity = (int)numQuantity.Value,
                     Purpose = txtSubject.Text,
                     GradeLevel = Enum.Parse<GradeLevel>(cmbGradeLevel.Text),
                     Status = BorrowStatus.Active
                 };
 
-                var items = await _inventoryService.GetFilteredInventoryAsync("Available", record.ItemName);
-                var itemToBorrow = items.FirstOrDefault();
+                // Fetch ALL available items to manually filter exactly
+                var allAvailableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
+
+                // Find the first available item whose base name matches the dropdown exactly
+                var itemToBorrow = allAvailableItems.FirstOrDefault(i =>
+                {
+                    int hashIndex = i.Name.LastIndexOf(" #");
+                    string baseName = hashIndex > 0 ? i.Name.Substring(0, hashIndex).Trim() : i.Name.Trim();
+                    return baseName.Equals(record.ItemName, StringComparison.OrdinalIgnoreCase);
+                });
 
                 if (itemToBorrow != null)
                 {
+                    // Update record ItemName to the exact database name (e.g., "Laptop #12") so the system tracks the specific physical item
+                    record.ItemName = itemToBorrow.Name;
+
                     await _borrowService.ProcessBorrowAsync(record, itemToBorrow.Id);
                     MessageBox.Show("Item Borrowed Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtSubject.Clear(); // Clear subject to prep for next action
-                    await LoadEquipmentListAsync();
+                    await LoadEquipmentListAsync(); // Reload the list to update availability
                 }
                 else
                 {
-                    MessageBox.Show("Item is no longer available.", "Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("This item is currently out of stock or no longer available.", "Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)

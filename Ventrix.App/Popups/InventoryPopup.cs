@@ -1,11 +1,9 @@
-﻿using MaterialSkin;
-using MaterialSkin.Controls;
+﻿using MaterialSkin.Controls;
 using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Enums;
-using Ventrix.Domain.Models;
 
 namespace Ventrix.App.Popups
 {
@@ -20,21 +18,15 @@ namespace Ventrix.App.Popups
             _editId = id;
 
             InitializeComponent();
-            MaterialSkinManager.Instance.AddFormToManage(this);
+            ThemeManager.ApplyMaterialTheme(this); // Applies the global sleek theme
+
             SetupDropdowns();
 
             this.Load += async (s, e) =>
             {
                 if (_editId.HasValue) await LoadItemDataAsync();
+                else this.Text = "Add New Inventory Item";
             };
-            ApplyPopupBranding();
-        }
-
-        private void ApplyPopupBranding()
-        {
-            ThemeManager.ApplyCustomFont(lblTitle, ThemeManager.SubHeaderFont, ThemeManager.VentrixBlue);
-            btnSave.BackColor = ThemeManager.VentrixBlue;
-            btnSave.Font = ThemeManager.ButtonFont;
         }
 
         private void SetupDropdowns()
@@ -57,9 +49,8 @@ namespace Ventrix.App.Popups
             var item = await _inventoryService.GetItemByIdAsync(_editId.Value);
             if (item != null)
             {
-                Text = "Ventrix | Edit Item Record";
+                this.Text = $"Edit Item: #{item.Id}";
                 txtName.Text = item.Name;
-                // FIX: Convert Enums to Strings to display in the UI
                 cmbCategory.Text = item.Category.ToString();
                 cmbStatus.Text = item.Status.ToString();
                 cmbCondition.Text = item.Condition.ToString();
@@ -70,14 +61,12 @@ namespace Ventrix.App.Popups
         {
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
-                MessageBox.Show("Please enter an item name.", "Validation Error");
+                MessageBox.Show("Please enter an item name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtName.Focus();
                 return;
             }
 
-            var category = Enum.Parse<ItemCategory>(cmbCategory.Text);
-            var status = Enum.Parse<ItemStatus>(cmbStatus.Text);
             var condition = Enum.Parse<Condition>(cmbCondition.Text);
-
 
             if (_editId.HasValue)
             {

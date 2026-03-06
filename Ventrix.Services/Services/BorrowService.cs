@@ -92,7 +92,7 @@ namespace Ventrix.Application.Services
                 throw new Exception($"Borrow limit exceeded. Faculty members are allowed up to 10 items.");
             }
 
-            // CRITICAL FIX: Map the User's Primary Key (Id) to the Record's Foreign Key (UserId)
+            // Map the User's Primary Key (Id) to the Record's Foreign Key (UserId)
             record.UserId = user.Id;
             record.InventoryItemId = itemId;
             record.BorrowDate = DateTime.Now;

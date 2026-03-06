@@ -24,6 +24,7 @@ namespace Ventrix.App
         private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
 
+        private bool isSigningOut = false;
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
         private const int sidebarMinWidth = 70;
@@ -58,10 +59,16 @@ namespace Ventrix.App
                 return cp;
             }
         }
-                
+
         private void ConfigureRuntimeUI()
         {
-            FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
+            FormClosed += (s, e) =>
+            {
+                if (!isSigningOut)
+                {
+                    System.Windows.Forms.Application.Exit();
+                }
+            };
 
             // Remove built-in docking so we can manually animate bounds flawlessly
             if (pnlSidebar != null) pnlSidebar.Dock = DockStyle.None;
@@ -90,7 +97,7 @@ namespace Ventrix.App
             // --- WIRE UP EVENTS ---
             if (btnCreate != null) btnCreate.Click += async (s, e) => await btnCreate_Click(s, e);
             if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
-            if (btnDelete != null) btnDelete.Click += async (s, e) => await BtnDelete_Click(s, e);
+            if (btnDelete != null) btnDelete.Click += async (s, e) => await btnDelete_Click(s, e);
 
             if (btnExportExcel != null) btnExportExcel.Click += (s, e) => ExportToExcel();
             if (btnExportPDF != null) btnExportPDF.Click += (s, e) => ExportToPDF();
@@ -255,40 +262,17 @@ namespace Ventrix.App
                 customScroll.BringToFront();
             }
 
-            // --- SLEEK CUSTOM DATAGRID SCROLLBAR ---
-            if (dgvInventory != null && pnlGridContainer != null)
-            {
-                dgvInventory.ScrollBars = ScrollBars.None;
-                Guna.UI2.WinForms.Guna2VScrollBar gridScroll = new Guna.UI2.WinForms.Guna2VScrollBar
-                {
-                    BindingContainer = dgvInventory,
-                    BorderRadius = 4,
-                    ThumbColor = Color.FromArgb(200, 200, 200),
-                    FillColor = Color.Transparent,
-                    Width = 8,
-                    Margin = new Padding(0, 10, 5, 10),
-                    Dock = DockStyle.Right
-                };
-                gridScroll.HoverState.ThumbColor = ThemeManager.VentrixLightBlue;
-                pnlGridContainer.Controls.Add(gridScroll);
-                gridScroll.BringToFront();
-            }
-
             // --- MODERN RIGHT-CLICK CONTEXT MENU ---
             Guna.UI2.WinForms.Guna2ContextMenuStrip gridMenu = new Guna.UI2.WinForms.Guna2ContextMenuStrip();
             gridMenu.RenderStyle.SelectionBackColor = ThemeManager.VentrixLightBlue;
             gridMenu.RenderStyle.SelectionForeColor = Color.White;
             gridMenu.Font = new System.Drawing.Font("Segoe UI", 10F);
 
-            ToolStripMenuItem editOption = new ToolStripMenuItem("✏️ Edit Record");
-            ToolStripMenuItem deleteOption = new ToolStripMenuItem("🗑️ Delete Item");
-            deleteOption.ForeColor = Color.IndianRed;
+            ToolStripMenuItem manageOption = new ToolStripMenuItem("⚙️ Manage Item Group");
+            gridMenu.Items.Add(manageOption);
 
-            gridMenu.Items.Add(editOption);
-            gridMenu.Items.Add(deleteOption);
-
-            if (btnEdit != null) editOption.Click += (s, e) => btnEdit.PerformClick();
-            if (btnDelete != null) deleteOption.Click += (s, e) => btnDelete.PerformClick();
+            // Clicking "Manage" does the exact same thing as double clicking the row
+            manageOption.Click += async (s, e) => await OpenItemGroupDetails();
 
             if (dgvInventory != null)
             {
@@ -303,7 +287,7 @@ namespace Ventrix.App
                 };
             }
 
-            this.Load += (s, e) =>
+            Load += (s, e) =>
             {
                 ApplyModernBranding();
                 RefreshLayout();
@@ -516,34 +500,40 @@ namespace Ventrix.App
 
             int currentWidth = pnlSidebar.Width;
             int contentWidth = currentWidth - 20;
+
+            // Determine if expanded based on width threshold
             bool expanded = currentWidth > 200;
 
+            // Adjust User Profile section
             int picSize = expanded ? 45 : 40;
             if (picUser != null) picUser.SetBounds(expanded ? 15 : 12, 25, picSize, picSize);
-
             if (lblOwnerRole != null) lblOwnerRole.Visible = expanded;
             if (cmbAccountActions != null) cmbAccountActions.Visible = expanded;
 
-            if (expanded)
-            {
-                if (lblOwnerRole != null) lblOwnerRole.Location = new Point(70, 25);
-                if (cmbAccountActions != null) cmbAccountActions.SetBounds(65, 42, 160, 30);
-            }
-
-            // --- STACK THE NAVIGATION BUTTONS ---
-            bool showNav = currentWidth > 100;
+            // --- MANAGE NAVIGATION BUTTONS ---
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
+            var navTexts = new[] { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "BORROWERS" };
 
             int btnY = 120;
-            foreach (var btn in navBtns)
+            for (int i = 0; i < navBtns.Length; i++)
             {
+                var btn = navBtns[i];
                 if (btn != null)
                 {
-                    btn.Visible = showNav;
-                    if (showNav)
+                    // If retracted (not expanded), hide the text to only show the icon
+                    btn.Text = expanded ? navTexts[i] : string.Empty;
+
+                    // Adjust text offset and alignment for a cleaner look
+                    btn.TextOffset = expanded ? new Point(10, 0) : new Point(0, 0);
+                    btn.TextAlign = expanded ? HorizontalAlignment.Left : HorizontalAlignment.Center;
+
+                    // Maintain visibility as long as the sidebar isn't at absolute minimum
+                    btn.Visible = currentWidth > sidebarMinWidth - 10;
+
+                    if (btn.Visible)
                     {
                         btn.SetBounds(10, btnY, contentWidth, 45);
-                        btnY += 80; // Spacing between buttons
+                        btnY += 60; // Slightly reduced spacing for a tighter look
                     }
                 }
             }
@@ -703,22 +693,46 @@ namespace Ventrix.App
         private async Task DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || dgvInventory == null) return;
-            int id = Convert.ToInt32(dgvInventory.Rows[e.RowIndex].Cells[0].Value);
-            string name = dgvInventory.Rows[e.RowIndex].Cells[1].Value?.ToString() ?? "";
-            string status = dgvInventory.Rows[e.RowIndex].Cells[3].Value?.ToString() ?? "";
+            await OpenItemGroupDetails();
+        }
 
-            if (status == ItemStatus.Available.ToString())
+        // ---------------- FIXED EDIT BUTTON ----------------
+        private async Task btnEdit_Click(object sender, EventArgs e)
+        {
+            await OpenItemGroupDetails();
+        }
+
+        // ---------------- FIXED DELETE BUTTON ----------------
+        private async Task btnDelete_Click(object sender, EventArgs e)
+        {
+            await OpenItemGroupDetails();
+        }
+
+        // Helper method to open the popup based on the selected row
+        private async Task OpenItemGroupDetails()
+        {
+            if (dgvInventory?.SelectedRows.Count == 0) return;
+
+            // Check if we are in the Summary View (it has the "TotalQty" column)
+            if (dgvInventory.Columns.Contains("TotalQty"))
             {
-                using (var popup = new BorrowPopup(_borrowService, id, name))
+                string itemName = dgvInventory.SelectedRows[0].Cells["ItemName"].Value?.ToString() ?? "";
+
+                using (var popup = new ItemGroupPopup(_inventoryService, _borrowService, itemName))
                 {
-                    if (popup.ShowDialog() == DialogResult.OK)
-                    {
-                        await LoadFromDatabase("All");
-                        await UpdateDashboardCounts();
-                    }
+                    popup.StartPosition = FormStartPosition.CenterParent;
+                    popup.ShowDialog(); // Wait for user to finish managing these specific items
+
+                    // Refresh dashboard when they close the popup
+                    await LoadFromDatabase(lblDashboardHeader.Text.Contains("AVAILABLE") ? "Available" : "All");
+                    await UpdateDashboardCounts();
                 }
             }
-            else MessageBox.Show("This item is already borrowed or unavailable.", "Ventrix System");
+            // For Borrowed or other views without groups, show a helpful message
+            else
+            {
+                MessageBox.Show("Please navigate to the 'All Items' or 'Available' views to Edit or Delete inventory.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void CmbAccountActions_SelectedIndexChanged(object sender, EventArgs e)
@@ -727,17 +741,33 @@ namespace Ventrix.App
             {
                 if (MessageBox.Show("Are you sure you want to sign out?", "Ventrix System", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    new BorrowerPortal(_inventoryService, _borrowService, new UserService(new Ventrix.Infrastructure.Data.AppDbContext())).Show();
+                    // 1. Tell the app we are just signing out, do not kill the program!
+                    isSigningOut = true;
+
+                    // 2. Open the Login screen
+                    var loginScreen = new BorrowerPortal(
+                        _inventoryService,
+                        _borrowService,
+                        new UserService(new Ventrix.Infrastructure.Data.AppDbContext())
+                    );
+
+                    loginScreen.ToggleMode("Admin");
+                    loginScreen.Show();
+
+                    // 3. Close the dashboard (this will no longer crash the app!)
                     this.Close();
                 }
-                else cmbAccountActions.SelectedIndex = -1;
+                else
+                {
+                    cmbAccountActions.SelectedIndex = -1;
+                }
             }
         }
 
         private async Task LoadFromDatabase(string statusFilter)
         {
             if (dgvInventory == null) return;
-
+            dgvInventory.SuspendLayout();
             dgvInventory.Rows.Clear();
             dgvInventory.Columns.Clear();
 
@@ -746,83 +776,55 @@ namespace Ventrix.App
             if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text))
             {
                 string search = txtSearch.Text.ToLower();
-                items = items.Where(i => i.Name.ToLower().Contains(search)).ToList();
+                items = items.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToString().ToLower().Contains(search)).ToList();
             }
 
-            var filteredItems = items;
-            if (statusFilter == "Available")
-            {
-                filteredItems = items.Where(x => x.Status == ItemStatus.Available).ToList();
-            }
-
-            if (lblEmptyState != null)
-            {
-                bool isEmpty = (statusFilter == "Borrowed" || statusFilter == "Borrower List")
-                    ? !(await _borrowService.GetAllBorrowRecordsAsync()).Any()
-                    : !filteredItems.Any();
-
-                lblEmptyState.Visible = isEmpty;
-
-                if (txtSearch != null)
-                {
-                    if (isEmpty && !string.IsNullOrEmpty(txtSearch.Text))
-                    {
-                        txtSearch.FocusedState.BorderColor = Color.IndianRed;
-                        txtSearch.BorderColor = Color.FromArgb(255, 200, 200);
-                    }
-                    else
-                    {
-                        txtSearch.FocusedState.BorderColor = ThemeManager.VentrixBlue;
-                        txtSearch.BorderColor = Color.Transparent;
-                    }
-                }
-            }
+            bool isEmpty = false;
 
             switch (statusFilter)
             {
-                case "Available":
-                    SetupColumns("ID", "Item Name", "Category", "Condition");
-                    foreach (var i in filteredItems)
-                    {
-                        dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Condition);
-                        if (filteredItems.Count < 30) await Task.Delay(15);
-                    }
-                    break;
-
                 case "Borrowed":
                     SetupColumns("ID", "Item Name", "Borrower ID", "Status", "Date Borrowed");
-                    var borrowedRecords = (await _borrowService.GetAllBorrowRecordsAsync())
-                        .Where(b => b.Status == BorrowStatus.Active).ToList();
-
-                    foreach (var r in borrowedRecords)
-                    {
-                        dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
-                        if (borrowedRecords.Count < 30) await Task.Delay(15);
-                    }
+                    var borrowedRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Active).ToList();
+                    isEmpty = !borrowedRecords.Any();
+                    foreach (var r in borrowedRecords) dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
                     break;
 
                 case "Borrower List":
                     SetupColumns("Borrower ID", "Borrower Name", "Grade Level", "Purpose", "Items Held");
-                    var groups = (await _borrowService.GetAllBorrowRecordsAsync())
-                        .GroupBy(b => b.BorrowerId).ToList();
-
-                    foreach (var group in groups)
-                    {
-                        dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown",
-                            group.First().GradeLevel, group.First().Purpose, group.Count(x => x.Status == BorrowStatus.Active));
-                        if (groups.Count < 30) await Task.Delay(15);
-                    }
+                    var groups = (await _borrowService.GetAllBorrowRecordsAsync()).GroupBy(b => b.BorrowerId).ToList();
+                    isEmpty = !groups.Any();
+                    foreach (var group in groups) dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown", group.First().GradeLevel, group.First().Purpose, group.Count(x => x.Status == BorrowStatus.Active));
                     break;
 
-                default:
-                    SetupColumns("ID", "Item Name", "Category", "Status", "Condition");
-                    foreach (var i in filteredItems)
-                    {
-                        dgvInventory.Rows.Add(i.Id, i.Name, i.Category, i.Status, i.Condition);
-                        if (filteredItems.Count < 30) await Task.Delay(15);
-                    }
+                default: // Grouped Summary View for "All" and "Available"
+                         // NEW: Added 'Needs Repair' column for Admin visibility
+                    SetupColumns("Item Name", "Category", "Total Qty", "Available Qty", "Needs Repair");
+
+                    var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category })
+                        .Select(g => new {
+                            Name = g.Key.BaseName,
+                            Category = g.Key.Category,
+                            Total = g.Count(),
+                            Available = g.Count(x => x.Status == ItemStatus.Available),
+                            Damaged = g.Count(x => x.Condition == Condition.Damaged || x.Status==ItemStatus.Lost) // NEW: Count damaged items
+                        })
+                        .OrderBy(g => g.Name)
+                        .ToList();
+
+                    if (statusFilter == "Available") groupedItems = groupedItems.Where(g => g.Available > 0).ToList();
+
+                    isEmpty = !groupedItems.Any();
+                    foreach (var g in groupedItems) dgvInventory.Rows.Add(g.Name, g.Category, g.Total, g.Available, g.Damaged);
+
+                    // Adjust column widths for better readability
+                    if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
+                    if (dgvInventory.Columns.Contains("NeedsRepair")) dgvInventory.Columns["NeedsRepair"].FillWeight = 80;
                     break;
             }
+
+            if (lblEmptyState != null) lblEmptyState.Visible = isEmpty;
+            dgvInventory.ResumeLayout();
         }
 
         private async Task LoadRecentActivity()
@@ -831,6 +833,13 @@ namespace Ventrix.App
             flowRecentActivity.Controls.Clear();
             foreach (var log in (await _borrowService.GetAllBorrowRecordsAsync()).OrderByDescending(b => b.BorrowDate).Take(10))
                 AddActivityCard(log.Status == BorrowStatus.Active ? $"{log.BorrowerId} borrowed {log.ItemName}" : $"{log.ItemName} was returned by {log.BorrowerId}", log.BorrowDate, log.Status == BorrowStatus.Active ? Color.FromArgb(33, 150, 243) : Color.Teal);
+        }
+
+        private string GetBaseItemName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown Item";
+            int hashIndex = name.IndexOf(" #");
+            return hashIndex > 0 ? name.Substring(0, hashIndex).Trim() : name.Trim();
         }
 
         private async Task LoadHomeContent()
@@ -909,37 +918,6 @@ namespace Ventrix.App
             }
         }
 
-        private async Task btnEdit_Click(object sender, EventArgs e)
-        {
-            if (dgvInventory?.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Please select a record to edit.", "Ventrix System");
-                return;
-            }
-
-            using (var popup = new InventoryPopup(_inventoryService, Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value)))
-            {
-                popup.StartPosition = FormStartPosition.CenterParent;
-                if (popup.ShowDialog() == DialogResult.OK)
-                {
-                    await LoadFromDatabase("All");
-                    await UpdateDashboardCounts();
-                    ToastNotification.Show(this, "Item updated successfully!", ToastType.Success);
-                }
-                RefreshLayout();
-            }
-        }
-
-        private async Task BtnDelete_Click(object sender, EventArgs e)
-        {
-            if (dgvInventory?.SelectedRows.Count > 0 && MessageBox.Show($"Delete item #{dgvInventory.SelectedRows[0].Cells[0].Value}?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                await _inventoryService.DeleteItemAsync(Convert.ToInt32(dgvInventory.SelectedRows[0].Cells[0].Value));
-                await SwitchView("Inventory", "All");
-                ToastNotification.Show(this, "Item deleted from inventory.", ToastType.Info);
-            }
-        }
-
         private async Task ClearRecentActivity()
         {
             if (MessageBox.Show("Delete all activity logs?", "Critical Action", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
@@ -957,11 +935,7 @@ namespace Ventrix.App
         #region Export Methods
         private void ExportToExcel()
         {
-            if (dgvInventory == null || dgvInventory.Rows.Count == 0)
-            {
-                MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = "Ventrix_Inventory_Report.xlsx" })
             {
@@ -973,19 +947,25 @@ namespace Ventrix.App
                         {
                             var worksheet = workbook.Worksheets.Add("Inventory Report");
 
+                            int colIndex = 1;
                             for (int i = 0; i < dgvInventory.Columns.Count; i++)
                             {
-                                worksheet.Cell(1, i + 1).Value = dgvInventory.Columns[i].HeaderText;
-                                worksheet.Cell(1, i + 1).Style.Font.Bold = true;
-                                worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#0D47A1");
-                                worksheet.Cell(1, i + 1).Style.Font.FontColor = XLColor.White;
+                                if (!dgvInventory.Columns[i].Visible) continue;
+                                worksheet.Cell(1, colIndex).Value = dgvInventory.Columns[i].HeaderText;
+                                worksheet.Cell(1, colIndex).Style.Font.Bold = true;
+                                worksheet.Cell(1, colIndex).Style.Fill.BackgroundColor = XLColor.FromHtml("#0D47A1");
+                                worksheet.Cell(1, colIndex).Style.Font.FontColor = XLColor.White;
+                                colIndex++;
                             }
 
                             for (int i = 0; i < dgvInventory.Rows.Count; i++)
                             {
+                                int cellIndex = 1;
                                 for (int j = 0; j < dgvInventory.Columns.Count; j++)
                                 {
-                                    worksheet.Cell(i + 2, j + 1).Value = dgvInventory.Rows[i].Cells[j].Value?.ToString() ?? "";
+                                    if (!dgvInventory.Columns[j].Visible) continue;
+                                    worksheet.Cell(i + 2, cellIndex).Value = dgvInventory.Rows[i].Cells[j].Value?.ToString() ?? "";
+                                    cellIndex++;
                                 }
                             }
 
@@ -994,21 +974,14 @@ namespace Ventrix.App
                             ToastNotification.Show(this, "Excel report exported successfully!", ToastType.Success);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error exporting to Excel: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    catch (Exception ex) { MessageBox.Show("Error exporting to Excel: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
                 }
             }
         }
 
         private void ExportToPDF()
         {
-            if (dgvInventory == null || dgvInventory.Rows.Count == 0)
-            {
-                MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = "Ventrix_Inventory_Report.pdf" })
             {
@@ -1025,11 +998,12 @@ namespace Ventrix.App
                         title.Alignment = Element.ALIGN_CENTER;
                         pdfDoc.Add(title);
 
-                        PdfPTable pdfTable = new PdfPTable(dgvInventory.Columns.Count);
+                        PdfPTable pdfTable = new PdfPTable(dgvInventory.Columns.Cast<DataGridViewColumn>().Count(c => c.Visible));
                         pdfTable.WidthPercentage = 100;
 
                         foreach (DataGridViewColumn column in dgvInventory.Columns)
                         {
+                            if (!column.Visible) continue;
                             PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, FontFactory.GetFont("Arial", 10, iTextSharp.text.Font.BOLD)));
                             cell.BackgroundColor = new BaseColor(13, 71, 161);
                             cell.Padding = 5;
@@ -1041,6 +1015,7 @@ namespace Ventrix.App
                         {
                             foreach (DataGridViewCell cell in row.Cells)
                             {
+                                if (!dgvInventory.Columns[cell.ColumnIndex].Visible) continue;
                                 PdfPCell pdfCell = new PdfPCell(new Phrase(cell.Value?.ToString() ?? "", FontFactory.GetFont("Arial", 9)));
                                 pdfCell.Padding = 5;
                                 pdfCell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -1050,13 +1025,9 @@ namespace Ventrix.App
 
                         pdfDoc.Add(pdfTable);
                         pdfDoc.Close();
-
                         ToastNotification.Show(this, "PDF report exported successfully!", ToastType.Success);
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    catch (Exception ex) { MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
                 }
             }
         }
@@ -1182,6 +1153,8 @@ namespace Ventrix.App
                 grid.MultiSelect = false;
                 grid.ReadOnly = true;
 
+                grid.ScrollBars = ScrollBars.Both;
+
                 grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
                 grid.ColumnHeadersHeight = 50;
                 grid.ThemeStyle.HeaderStyle.BackColor = ThemeManager.VentrixBlue;
@@ -1246,17 +1219,49 @@ namespace Ventrix.App
                 string colName = dgv.Columns[e.ColumnIndex].Name;
                 string value = e.Value.ToString();
 
-                if (!string.IsNullOrEmpty(txtSearch.Text) && value.ToLower().Contains(txtSearch.Text.ToLower()))
+                // Search Highlight
+                if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text) && value.ToLower().Contains(txtSearch.Text.ToLower()))
                 {
                     e.CellStyle.BackColor = Color.FromArgb(255, 255, 200);
                 }
 
+                e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+
+                // Standard Status & Condition Colors
                 if (colName == "Status" || colName == "Condition")
                 {
-                    e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
                     if (value == "Available" || value == "Good") e.CellStyle.ForeColor = Color.MediumSeaGreen;
                     else if (value == "Borrowed") e.CellStyle.ForeColor = Color.DarkOrange;
                     else if (value == "Damaged" || value == "Missing") e.CellStyle.ForeColor = Color.IndianRed;
+                }
+
+                // Dynamic Colors for Group Quantity
+                if (colName == "AvailableQty")
+                {
+                    int available = int.Parse(value);
+                    int total = int.Parse(dgv.Rows[e.RowIndex].Cells["TotalQty"].Value.ToString());
+
+                    if (available == 0) e.CellStyle.ForeColor = Color.IndianRed;
+                    else if (available < total) e.CellStyle.ForeColor = Color.DarkOrange;
+                    else e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                }
+
+                // NEW: Intense Alert Color & Entire Row Tinting for Damaged Items
+                if (colName == "NeedsRepair")
+                {
+                    int damaged = int.Parse(value);
+                    if (damaged > 0)
+                    {
+                        e.CellStyle.BackColor = Color.IndianRed;
+                        e.CellStyle.ForeColor = Color.White;
+
+                        // Tint the whole row a very light red to grab attention
+                        dgv.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 240);
+                    }
+                    else
+                    {
+                        e.CellStyle.ForeColor = Color.LightGray;
+                    }
                 }
             }
         }

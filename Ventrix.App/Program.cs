@@ -6,7 +6,6 @@ using System.IO;
 using Ventrix.Application.Services;
 using Ventrix.Infrastructure;
 using Ventrix.Infrastructure.Data;
-// Notice we removed the Repositories and Interfaces 'using' statements here!
 
 namespace Ventrix.App
 {
@@ -46,6 +45,20 @@ namespace Ventrix.App
             services.AddTransient<BorrowerRegistration>(); // Good practice to register all your forms
 
             var serviceProvider = services.BuildServiceProvider();
+
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var inventoryService = scope.ServiceProvider.GetRequiredService<InventoryService>();
+
+                // Fetch existing items using GetAwaiter().GetResult() since Main is not an async method
+                var existingItems = inventoryService.GetAllItemsAsync().GetAwaiter().GetResult();
+
+                // If the database is completely empty, run the seeding process!
+                if (existingItems.Count == 0)
+                {
+                    inventoryService.RunInitialSeed().GetAwaiter().GetResult();
+                }
+            }
 
             // 4. Start App
             var startForm = serviceProvider.GetRequiredService<InitializingApp>();
