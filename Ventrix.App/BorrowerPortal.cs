@@ -23,6 +23,7 @@ namespace Ventrix.App
 
             InitializeComponent();
             SetupEvents();
+            SetupFocusHighlighting(); // Initialize visual feedback for Tab navigation
         }
 
         private void SetupEvents()
@@ -41,10 +42,31 @@ namespace Ventrix.App
             txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
 
-            // Enter Key Support
+            // Enter Key Support for final actions
             txtPassword.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnLogin.PerformClick(); };
-            txtStudentId.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter && btnBorrow.Visible) btnBorrow.PerformClick(); else if (e.KeyCode == Keys.Enter && btnLogin.Visible) txtPassword.Focus(); };
             txtSubject.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnBorrow.PerformClick(); };
+
+            // Student ID Enter logic: Smart submission or focus jump
+            txtStudentId.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    if (txtPassword.Visible)
+                    {
+                        txtPassword.Focus(); // Move to password in Admin mode
+                    }
+                    else if (btnReturn.Visible && !string.IsNullOrWhiteSpace(txtStudentId.Text))
+                    {
+                        btnReturn.PerformClick(); // Quick Return support if ID is already filled
+                    }
+                    else
+                    {
+                        cmbListEquipments.Focus(); // Move to equipment list in Student mode
+                    }
+
+                    e.SuppressKeyPress = true;
+                }
+            };
 
             ToggleMode("Student");
 
@@ -53,6 +75,30 @@ namespace Ventrix.App
                 await _userService.InitializeDefaultAdminAsync();
                 await LoadEquipmentListAsync();
             };
+        }
+
+        private void SetupFocusHighlighting()
+        {
+            // Apply to main actionable buttons
+            var actionButtons = new[] { btnLogin, btnBorrow, btnReturn, btnAdminToggle, btnStudentToggle };
+
+            foreach (var btn in actionButtons)
+            {
+                if (btn == null) continue;
+
+                // When the button receives focus (via Tab key)
+                btn.GotFocus += (s, e) =>
+                {
+                    btn.BorderThickness = 2;
+                    btn.BorderColor = Color.Cyan; 
+                };
+
+                // When focus moves to the next item
+                btn.LostFocus += (s, e) =>
+                {
+                    btn.BorderThickness = 0;
+                };
+            }
         }
 
         private void TxtPassword_IconRightClick(object sender, EventArgs e)
@@ -96,6 +142,10 @@ namespace Ventrix.App
             txtPassword.Clear();
             txtSubject.Clear();
 
+            // Set mnemonic shortcuts (Alt + A for Admin, Alt + S for Student)
+            btnAdminToggle.Text = "&Admin Mode";
+            btnStudentToggle.Text = "&Student Mode";
+
             bool isAdmin = mode == "Admin";
 
             // Header & Placeholders
@@ -126,7 +176,7 @@ namespace Ventrix.App
 
             numQuantity.Maximum = isAdmin ? 10 : 2;
 
-            // Smart Focus
+            // Smart Focus: Return to ID field automatically
             txtStudentId.Focus();
         }
 

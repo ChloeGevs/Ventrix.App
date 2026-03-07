@@ -47,6 +47,8 @@ namespace Ventrix.App
                 RefreshLayout();
                 SetupInitialInnerLayout();
                 await SwitchView("Home");
+
+                btnHome?.Select();
             };
         }
 
@@ -144,6 +146,15 @@ namespace Ventrix.App
             {
                 dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
                 dgvInventory.CellFormatting += DgvInventory_CellFormatting;
+
+                dgvInventory.KeyDown += async (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Space && dgvInventory.SelectedRows.Count > 0)
+                    {
+                        e.Handled = true;
+                        await OpenItemGroupDetails(); 
+                    }
+                };
             }
 
             // Cards now click to switch view too
@@ -660,6 +671,7 @@ namespace Ventrix.App
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            // Ctrl + F: Focus and select all in Search bar
             if (keyData == (Keys.Control | Keys.F))
             {
                 if (txtSearch != null && txtSearch.Visible)
@@ -669,6 +681,62 @@ namespace Ventrix.App
                     return true;
                 }
             }
+
+            // Ctrl + N: Quickly open "Add New Item" popup
+            if (keyData == (Keys.Control | Keys.N))
+            {
+                if (btnCreate != null && btnCreate.Visible)
+                {
+                    btnCreate.PerformClick();
+                    return true;
+                }
+            }
+
+            // Ctrl + E: Edit the currently selected item group
+            if (keyData == (Keys.Control | Keys.E))
+            {
+                if (btnEdit != null && btnEdit.Visible)
+                {
+                    btnEdit.PerformClick();
+                    return true;
+                }
+            }
+
+            // Delete Key: Delete selected item group (requires focus on the grid)
+            if (keyData == Keys.Delete)
+            {
+                if (btnDelete != null && btnDelete.Visible && dgvInventory.Focused)
+                {
+                    btnDelete.PerformClick();
+                    return true;
+                }
+            }
+
+            // Esc: Clear search and return focus to the inventory grid
+            if (keyData == Keys.Escape)
+            {
+                if (txtSearch != null && txtSearch.Focused)
+                {
+                    txtSearch.Clear();
+                    dgvInventory.Focus();
+                    return true;
+                }
+            }
+
+            // If pressing Tab on the last button (Borrowers), loop forward to Home
+            if (keyData == Keys.Tab && btnNavBorrowers != null && btnNavBorrowers.Focused)
+            {
+                btnHome?.Select();
+                return true;
+            }
+
+            // If pressing Shift+Tab (Backwards) on the first button (Home), loop backward to Borrowers
+            if (keyData == (Keys.Shift | Keys.Tab) && btnHome != null && btnHome.Focused)
+            {
+                btnNavBorrowers?.Select();
+                return true;
+            }
+
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
@@ -1076,6 +1144,19 @@ namespace Ventrix.App
                     sideBtns[i].TextOffset = new Point(10, 0);
                     sideBtns[i].BorderRadius = 8;
                     sideBtns[i].Animated = true;
+
+                    var currentBtn = sideBtns[i];
+                    currentBtn.Enter += (s, e) =>
+                    {
+                        currentBtn.BorderThickness = 2;
+                        currentBtn.BorderColor = Color.Transparent;
+
+                        currentBtn.PerformClick();
+                    };
+                    currentBtn.Leave += (s, e) =>
+                    {
+                        currentBtn.BorderThickness = 0;
+                    };
                 }
             }
 

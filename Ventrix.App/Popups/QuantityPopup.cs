@@ -12,8 +12,12 @@ namespace Ventrix.App.Popups
         public QuantityPopup()
         {
             InitializeComponent();
-
             ThemeManager.ApplyMaterialTheme(this);
+
+            // --- IMPROVED SHORTCUT KEYS ---
+            // These built-in properties automatically handle 'Enter' and 'Esc' anywhere in the form
+            this.AcceptButton = btnConfirm;
+            this.CancelButton = btnCancel;
 
             // Automatically highlight the "1" so the user can just start typing
             this.Load += (s, e) => {
@@ -21,16 +25,13 @@ namespace Ventrix.App.Popups
                 txtQuantity.SelectAll();
             };
 
-            txtQuantity.KeyDown += (s, e) => {
-                if (e.KeyCode == Keys.Enter)
+            // --- NEW: INPUT VALIDATION (USER CONVENIENCE) ---
+            // Prevent the user from even typing letters or symbols by mistake
+            txtQuantity.KeyPress += (s, e) => {
+                // Only allow digits (0-9) and control keys (like Backspace)
+                if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
                 {
-                    e.SuppressKeyPress = true; // Stops the annoying Windows 'ding' sound
-                    btnConfirm.PerformClick(); // Simulates clicking the button
-                }
-                else if (e.KeyCode == Keys.Escape)
-                {
-                    e.SuppressKeyPress = true;
-                    btnCancel.PerformClick();
+                    e.Handled = true; // Block the invalid keystroke
                 }
             };
         }

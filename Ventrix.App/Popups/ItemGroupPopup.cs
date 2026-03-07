@@ -31,6 +31,51 @@ namespace Ventrix.App.Popups
 
             gridItems.CellFormatting += GridItems_CellFormatting;
             gridItems.CellDoubleClick += GridItems_CellDoubleClick;
+
+            // --- NEW: ADD KEYBOARD SHORTCUTS TO GRID ---
+            gridItems.KeyDown += GridItems_KeyDown;
+        }
+
+        // --- NEW: GLOBAL POPUP SHORTCUTS ---
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // Esc: Close the popup
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+                return true;
+            }
+
+            // Ctrl + F: Focus on search box
+            if (keyData == (Keys.Control | Keys.F))
+            {
+                if (txtSearch != null)
+                {
+                    txtSearch.Focus();
+                    txtSearch.SelectAll();
+                    return true;
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        // --- NEW: GRID SPECIFIC SHORTCUTS ---
+        private void GridItems_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (gridItems.SelectedRows.Count > 0)
+            {
+                if (e.KeyCode == Keys.Delete)
+                {
+                    deleteItem_Click(sender, e);
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Enter)
+                {
+                    editItem_Click(sender, e);
+                    e.Handled = true;
+                }
+            }
         }
 
         private void StyleGrid()
@@ -89,8 +134,8 @@ namespace Ventrix.App.Popups
             int total = specificItems.Count;
             int available = specificItems.Count(x => x.Status == ItemStatus.Available);
 
-            // Adjusted logic to match your Enums
-            int damaged = specificItems.Count(x => x.Condition == Condition.Damaged || x.Status.ToString() == "Lost");
+            // --- IMPROVED: Used the actual ItemStatus Enum instead of string "Lost" ---
+            int damaged = specificItems.Count(x => x.Condition == Condition.Damaged || x.Status == ItemStatus.Lost);
 
             lblStats.Text = $"Total Units: {total}   |   Available: {available}   |   Needs Repair: {damaged}";
             if (damaged > 0) lblStats.ForeColor = Color.IndianRed;

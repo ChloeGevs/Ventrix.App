@@ -7,6 +7,7 @@ using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using System.Threading.Tasks;
 using Ventrix.Domain.Enums;
+using System.Linq;
 
 namespace Ventrix.App.Popups
 {
@@ -26,7 +27,31 @@ namespace Ventrix.App.Popups
             ThemeManager.ApplyMaterialTheme(this);
 
             this.Text = "Ventrix | Maintenance Queue";
+
+            // Allow Esc key to close the window easily
+            this.CancelButton = btnClose; // Assuming you have a standard btnClose from the designer
+
             LoadRepairList();
+
+            // Set focus to the first item in the flow panel automatically
+            this.Shown += (s, e) => {
+                if (flowRepairList.Controls.Count > 0)
+                {
+                    var firstCard = flowRepairList.Controls[0] as Guna.UI2.WinForms.Guna2Panel;
+                    var firstBtn = firstCard?.Controls.OfType<Guna.UI2.WinForms.Guna2Button>().FirstOrDefault();
+                    firstBtn?.Focus();
+                }
+            };
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         private void LoadRepairList()
@@ -39,7 +64,6 @@ namespace Ventrix.App.Popups
 
             foreach (var item in _damagedItems)
             {
-                // Create a sleek, rounded background card
                 Guna.UI2.WinForms.Guna2Panel card = new Guna.UI2.WinForms.Guna2Panel
                 {
                     Size = new Size(flowRepairList.Width - 30, 80),
@@ -49,11 +73,10 @@ namespace Ventrix.App.Popups
                     BorderThickness = 1,
                     BorderColor = Color.FromArgb(230, 235, 240),
                     CustomBorderThickness = new Padding(6, 0, 0, 0),
-                    CustomBorderColor = Color.IndianRed, // Red accent on the left
+                    CustomBorderColor = Color.IndianRed,
                     Margin = new Padding(5, 5, 5, 10)
                 };
 
-                // Item Name Label
                 Label name = new Label
                 {
                     Text = $"{item.Name} (Unit #{item.Id})",
@@ -63,7 +86,6 @@ namespace Ventrix.App.Popups
                     AutoSize = true
                 };
 
-                // Item Category/Status Label
                 Label details = new Label
                 {
                     Text = $"Category: {item.Category}  |  Current Status: {item.Condition}",
@@ -73,7 +95,6 @@ namespace Ventrix.App.Popups
                     AutoSize = true
                 };
 
-                // Modern Action Button
                 Guna.UI2.WinForms.Guna2Button btnRepair = new Guna.UI2.WinForms.Guna2Button
                 {
                     Text = "MARK FIXED",
@@ -83,7 +104,26 @@ namespace Ventrix.App.Popups
                     FillColor = Color.MediumSeaGreen,
                     Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                     ForeColor = Color.White,
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    TabStop = true // Ensures the Tab key can reach it
+                };
+
+                // Add visual highlight when Tabbed into
+                btnRepair.Enter += (s, e) => {
+                    btnRepair.BorderThickness = 2;
+                    btnRepair.BorderColor = Color.Orange;
+                };
+                btnRepair.Leave += (s, e) => {
+                    btnRepair.BorderThickness = 0;
+                };
+
+                // Allow pressing Space or Enter to trigger the button when focused
+                btnRepair.KeyDown += (s, e) => {
+                    if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter)
+                    {
+                        e.Handled = true;
+                        btnRepair.PerformClick();
+                    }
                 };
 
                 btnRepair.Click += async (s, e) => {
@@ -100,9 +140,16 @@ namespace Ventrix.App.Popups
                     _damagedItems.Remove(item);
                     LoadRepairList();
 
+                    // Re-focus after list reload so the user can just keep pressing Enter!
+                    if (flowRepairList.Controls.Count > 0)
+                    {
+                        var firstCard = flowRepairList.Controls[0] as Guna.UI2.WinForms.Guna2Panel;
+                        var firstBtn = firstCard?.Controls.OfType<Guna.UI2.WinForms.Guna2Button>().FirstOrDefault();
+                        firstBtn?.Focus();
+                    }
+
                     if (_damagedItems.Count == 0)
                     {
-                        // Add "Ventrix.App." to the front so it knows it is a namespace!
                         Ventrix.App.Controls.ToastNotification.Show(this, "All items repaired!", Ventrix.App.Controls.ToastType.Success);
                         await Task.Delay(1000);
                         this.DialogResult = DialogResult.OK;

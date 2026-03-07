@@ -18,7 +18,8 @@ namespace Ventrix.App.Popups
             _editId = id;
 
             InitializeComponent();
-            ThemeManager.ApplyMaterialTheme(this); // Applies the global sleek theme
+            ThemeManager.ApplyMaterialTheme(this);
+            AcceptButton = btnSave;
 
             SetupDropdowns();
 
@@ -35,13 +36,13 @@ namespace Ventrix.App.Popups
             cmbStatus.Items.Clear();
             cmbCondition.Items.Clear();
 
-            cmbCategory.Items.AddRange(new[] { "Hardware", "Device", "Accessory" });
-            cmbStatus.Items.AddRange(new[] { "Available", "Borrowed", "Maintenance" });
-            cmbCondition.Items.AddRange(new[] { "New", "Good", "Fair", "Damaged" });
+            cmbCategory.Items.AddRange(Enum.GetNames(typeof(ItemCategory)));
+            cmbStatus.Items.AddRange(Enum.GetNames(typeof(ItemStatus)));
+            cmbCondition.Items.AddRange(Enum.GetNames(typeof(Condition)));
 
-            cmbCategory.SelectedIndex = 0;
-            cmbStatus.SelectedIndex = 0;
-            cmbCondition.SelectedIndex = 0;
+            if (cmbCategory.Items.Count > 0) cmbCategory.SelectedIndex = 0;
+            if (cmbStatus.Items.Count > 0) cmbStatus.SelectedIndex = 0;
+            if (cmbCondition.Items.Count > 0) cmbCondition.SelectedIndex = 0;
         }
 
         private async Task LoadItemDataAsync()
