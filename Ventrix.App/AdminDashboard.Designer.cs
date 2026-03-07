@@ -422,13 +422,13 @@ namespace Ventrix.App
             // btnHamburger
             // 
             btnHamburger.BackColor = Color.Transparent;
-            btnHamburger.Image = Properties.Resources.burger_icon;
+            btnHamburger.Image = Properties.Resources.bar;
             btnHamburger.ImageOffset = new Point(0, 0);
             btnHamburger.ImageRotate = 0F;
-            btnHamburger.Location = new Point(58, 42);
+            btnHamburger.Location = new Point(35, 46);
             btnHamburger.Name = "btnHamburger";
             btnHamburger.ShadowDecoration.CustomizableEdges = customizableEdges27;
-            btnHamburger.Size = new Size(29, 38);
+            btnHamburger.Size = new Size(55, 34);
             btnHamburger.TabIndex = 0;
             // 
             // lblDashboardHeader

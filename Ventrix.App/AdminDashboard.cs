@@ -43,11 +43,8 @@ namespace Ventrix.App
             StyleDataGrids();
 
             Shown += async (s, e) => {
-                this.PerformLayout();
                 RefreshLayout();
-                SetupInitialInnerLayout();
                 await SwitchView("Home");
-
                 btnHome?.Select();
             };
         }
@@ -107,9 +104,10 @@ namespace Ventrix.App
             // --- SIDEBAR NAVIGATION CLICKS ---
             if (btnHome != null) btnHome.Click += async (s, e) => await SwitchView("Home");
             if (btnHistoryNav != null) btnHistoryNav.Click += async (s, e) => await SwitchView("History");
+
             if (btnNavAllItems != null) btnNavAllItems.Click += async (s, e) => await SwitchView("Inventory", "All");
-            if (btnNavAvailable != null) btnNavAvailable.Click += async (s, e) => await SwitchView("Inventory", "Available");
-            if (btnNavBorrowed != null) btnNavBorrowed.Click += async (s, e) => await SwitchView("Inventory", "Borrowed");
+            if (btnNavAvailable != null) btnNavAvailable.Click += async (s, e) => await SwitchView("Inventory", nameof(ItemStatus.Available));
+            if (btnNavBorrowed != null) btnNavBorrowed.Click += async (s, e) => await SwitchView("Inventory", nameof(ItemStatus.Borrowed));
             if (btnNavBorrowers != null) btnNavBorrowers.Click += async (s, e) => await SwitchView("Inventory", "Borrower List");
 
             if (btnClearActivity != null) btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
@@ -159,13 +157,13 @@ namespace Ventrix.App
 
             // Cards now click to switch view too
             if (cardTotal != null) cardTotal.CardClicked += async (s, e) => await SwitchView("Inventory", "All");
-            if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
-            if (cardPending != null) cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
+            if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", nameof(ItemStatus.Available));
+            if (cardPending != null) cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", nameof(ItemStatus.Borrowed));
             if (cardBorrowers != null) cardBorrowers.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrower List");
 
             if (sidebarTimer != null && btnHamburger != null)
             {
-                sidebarTimer.Interval = 10;
+                sidebarTimer.Interval = 16;
                 btnHamburger.Click += (s, e) =>
                 {
                     if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = false;
@@ -280,8 +278,32 @@ namespace Ventrix.App
             gridMenu.Font = new System.Drawing.Font("Segoe UI", 10F);
 
             ToolStripMenuItem manageOption = new ToolStripMenuItem("⚙️ Manage Item Group");
-            gridMenu.Items.Add(manageOption);
+            ToolStripMenuItem returnOption = new ToolStripMenuItem("📥 Process Return");
 
+            gridMenu.Items.Add(manageOption);
+            gridMenu.Items.Add(returnOption);
+
+            manageOption.Click += async (s, e) => await OpenItemGroupDetails();
+            returnOption.Click += async (s, e) => await ProcessReturnItem();
+
+            if (dgvInventory != null)
+            {
+                dgvInventory.CellMouseDown += (s, e) =>
+                {
+                    if (e.Button == MouseButtons.Right && e.RowIndex >= 0)
+                    {
+                        dgvInventory.ClearSelection();
+                        dgvInventory.Rows[e.RowIndex].Selected = true;
+
+                        // Dynamically show the correct right-click option based on the active view
+                        bool isBorrowedView = dgvInventory.Columns.Contains("RecordID");
+                        manageOption.Visible = !isBorrowedView;
+                        returnOption.Visible = isBorrowedView;
+
+                        gridMenu.Show(Cursor.Position);
+                    }
+                };
+            }
             // Clicking "Manage" does the exact same thing as double clicking the row
             manageOption.Click += async (s, e) => await OpenItemGroupDetails();
 
@@ -298,10 +320,20 @@ namespace Ventrix.App
                 };
             }
 
+            if (dgvHistory != null)
+            {
+                dgvHistory.CellFormatting += DgvHistory_CellFormatting;
+            }
+
             Load += (s, e) =>
             {
+                SuspendLayout();
+
                 ApplyModernBranding();
                 RefreshLayout();
+                SetupInitialInnerLayout();
+
+                ResumeLayout(true);
             };
 
             Resize += (s, e) => {
@@ -443,9 +475,12 @@ namespace Ventrix.App
 
             int targetWidth = isSidebarExpanded ? sidebarMinWidth : sidebarMaxWidth;
             int distanceRemaining = Math.Abs(targetWidth - pnlSidebar.Width);
-            int easingFactor = 4;
 
-            if (distanceRemaining <= 2)
+            // Smoother easing: moves faster when far, slower when close, with a minimum step of 2 to prevent stalling
+            int step = Math.Max(2, distanceRemaining / 3);
+
+            // If the remaining distance is less than or equal to the step, snap to target
+            if (distanceRemaining <= step)
             {
                 pnlSidebar.Width = targetWidth;
                 isSidebarExpanded = !isSidebarExpanded;
@@ -454,13 +489,21 @@ namespace Ventrix.App
             }
             else
             {
-                int step = (distanceRemaining / easingFactor) + 1;
-
+                // Increment or decrement width based on state
                 if (isSidebarExpanded) pnlSidebar.Width -= step;
                 else pnlSidebar.Width += step;
 
+                // Move and resize main content to perfectly hug the sidebar
                 pnlMainContent.Location = new Point(pnlSidebar.Width, pnlMainContent.Location.Y);
                 pnlMainContent.Width = this.Width - pnlSidebar.Width;
+
+                // Animate the text/icons inside the sidebar simultaneously
+                UpdateSidebarInternalUI();
+
+                // IMPORTANT: Force standard UI thread to repaint immediately. 
+                // This is the key to removing WinForms animation lag.
+                pnlSidebar.Update();
+                pnlMainContent.Update();
             }
         }
 
@@ -576,7 +619,8 @@ namespace Ventrix.App
             if (pnlGridContainer != null) pnlGridContainer.Visible = (viewName == "Inventory");
             if (pnlHistory != null) pnlHistory.Visible = (viewName == "History");
 
-            bool showCrud = (viewName == "Inventory" && filter != "Borrowed" && filter != "Borrower List");
+            // --- UPDATED: Use nameof() for strict enum checking ---
+            bool showCrud = (viewName == "Inventory" && filter != nameof(ItemStatus.Borrowed) && filter != "Borrower List");
 
             if (btnCreate != null) btnCreate.Visible = showCrud;
             if (btnEdit != null) btnEdit.Visible = showCrud;
@@ -616,9 +660,10 @@ namespace Ventrix.App
                     pnlGridContainer?.BringToFront();
                     if (lblDashboardHeader != null) lblDashboardHeader.Text = $"INVENTORY: {filter.ToUpper()}";
 
+                    // --- UPDATED: Use nameof() for safe filter matching ---
                     if (filter == "All") HighlightNavButton(btnNavAllItems);
-                    else if (filter == "Available") HighlightNavButton(btnNavAvailable);
-                    else if (filter == "Borrowed") HighlightNavButton(btnNavBorrowed);
+                    else if (filter == nameof(ItemStatus.Available)) HighlightNavButton(btnNavAvailable);
+                    else if (filter == nameof(ItemStatus.Borrowed)) HighlightNavButton(btnNavBorrowed);
                     else if (filter == "Borrower List") HighlightNavButton(btnNavBorrowers);
 
                     await LoadFromDatabase(filter);
@@ -747,8 +792,8 @@ namespace Ventrix.App
             {
                 using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, async () => await LoadHomeContent()))
                 {
-                    popup.StartPosition = FormStartPosition.CenterParent;
-                    popup.ShowDialog();
+                    // Swapped to our new fade method!
+                    ShowPopupWithFade(popup);
                     await UpdateDashboardCounts();
                 }
             }
@@ -761,45 +806,131 @@ namespace Ventrix.App
         private async Task DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || dgvInventory == null) return;
-            await OpenItemGroupDetails();
+
+            // Route the action based on the columns currently loaded in the grid
+            if (dgvInventory.Columns.Contains("RecordID"))
+            {
+                // We are on the Borrowed page! Process a return.
+                await ProcessReturnItem();
+            }
+            else if (dgvInventory.Columns.Contains("BorrowerID"))
+            {
+                // We are on the Borrower List page! Show what they are holding.
+                await ShowBorrowerDetails();
+            }
+            else
+            {
+                // We are on the All Items or Available page! Manage the item group.
+                await OpenItemGroupDetails();
+            }
         }
 
-        // ---------------- FIXED EDIT BUTTON ----------------
         private async Task btnEdit_Click(object sender, EventArgs e)
         {
             await OpenItemGroupDetails();
         }
 
-        // ---------------- FIXED DELETE BUTTON ----------------
         private async Task btnDelete_Click(object sender, EventArgs e)
         {
             await OpenItemGroupDetails();
         }
 
-        // Helper method to open the popup based on the selected row
+
         private async Task OpenItemGroupDetails()
         {
             if (dgvInventory?.SelectedRows.Count == 0) return;
 
-            // Check if we are in the Summary View (it has the "TotalQty" column)
-            if (dgvInventory.Columns.Contains("TotalQty"))
+            if (dgvInventory.Columns.Contains("ItemName"))
             {
                 string itemName = dgvInventory.SelectedRows[0].Cells["ItemName"].Value?.ToString() ?? "";
 
+                bool isAvailableView = lblDashboardHeader.Text.ToUpper().Contains("AVAILABLE");
+
                 using (var popup = new ItemGroupPopup(_inventoryService, _borrowService, itemName))
                 {
-                    popup.StartPosition = FormStartPosition.CenterParent;
-                    popup.ShowDialog(); // Wait for user to finish managing these specific items
+                    // Replaced StartPosition and ShowDialog with our sleek fade overlay!
+                    ShowPopupWithFade(popup);
 
-                    // Refresh dashboard when they close the popup
-                    await LoadFromDatabase(lblDashboardHeader.Text.Contains("AVAILABLE") ? "Available" : "All");
-                    await UpdateDashboardCounts();
+                    string refreshFilter = isAvailableView ? nameof(ItemStatus.Available) : "All";
+
+                    await SwitchView("Inventory", refreshFilter);
                 }
             }
-            // For Borrowed or other views without groups, show a helpful message
             else
             {
                 MessageBox.Show("Please navigate to the 'All Items' or 'Available' views to Edit or Delete inventory.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private async Task ProcessReturnItem()
+        {
+            if (dgvInventory?.SelectedRows.Count == 0) return;
+
+            if (dgvInventory.Columns.Contains("RecordID"))
+            {
+                // Safely extract the data from the selected row
+                if (int.TryParse(dgvInventory.SelectedRows[0].Cells["RecordID"].Value?.ToString(), out int recordId))
+                {
+                    string exactItem = dgvInventory.SelectedRows[0].Cells["ExactItem"].Value?.ToString() ?? "Unknown Item";
+                    string borrowerName = dgvInventory.SelectedRows[0].Cells["BorrowerName"].Value?.ToString() ?? "Unknown Borrower";
+
+                    // Prompt the admin to confirm the return
+                    var result = MessageBox.Show($"Process return for '{exactItem}' from {borrowerName}?\n\nThis will mark the item as Available again.",
+                                                 "Process Item Return", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            // NOTE: Change 'ReturnItemAsync' if your BorrowService uses a slightly different method name!
+                            await _borrowService.ReturnItemAsync(recordId);
+
+                            ToastNotification.Show(this, "Item successfully returned to inventory!", ToastType.Success);
+
+                            // Instantly refresh the Borrowed view and metrics
+                            await SwitchView("Inventory", nameof(ItemStatus.Borrowed));
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Error processing return: " + ex.Message, "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task ShowBorrowerDetails()
+        {
+            if (dgvInventory?.SelectedRows.Count == 0) return;
+
+            if (dgvInventory.Columns.Contains("BorrowerID"))
+            {
+                // Get the student's details from the clicked row
+                string borrowerId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value?.ToString() ?? "";
+                string borrowerName = dgvInventory.SelectedRows[0].Cells["BorrowerName"].Value?.ToString() ?? "Unknown Borrower";
+
+                if (string.IsNullOrEmpty(borrowerId)) return;
+
+                // Fetch all active records specifically for this student
+                var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                var userItems = allRecords
+                    .Where(b => b.BorrowerId == borrowerId && b.Status == BorrowStatus.Active)
+                    .ToList();
+
+                if (userItems.Any())
+                {
+                    // Build a nicely formatted bulleted list of their items
+                    string itemList = string.Join("\n", userItems.Select(i => $"• {i.ItemName} (Borrowed: {i.BorrowDate.ToShortDateString()})"));
+
+                    MessageBox.Show($"Active items held by {borrowerName}:\n\n{itemList}",
+                                    "Borrower Details",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("This student has no active borrowed items.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
         }
 
@@ -851,41 +982,92 @@ namespace Ventrix.App
 
             switch (statusFilter)
             {
-                case "Borrowed":
-                    SetupColumns("ID", "Item Name", "Borrower ID", "Status", "Date Borrowed");
-                    var borrowedRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Active).ToList();
+                case nameof(ItemStatus.Borrowed):
+                    // 1. Setup the exact columns for the Tracking View
+                    SetupColumns("Record ID", "Item", "Borrower Name", "Grade Level", "Date Borrowed", "Purpose");
+
+                    // 2. Fetch only the active borrowed records
+                    var borrowedRecords = (await _borrowService.GetAllBorrowRecordsAsync())
+                                          .Where(b => b.Status == BorrowStatus.Active)
+                                          .ToList();
+
                     isEmpty = !borrowedRecords.Any();
-                    foreach (var r in borrowedRecords) dgvInventory.Rows.Add(r.Id, r.ItemName, r.BorrowerId, r.Status, r.BorrowDate.ToShortDateString());
+
+                    // 3. Populate the rows with the rich context data
+                    foreach (var r in borrowedRecords)
+                    {
+                        string borrowerName = r.Borrower != null ? r.Borrower.FullName : r.BorrowerId;
+
+                        string gradeLevel = r.GradeLevel.ToString();
+
+                        dgvInventory.Rows.Add(
+                            r.Id,
+                            r.ItemName,
+                            borrowerName,
+                            gradeLevel,
+                            r.BorrowDate.ToShortDateString(),
+                            r.Purpose
+                        );
+                    }
+                    if (dgvInventory.Columns.Contains("ExactItem")) dgvInventory.Columns["Item"].FillWeight = 150;
+                    if (dgvInventory.Columns.Contains("Purpose")) dgvInventory.Columns["Purpose"].FillWeight = 150;
                     break;
 
                 case "Borrower List":
-                    SetupColumns("Borrower ID", "Borrower Name", "Grade Level", "Purpose", "Items Held");
-                    var groups = (await _borrowService.GetAllBorrowRecordsAsync()).GroupBy(b => b.BorrowerId).ToList();
+                    SetupColumns("Borrower ID", "Borrower Name", "Grade Level", "Items Held");
+
+                    var groups = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Active).GroupBy(b => b.BorrowerId).ToList();
                     isEmpty = !groups.Any();
-                    foreach (var group in groups) dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown", group.First().GradeLevel, group.First().Purpose, group.Count(x => x.Status == BorrowStatus.Active));
+
+                    foreach (var group in groups)
+                    {
+                        dgvInventory.Rows.Add(group.Key, group.First().Borrower?.FullName ?? "Unknown", group.First().GradeLevel, group.Count());
+                    }
                     break;
 
-                default: // Grouped Summary View for "All" and "Available"
-                         // NEW: Added 'Needs Repair' column for Admin visibility
-                    SetupColumns("Item Name", "Category", "Total Qty", "Available Qty", "Needs Repair");
+                case nameof(ItemStatus.Available):
+                    SetupColumns("Item Name", "Category", "Available Qty");
 
-                    var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category })
+                    var availableItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category })
+                        .Select(g => new {
+                            Name = g.Key.BaseName,
+                            Category = g.Key.Category,
+                            Available = g.Count(x => x.Status == ItemStatus.Available)
+                        })
+                        .Where(g => g.Available > 0)
+                        .OrderBy(g => g.Name)
+                        .ToList();
+
+                    isEmpty = !availableItems.Any();
+                    foreach (var g in availableItems)
+                    {
+                        dgvInventory.Rows.Add(g.Name, g.Category, g.Available);
+                    }
+
+                    if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 200;
+                    break;
+
+                default: 
+                    SetupColumns("Item Name", "Category", "Total Qty", "Available Qty", "Borrowed Qty", "Needs Repair");
+
+                    var allGroupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category })
                         .Select(g => new {
                             Name = g.Key.BaseName,
                             Category = g.Key.Category,
                             Total = g.Count(),
                             Available = g.Count(x => x.Status == ItemStatus.Available),
-                            Damaged = g.Count(x => x.Condition == Condition.Damaged || x.Status==ItemStatus.Lost) // NEW: Count damaged items
+                            Borrowed = g.Count(x => x.Status == ItemStatus.Borrowed),
+                            Damaged = g.Count(x => x.Condition == Condition.Damaged || x.Status == ItemStatus.Lost)
                         })
                         .OrderBy(g => g.Name)
                         .ToList();
 
-                    if (statusFilter == "Available") groupedItems = groupedItems.Where(g => g.Available > 0).ToList();
+                    isEmpty = !allGroupedItems.Any();
+                    foreach (var g in allGroupedItems)
+                    {
+                        dgvInventory.Rows.Add(g.Name, g.Category, g.Total, g.Available, g.Borrowed, g.Damaged);
+                    }
 
-                    isEmpty = !groupedItems.Any();
-                    foreach (var g in groupedItems) dgvInventory.Rows.Add(g.Name, g.Category, g.Total, g.Available, g.Damaged);
-
-                    // Adjust column widths for better readability
                     if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
                     if (dgvInventory.Columns.Contains("NeedsRepair")) dgvInventory.Columns["NeedsRepair"].FillWeight = 80;
                     break;
@@ -929,7 +1111,18 @@ namespace Ventrix.App
         private void AddDashboardAlert(string message, Color color)
         {
             var alert = new AlertTile(message, color);
-            alert.AlertClicked += async (s, e) => { if (message.Contains("REPAIR")) { using (var popup = new RepairDetailsPopup((await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList(), _inventoryService, async () => await LoadHomeContent())) popup.ShowDialog(); } };
+
+            // Replaced popup.ShowDialog() with ShowPopupWithFade(popup)
+            alert.AlertClicked += async (s, e) => {
+                if (message.Contains("REPAIR"))
+                {
+                    using (var popup = new RepairDetailsPopup((await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList(), _inventoryService, async () => await LoadHomeContent()))
+                    {
+                        ShowPopupWithFade(popup);
+                    }
+                }
+            };
+
             flowRecentActivity?.Controls.Add(alert);
             alert.BringToFront();
         }
@@ -939,10 +1132,38 @@ namespace Ventrix.App
         private async Task LoadHistoryData()
         {
             if (dgvHistory == null) return;
+
+            dgvHistory.SuspendLayout();
             dgvHistory.Rows.Clear();
             dgvHistory.Columns.Clear();
             SetupColumnsHistory();
-            foreach (var log in (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Returned).OrderByDescending(b => b.ReturnDate)) dgvHistory.Rows.Add(log.Id, log.ItemName, log.BorrowerId, log.BorrowDate.ToShortDateString(), log.ReturnDate?.ToShortDateString());
+
+            // Fetch ALL records (both Active and Returned), sorted by the most recent activity
+            var allLogs = (await _borrowService.GetAllBorrowRecordsAsync())
+                .OrderByDescending(b => b.ReturnDate ?? b.BorrowDate)
+                .ToList();
+
+            if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text))
+            {
+                string search = txtSearch.Text.ToLower();
+                allLogs = allLogs.Where(l => l.ItemName.ToLower().Contains(search) ||
+                                             (l.Borrower?.FullName.ToLower().Contains(search) ?? false) ||
+                                             l.BorrowerId.ToLower().Contains(search)).ToList();
+            }
+
+            foreach (var log in allLogs)
+            {
+                string borrowerName = log.Borrower != null ? log.Borrower.FullName : log.BorrowerId;
+
+                // If it hasn't been returned yet, show a clean "---" instead of a blank space
+                string returnDate = log.ReturnDate.HasValue ? log.ReturnDate.Value.ToShortDateString() : "---";
+
+                string status = log.Status.ToString();
+
+                dgvHistory.Rows.Add(log.Id, log.ItemName, borrowerName, log.BorrowDate.ToShortDateString(), returnDate, status);
+            }
+
+            dgvHistory.ResumeLayout();
         }
 
         private async Task UpdateDashboardCounts()
@@ -975,8 +1196,8 @@ namespace Ventrix.App
         {
             using (var popup = new InventoryPopup(_inventoryService))
             {
-                popup.StartPosition = FormStartPosition.CenterParent;
-                if (popup.ShowDialog() == DialogResult.OK)
+                // Swap standard ShowDialog for our fade method!
+                if (ShowPopupWithFade(popup) == DialogResult.OK)
                 {
                     await LoadFromDatabase("All");
                     await UpdateDashboardCounts();
@@ -1099,10 +1320,48 @@ namespace Ventrix.App
                 }
             }
         }
+
+        // Helper method to create a sleek, modern background fade effect for all popups
+        private DialogResult ShowPopupWithFade(Form popup)
+        {
+            DialogResult result = DialogResult.Cancel;
+
+            using (Form fadeOverlay = new Form())
+            {
+                // 1. Setup the dark transparent overlay
+                fadeOverlay.StartPosition = FormStartPosition.Manual;
+                fadeOverlay.FormBorderStyle = FormBorderStyle.None;
+                fadeOverlay.Opacity = 0.50; 
+                fadeOverlay.BackColor = Color.Black;
+                fadeOverlay.ShowInTaskbar = false;
+
+                // 2. Make it perfectly cover the dashboard
+                fadeOverlay.Location = this.Location;
+                fadeOverlay.Size = this.Size;
+
+                // 3. Show the overlay
+                fadeOverlay.Show(this);
+
+                // 4. Show the actual popup ON TOP of the overlay
+                popup.StartPosition = FormStartPosition.CenterParent;
+                result = popup.ShowDialog(fadeOverlay);
+            } 
+
+            return result;
+        }
         #endregion
 
         #region UI Styling
-        private void SetupColumnsHistory() { dgvHistory.Columns.Add("ID", "ID"); dgvHistory.Columns.Add("Item", "Item Name"); dgvHistory.Columns.Add("Borrower", "Borrower"); dgvHistory.Columns.Add("BDate", "Borrowed"); dgvHistory.Columns.Add("RDate", "Returned"); dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; }
+        private void SetupColumnsHistory()
+        {
+            dgvHistory.Columns.Add("ID", "Record ID");
+            dgvHistory.Columns.Add("Item", "Item");
+            dgvHistory.Columns.Add("Borrower", "Borrower Name");
+            dgvHistory.Columns.Add("BDate", "Date Borrowed");
+            dgvHistory.Columns.Add("RDate", "Date Returned");
+            dgvHistory.Columns.Add("Status", "Status"); 
+            dgvHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
         private void SetupColumns(params string[] names) { foreach (var n in names) dgvInventory.Columns.Add(n.Replace(" ", ""), n); dgvInventory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; }
 
         private void AddSectionHeader(string title) { flowRecentActivity?.Controls.Add(new Label { Text = title, Font = new System.Drawing.Font("Segoe UI", 12, FontStyle.Bold), AutoSize = true }); }
@@ -1118,7 +1377,6 @@ namespace Ventrix.App
             {
                 lblDashboardHeader.Font = null;
                 ThemeManager.ApplyCustomFont(lblDashboardHeader, ThemeManager.HeaderFont, ThemeManager.VentrixBlue);
-                lblDashboardHeader.Text = "INVENTORY OVERVIEW";
             }
 
             if (lblUrgentHeader != null)
@@ -1181,6 +1439,14 @@ namespace Ventrix.App
                 }
             }
 
+            if (btnClearActivity != null)
+            {
+                btnClearActivity.TextAlign = HorizontalAlignment.Center;
+                btnClearActivity.Image = null;
+                btnClearActivity.Padding = new Padding(0);
+                btnClearActivity.TextOffset = new Point(0, 0); // Override the 10px shift from the loop above
+            }
+
             if (txtSearch != null)
             {
                 txtSearch.BorderRadius = txtSearch.Height / 2;
@@ -1210,7 +1476,15 @@ namespace Ventrix.App
 
             if (btnHamburger != null)
             {
-                btnHamburger.HoverState.ImageSize = new Size(btnHamburger.ImageSize.Width - 2, btnHamburger.ImageSize.Height - 2);
+                btnHamburger.Cursor = Cursors.Hand;
+
+                // Stop the image from shrinking/changing size on hover and click
+                btnHamburger.HoverState.ImageSize = btnHamburger.ImageSize;
+                btnHamburger.PressedState.ImageSize = btnHamburger.ImageSize;
+
+                // Use standard BackColor events since ImageButton lacks FillColor properties
+                btnHamburger.MouseEnter += (s, e) => btnHamburger.BackColor = Color.White;
+                btnHamburger.MouseLeave += (s, e) => btnHamburger.BackColor = Color.White;
             }
         }
 
@@ -1300,49 +1574,129 @@ namespace Ventrix.App
                 string colName = dgv.Columns[e.ColumnIndex].Name;
                 string value = e.Value.ToString();
 
-                // Search Highlight
+                // 1. Search Highlight (Yellow background for matching text)
                 if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text) && value.ToLower().Contains(txtSearch.Text.ToLower()))
                 {
                     e.CellStyle.BackColor = Color.FromArgb(255, 255, 200);
                 }
 
-                e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
-
-                // Standard Status & Condition Colors
+                // 2. ENUM-BASED STATUS & CONDITION COLORS
                 if (colName == "Status" || colName == "Condition")
                 {
-                    if (value == "Available" || value == "Good") e.CellStyle.ForeColor = Color.MediumSeaGreen;
-                    else if (value == "Borrowed") e.CellStyle.ForeColor = Color.DarkOrange;
-                    else if (value == "Damaged" || value == "Missing") e.CellStyle.ForeColor = Color.IndianRed;
+                    e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+
+                    if (value == nameof(ItemStatus.Available) || value == nameof(Condition.Good))
+                        e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                    else if (value == nameof(ItemStatus.Borrowed))
+                        e.CellStyle.ForeColor = Color.DarkOrange;
+                    else if (value == nameof(Condition.Damaged) || value == nameof(ItemStatus.Lost))
+                        e.CellStyle.ForeColor = Color.IndianRed;
                 }
 
-                // Dynamic Colors for Group Quantity
-                if (colName == "AvailableQty")
+                // 3. Dynamic Colors for Group Quantity
+                if (colName == "Available" || colName == "AvailableQty")
                 {
-                    int available = int.Parse(value);
-                    int total = int.Parse(dgv.Rows[e.RowIndex].Cells["TotalQty"].Value.ToString());
+                    e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
 
-                    if (available == 0) e.CellStyle.ForeColor = Color.IndianRed;
-                    else if (available < total) e.CellStyle.ForeColor = Color.DarkOrange;
-                    else e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                    if (int.TryParse(value, out int available))
+                    {
+                        // ONLY do the math if the TotalQty column actually exists (like in the "All Items" view)
+                        if (dgv.Columns.Contains("TotalQty") &&
+                            int.TryParse(dgv.Rows[e.RowIndex].Cells["TotalQty"].Value?.ToString(), out int total))
+                        {
+                            if (available == 0) e.CellStyle.ForeColor = Color.IndianRed;
+                            else if (available < total) e.CellStyle.ForeColor = Color.DarkOrange;
+                            else e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                        }
+                        else
+                        {
+                            // If we are in the "Available" view (no TotalQty), just color it green!
+                            e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                        }
+                    }
                 }
 
-                // NEW: Intense Alert Color & Entire Row Tinting for Damaged Items
+                // 4. Intense Alert Color & Row Tinting for Damaged Items
                 if (colName == "NeedsRepair")
                 {
-                    int damaged = int.Parse(value);
-                    if (damaged > 0)
+                    e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+
+                    if (int.TryParse(value, out int damaged) && damaged > 0)
                     {
                         e.CellStyle.BackColor = Color.IndianRed;
                         e.CellStyle.ForeColor = Color.White;
-
-                        // Tint the whole row a very light red to grab attention
                         dgv.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(255, 240, 240);
                     }
                     else
                     {
                         e.CellStyle.ForeColor = Color.LightGray;
                     }
+                }
+
+                // 5. OVERDUE HIGHLIGHTING FOR BORROWED PAGE
+                if (colName == "DateBorrowed")
+                {
+                    if (DateTime.TryParse(value, out DateTime borrowDate))
+                    {
+                        // Calculate how many days have passed since it was borrowed
+                        int daysBorrowed = (DateTime.Now - borrowDate).Days;
+
+                        // CRITICAL OVERDUE: More than 7 days
+                        if (daysBorrowed > 7)
+                        {
+                            e.CellStyle.BackColor = Color.IndianRed;
+                            e.CellStyle.ForeColor = Color.White;
+                            e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+                        }
+                        // WARNING: 5 to 7 days (Getting close to the limit)
+                        else if (daysBorrowed >= 5)
+                        {
+                            e.CellStyle.ForeColor = Color.DarkOrange;
+                            e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+                        }
+                        // NORMAL: Under 5 days
+                        else
+                        {
+                            e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void DgvHistory_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && e.Value != null)
+            {
+                DataGridView dgv = sender as DataGridView;
+                string colName = dgv.Columns[e.ColumnIndex].Name;
+                string value = e.Value.ToString();
+
+                // 1. Search Highlight
+                if (txtSearch != null && !string.IsNullOrEmpty(txtSearch.Text) && value.ToLower().Contains(txtSearch.Text.ToLower()))
+                {
+                    e.CellStyle.BackColor = Color.FromArgb(255, 255, 200);
+                }
+
+                // 2. Color-code the Status column using your Enums
+                if (colName == "Status")
+                {
+                    e.CellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+
+                    if (value == nameof(BorrowStatus.Returned))
+                    {
+                        e.CellStyle.ForeColor = Color.MediumSeaGreen;
+                    }
+                    else if (value == nameof(BorrowStatus.Active))
+                    {
+                        e.CellStyle.ForeColor = Color.DarkOrange;
+                    }
+                }
+
+                // 3. Dim the "---" placeholders so they don't distract the eye
+                if (colName == "RDate" && value == "---")
+                {
+                    e.CellStyle.ForeColor = Color.LightGray;
                 }
             }
         }
