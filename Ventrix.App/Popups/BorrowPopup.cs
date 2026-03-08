@@ -1,8 +1,6 @@
-﻿using MaterialSkin;
-using MaterialSkin.Controls;
+﻿using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
-using System.Threading.Tasks;
 using System;
 using System.Windows.Forms;
 using Ventrix.Domain.Enums;
@@ -22,27 +20,27 @@ namespace Ventrix.App.Popups
             _itemName = name;
 
             InitializeComponent();
+            ThemeManager.ApplyMaterialTheme(this);
+            AcceptButton = btnConfirm;
 
-            MaterialSkinManager.Instance.AddFormToManage(this);
-            ApplyLocalBranding();
+            this.Text = $"Checkout: {_itemName} (Unit #{id})";
 
-            lblItemHeader.Text = $"Borrowing: {_itemName}";
-            cmbGrade.Items.AddRange(new[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Faculty" });
-            cmbGrade.SelectedIndex = 0;
-        }
+            cmbGrade.Items.Clear();
+            foreach (var gradeName in Enum.GetNames(typeof(GradeLevel)))
+            {
+                string displayName = gradeName.StartsWith("Grade") ? gradeName.Insert(5, " ") : gradeName;
+                cmbGrade.Items.Add(displayName);
+            }
 
-        private void ApplyLocalBranding()
-        {
-            ThemeManager.ApplyCustomFont(lblItemHeader, ThemeManager.SubHeaderFont, ThemeManager.VentrixBlue);
-            btnConfirm.BackColor = ThemeManager.VentrixBlue;
-            btnConfirm.Font = ThemeManager.ButtonFont;
+            if (cmbGrade.Items.Count > 0) cmbGrade.SelectedIndex = 0;
         }
 
         private async void btnConfirm_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtBorrower.Text))
             {
-                MessageBox.Show("Please enter a valid Borrower ID.", "Required Field");
+                MessageBox.Show("Please enter a valid Borrower ID.", "Required Field", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtBorrower.Focus();
                 return;
             }
 
@@ -51,7 +49,7 @@ namespace Ventrix.App.Popups
                 BorrowerId = txtBorrower.Text,
                 ItemName = _itemName,
                 Purpose = txtPurpose.Text,
-                GradeLevel = cmbGrade.Text,
+                GradeLevel = Enum.Parse<GradeLevel>(cmbGrade.Text.Replace(" ", "")), // Ensures enum compatibility
                 BorrowDate = DateTime.Now,
                 Status = BorrowStatus.Active
             };

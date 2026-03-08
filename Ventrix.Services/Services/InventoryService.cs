@@ -18,14 +18,14 @@ namespace Ventrix.Application.Services
             _context = context;
         }
 
-        public async Task AddItemAsync(string name, string category, string status, string condition)
+        public async Task AddItemAsync(string name, string category, string status, Condition condition)
         {
             var newItem = new InventoryItem
             {
                 Name = name,
                 Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category),
                 Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status),
-                Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition),
+                Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition.ToString()),
                 DateAdded = DateTime.Now
             };
 
@@ -61,7 +61,7 @@ namespace Ventrix.Application.Services
             return await _context.InventoryItems.FindAsync(id);
         }
 
-        public async Task UpdateItemAsync(int id, string name, string category, string status, string condition)
+        public async Task UpdateItemAsync(int id, string name, string category, string status, Condition condition)
         {
             var item = await _context.InventoryItems.FindAsync(id);
             if (item != null)
@@ -69,7 +69,7 @@ namespace Ventrix.Application.Services
                 item.Name = name;
                 item.Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category);
                 item.Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status);
-                item.Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition);
+                item.Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition.ToString());
                 await _context.SaveChangesAsync();
             }
         }
@@ -82,6 +82,57 @@ namespace Ventrix.Application.Services
                 _context.InventoryItems.Remove(item);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task SeedInventoryAsync(List<InventoryItem> items)
+        {
+            foreach (var item in items)
+            {
+                item.DateAdded = DateTime.Now;
+                _context.InventoryItems.Add(item);
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RunInitialSeed()
+        {
+            var itemsToSeed = new List<InventoryItem>();
+
+            // Local helper to generate multiple items for the list
+            void PrepareItems(string name, int count, ItemCategory category)
+            {
+                for (int i = 1; i <= count; i++)
+                {
+                    itemsToSeed.Add(new InventoryItem
+                    {
+                        Name = count > 1 ? $"{name} #{i}" : name,
+                        Category = category,
+                        Status = ItemStatus.Available, // Using your ItemStatus Enum
+                        Condition = Condition.Good     // FIX 1: Use the Condition Enum instead of a string
+                    });
+                }
+            }
+
+            // Mapping your specific list to the Enums
+            PrepareItems("Laptop", 40, ItemCategory.Electronics);
+            PrepareItems("Tablets", 50, ItemCategory.Electronics);
+            PrepareItems("Projector", 2, ItemCategory.Electronics);
+            PrepareItems("Headphones", 30, ItemCategory.Peripherals);
+            PrepareItems("Hdmi", 3, ItemCategory.Peripherals);
+            PrepareItems("Speaker", 2, ItemCategory.Electronics);
+            PrepareItems("Mouse", 40, ItemCategory.Peripherals);
+            PrepareItems("Keyboard", 20, ItemCategory.Peripherals);
+            PrepareItems("Chess board", 8, ItemCategory.Others);
+            PrepareItems("Sudoku board", 4, ItemCategory.Others);
+            PrepareItems("Word factory", 2, ItemCategory.Others);
+            PrepareItems("Games of general board", 1, ItemCategory.Others);
+            PrepareItems("Meter stick", 30, ItemCategory.Others);
+            PrepareItems("Flash drive", 5, ItemCategory.Peripherals);
+            PrepareItems("Laptop bags", 40, ItemCategory.Others);
+            PrepareItems("Chairs/mono blocks", 40, ItemCategory.Others);
+
+            // FIX 2: Call the method directly within the same class
+            await SeedInventoryAsync(itemsToSeed);
         }
     }
 }

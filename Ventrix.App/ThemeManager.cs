@@ -1,4 +1,5 @@
-﻿using MaterialSkin;
+﻿using Guna.UI2.WinForms;
+using MaterialSkin;
 using MaterialSkin.Controls;
 using System.Drawing;
 using System.Windows.Forms;
@@ -47,6 +48,24 @@ namespace Ventrix.App
             }
 
             ctrl.Tag = "LockedFont";
+        }
+
+        public static void ApplyMaterialTheme(MaterialSkin.Controls.MaterialForm form)
+        {
+            var manager = MaterialSkinManager.Instance;
+            manager.AddFormToManage(form);
+            manager.Theme = MaterialSkinManager.Themes.LIGHT;
+            manager.ColorScheme = new ColorScheme(
+                Color.FromArgb(13, 71, 161),  // Primary
+                Color.FromArgb(10, 50, 120),  // Dark Primary
+                Color.FromArgb(33, 150, 243), // Light Primary
+                Color.FromArgb(30, 136, 229), // Accent
+                TextShade.WHITE
+            );
+
+            Guna2Elipse elipse = new Guna2Elipse();
+            elipse.TargetControl = form;
+            elipse.BorderRadius = 20;
         }
     }
 }

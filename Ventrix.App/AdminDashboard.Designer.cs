@@ -25,6 +25,7 @@ namespace Ventrix.App
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -35,7 +36,6 @@ namespace Ventrix.App
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -74,12 +74,12 @@ namespace Ventrix.App
             cardPending = new Ventrix.App.Controls.MetricCard();
             btnHome = new Guna.UI2.WinForms.Guna2Button();
             pnlSidebar = new Guna.UI2.WinForms.Guna2Panel();
+            picUser = new Guna.UI2.WinForms.Guna2CirclePictureBox();
             btnHistoryNav = new Guna.UI2.WinForms.Guna2Button();
             btnNavAllItems = new Guna.UI2.WinForms.Guna2Button();
             btnNavAvailable = new Guna.UI2.WinForms.Guna2Button();
             btnNavBorrowed = new Guna.UI2.WinForms.Guna2Button();
             btnNavBorrowers = new Guna.UI2.WinForms.Guna2Button();
-            picUser = new Guna.UI2.WinForms.Guna2CirclePictureBox();
             lblOwnerRole = new Guna.UI2.WinForms.Guna2HtmlLabel();
             cmbAccountActions = new Guna.UI2.WinForms.Guna2ComboBox();
             btnCreate = new Guna.UI2.WinForms.Guna2Button();
@@ -211,7 +211,7 @@ namespace Ventrix.App
             btnHome.Name = "btnHome";
             btnHome.ShadowDecoration.CustomizableEdges = customizableEdges6;
             btnHome.Size = new Size(180, 45);
-            btnHome.TabIndex = 5;
+            btnHome.TabIndex = 0;
             // 
             // pnlSidebar
             // 
@@ -231,7 +231,24 @@ namespace Ventrix.App
             pnlSidebar.Name = "pnlSidebar";
             pnlSidebar.ShadowDecoration.CustomizableEdges = customizableEdges21;
             pnlSidebar.Size = new Size(240, 703);
-            pnlSidebar.TabIndex = 1;
+            pnlSidebar.TabIndex = 0;
+            // 
+            // picUser
+            // 
+            picUser.BackColor = Color.Transparent;
+            picUser.ErrorImage = null;
+            picUser.FillColor = Color.Transparent;
+            picUser.Image = Properties.Resources.admin;
+            picUser.ImageRotate = 0F;
+            picUser.InitialImage = null;
+            picUser.Location = new Point(20, 30);
+            picUser.Name = "picUser";
+            picUser.ShadowDecoration.CustomizableEdges = customizableEdges7;
+            picUser.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
+            picUser.Size = new Size(45, 47);
+            picUser.SizeMode = PictureBoxSizeMode.Zoom;
+            picUser.TabIndex = 3;
+            picUser.TabStop = false;
             // 
             // btnHistoryNav
             // 
@@ -245,7 +262,7 @@ namespace Ventrix.App
             btnHistoryNav.Name = "btnHistoryNav";
             btnHistoryNav.ShadowDecoration.CustomizableEdges = customizableEdges9;
             btnHistoryNav.Size = new Size(180, 45);
-            btnHistoryNav.TabIndex = 6;
+            btnHistoryNav.TabIndex = 1;
             // 
             // btnNavAllItems
             // 
@@ -260,7 +277,7 @@ namespace Ventrix.App
             btnNavAllItems.Name = "btnNavAllItems";
             btnNavAllItems.ShadowDecoration.CustomizableEdges = customizableEdges11;
             btnNavAllItems.Size = new Size(180, 45);
-            btnNavAllItems.TabIndex = 7;
+            btnNavAllItems.TabIndex = 2;
             // 
             // btnNavAvailable
             // 
@@ -275,7 +292,7 @@ namespace Ventrix.App
             btnNavAvailable.Name = "btnNavAvailable";
             btnNavAvailable.ShadowDecoration.CustomizableEdges = customizableEdges13;
             btnNavAvailable.Size = new Size(180, 45);
-            btnNavAvailable.TabIndex = 8;
+            btnNavAvailable.TabIndex = 3;
             // 
             // btnNavBorrowed
             // 
@@ -290,7 +307,7 @@ namespace Ventrix.App
             btnNavBorrowed.Name = "btnNavBorrowed";
             btnNavBorrowed.ShadowDecoration.CustomizableEdges = customizableEdges15;
             btnNavBorrowed.Size = new Size(180, 45);
-            btnNavBorrowed.TabIndex = 9;
+            btnNavBorrowed.TabIndex = 4;
             // 
             // btnNavBorrowers
             // 
@@ -305,34 +322,17 @@ namespace Ventrix.App
             btnNavBorrowers.Name = "btnNavBorrowers";
             btnNavBorrowers.ShadowDecoration.CustomizableEdges = customizableEdges17;
             btnNavBorrowers.Size = new Size(180, 45);
-            btnNavBorrowers.TabIndex = 10;
-            // 
-            // picUser
-            // 
-            picUser.BackColor = Color.Transparent;
-            picUser.ErrorImage = null;
-            picUser.FillColor = Color.Transparent;
-            picUser.Image = Properties.Resources.user__1_;
-            picUser.ImageRotate = 0F;
-            picUser.InitialImage = null;
-            picUser.Location = new Point(15, 21);
-            picUser.Name = "picUser";
-            picUser.ShadowDecoration.CustomizableEdges = customizableEdges7;
-            picUser.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
-            picUser.Size = new Size(45, 43);
-            picUser.SizeMode = PictureBoxSizeMode.Zoom;
-            picUser.TabIndex = 3;
-            picUser.TabStop = false;
+            btnNavBorrowers.TabIndex = 5;
             // 
             // lblOwnerRole
             // 
             lblOwnerRole.BackColor = Color.Transparent;
             lblOwnerRole.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             lblOwnerRole.ForeColor = Color.White;
-            lblOwnerRole.Location = new Point(66, 11);
+            lblOwnerRole.Location = new Point(71, 20);
             lblOwnerRole.Name = "lblOwnerRole";
             lblOwnerRole.Size = new Size(53, 25);
-            lblOwnerRole.TabIndex = 1;
+            lblOwnerRole.TabIndex = 6;
             lblOwnerRole.Text = "Admin";
             // 
             // cmbAccountActions
@@ -348,12 +348,12 @@ namespace Ventrix.App
             cmbAccountActions.ForeColor = Color.White;
             cmbAccountActions.ItemHeight = 30;
             cmbAccountActions.Items.AddRange(new object[] { "Sign out" });
-            cmbAccountActions.Location = new Point(0, 0);
+            cmbAccountActions.Location = new Point(71, 41);
             cmbAccountActions.Name = "cmbAccountActions";
             cmbAccountActions.ShadowDecoration.CustomizableEdges = customizableEdges19;
             cmbAccountActions.Size = new Size(165, 36);
             cmbAccountActions.StartIndex = 0;
-            cmbAccountActions.TabIndex = 4;
+            cmbAccountActions.TabIndex = 7;
             // 
             // btnCreate
             // 
@@ -417,18 +417,18 @@ namespace Ventrix.App
             pnlTopBar.ShadowDecoration.CustomizableEdges = customizableEdges33;
             pnlTopBar.ShadowDecoration.Enabled = true;
             pnlTopBar.Size = new Size(1274, 80);
-            pnlTopBar.TabIndex = 2;
+            pnlTopBar.TabIndex = 1;
             // 
             // btnHamburger
             // 
             btnHamburger.BackColor = Color.Transparent;
-            btnHamburger.Image = Properties.Resources.burger_icon;
+            btnHamburger.Image = Properties.Resources.bar;
             btnHamburger.ImageOffset = new Point(0, 0);
             btnHamburger.ImageRotate = 0F;
-            btnHamburger.Location = new Point(52, 44);
+            btnHamburger.Location = new Point(47, 46);
             btnHamburger.Name = "btnHamburger";
             btnHamburger.ShadowDecoration.CustomizableEdges = customizableEdges27;
-            btnHamburger.Size = new Size(32, 36);
+            btnHamburger.Size = new Size(43, 34);
             btnHamburger.TabIndex = 0;
             // 
             // lblDashboardHeader
@@ -488,7 +488,7 @@ namespace Ventrix.App
             pnlMainContent.Name = "pnlMainContent";
             pnlMainContent.ShadowDecoration.CustomizableEdges = customizableEdges2;
             pnlMainContent.Size = new Size(1274, 703);
-            pnlMainContent.TabIndex = 0;
+            pnlMainContent.TabIndex = 2;
             // 
             // pnlGridContainer
             // 

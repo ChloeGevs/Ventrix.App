@@ -23,6 +23,7 @@ namespace Ventrix.App
 
             InitializeComponent();
             SetupEvents();
+            SetupFocusHighlighting(); // Initialize visual feedback for Tab navigation
         }
 
         private void SetupEvents()
@@ -41,10 +42,31 @@ namespace Ventrix.App
             txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
 
-            // Enter Key Support
+            // Enter Key Support for final actions
             txtPassword.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnLogin.PerformClick(); };
-            txtStudentId.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter && btnBorrow.Visible) btnBorrow.PerformClick(); else if (e.KeyCode == Keys.Enter && btnLogin.Visible) txtPassword.Focus(); };
             txtSubject.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnBorrow.PerformClick(); };
+
+            // Student ID Enter logic: Smart submission or focus jump
+            txtStudentId.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    if (txtPassword.Visible)
+                    {
+                        txtPassword.Focus(); // Move to password in Admin mode
+                    }
+                    else if (btnReturn.Visible && !string.IsNullOrWhiteSpace(txtStudentId.Text))
+                    {
+                        btnReturn.PerformClick(); // Quick Return support if ID is already filled
+                    }
+                    else
+                    {
+                        cmbListEquipments.Focus(); // Move to equipment list in Student mode
+                    }
+
+                    e.SuppressKeyPress = true;
+                }
+            };
 
             ToggleMode("Student");
 
@@ -53,7 +75,30 @@ namespace Ventrix.App
                 await _userService.InitializeDefaultAdminAsync();
                 await LoadEquipmentListAsync();
             };
+        }
 
+        private void SetupFocusHighlighting()
+        {
+            // Apply to main actionable buttons
+            var actionButtons = new[] { btnLogin, btnBorrow, btnReturn, btnAdminToggle, btnStudentToggle };
+
+            foreach (var btn in actionButtons)
+            {
+                if (btn == null) continue;
+
+                // When the button receives focus (via Tab key)
+                btn.GotFocus += (s, e) =>
+                {
+                    btn.BorderThickness = 2;
+                    btn.BorderColor = Color.Cyan; 
+                };
+
+                // When focus moves to the next item
+                btn.LostFocus += (s, e) =>
+                {
+                    btn.BorderThickness = 0;
+                };
+            }
         }
 
         private void TxtPassword_IconRightClick(object sender, EventArgs e)
@@ -72,9 +117,23 @@ namespace Ventrix.App
         private async Task LoadEquipmentListAsync()
         {
             cmbListEquipments.Items.Clear();
-            var items = await _inventoryService.GetFilteredInventoryAsync("Available", "");
-            var names = items.Select(i => i.Name).Distinct().ToArray();
-            if (names.Any()) cmbListEquipments.Items.AddRange(names);
+            var availableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
+
+            // Extract the base name (remove " #1", " #2") and get unique names
+            var distinctItemNames = availableItems
+                .Select(item =>
+                {
+                    int hashIndex = item.Name.LastIndexOf(" #");
+                    return hashIndex > 0 ? item.Name.Substring(0, hashIndex).Trim() : item.Name.Trim();
+                })
+                .Distinct()
+                .OrderBy(name => name) // Sort alphabetically A-Z
+                .ToArray();
+
+            if (distinctItemNames.Any())
+            {
+                cmbListEquipments.Items.AddRange(distinctItemNames);
+            }
         }
 
         public void ToggleMode(string mode)
@@ -82,6 +141,10 @@ namespace Ventrix.App
             txtStudentId.Clear();
             txtPassword.Clear();
             txtSubject.Clear();
+
+            // Set mnemonic shortcuts (Alt + A for Admin, Alt + S for Student)
+            btnAdminToggle.Text = "&Admin Mode";
+            btnStudentToggle.Text = "&Student Mode";
 
             bool isAdmin = mode == "Admin";
 
@@ -113,7 +176,7 @@ namespace Ventrix.App
 
             numQuantity.Maximum = isAdmin ? 10 : 2;
 
-            // Smart Focus
+            // Smart Focus: Return to ID field automatically
             txtStudentId.Focus();
         }
 
@@ -189,26 +252,37 @@ namespace Ventrix.App
                 var record = new BorrowRecord
                 {
                     BorrowerId = txtStudentId.Text,
-                    ItemName = cmbListEquipments.Text,
+                    ItemName = cmbListEquipments.Text, // This will just say "Laptop" or "Mouse"
                     Quantity = (int)numQuantity.Value,
                     Purpose = txtSubject.Text,
-                    GradeLevel = cmbGradeLevel.Text,
+                    GradeLevel = Enum.Parse<GradeLevel>(cmbGradeLevel.Text),
                     Status = BorrowStatus.Active
                 };
 
-                var items = await _inventoryService.GetFilteredInventoryAsync("Available", record.ItemName);
-                var itemToBorrow = items.FirstOrDefault();
+                // Fetch ALL available items to manually filter exactly
+                var allAvailableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
+
+                // Find the first available item whose base name matches the dropdown exactly
+                var itemToBorrow = allAvailableItems.FirstOrDefault(i =>
+                {
+                    int hashIndex = i.Name.LastIndexOf(" #");
+                    string baseName = hashIndex > 0 ? i.Name.Substring(0, hashIndex).Trim() : i.Name.Trim();
+                    return baseName.Equals(record.ItemName, StringComparison.OrdinalIgnoreCase);
+                });
 
                 if (itemToBorrow != null)
                 {
+                    // Update record ItemName to the exact database name (e.g., "Laptop #12") so the system tracks the specific physical item
+                    record.ItemName = itemToBorrow.Name;
+
                     await _borrowService.ProcessBorrowAsync(record, itemToBorrow.Id);
                     MessageBox.Show("Item Borrowed Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtSubject.Clear(); // Clear subject to prep for next action
-                    await LoadEquipmentListAsync();
+                    await LoadEquipmentListAsync(); // Reload the list to update availability
                 }
                 else
                 {
-                    MessageBox.Show("Item is no longer available.", "Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("This item is currently out of stock or no longer available.", "Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)

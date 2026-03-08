@@ -5,19 +5,20 @@ namespace Ventrix.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext() { }
+        // THE FIX: This allows your original Factory to pass in the connection string
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
 
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
+        public DbSet<User> Users { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<BorrowRecord> BorrowRecords { get; set; }
-        public DbSet<User> Users { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!options.IsConfigured)
+            if (!optionsBuilder.IsConfigured)
             {
-                options.UseSqlite("Data Source=ventrix.db");
+                optionsBuilder.UseSqlite("Data Source=ventrix.db");
             }
         }
     }

@@ -12,41 +12,88 @@
 
         private void InitializeComponent()
         {
-            this.lblItemHeader = new System.Windows.Forms.Label();
-            this.txtBorrower = new System.Windows.Forms.TextBox();
-            this.cmbGrade = new System.Windows.Forms.ComboBox();
-            this.txtPurpose = new System.Windows.Forms.TextBox();
-            this.btnConfirm = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            panelContent = new System.Windows.Forms.Panel();
+            txtBorrower = new Guna.UI2.WinForms.Guna2TextBox();
+            cmbGrade = new Guna.UI2.WinForms.Guna2ComboBox();
+            txtPurpose = new Guna.UI2.WinForms.Guna2TextBox();
+            btnConfirm = new Guna.UI2.WinForms.Guna2Button();
 
-            // lblItemHeader
-            this.lblItemHeader.AutoSize = true;
-            this.lblItemHeader.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.lblItemHeader.Location = new System.Drawing.Point(20, 20);
+            panelContent.SuspendLayout();
+            SuspendLayout();
 
-            // txtBorrower, cmbGrade, txtPurpose auto-generated layout logic...
+            // panelContent
+            panelContent.BackColor = System.Drawing.Color.White;
+            panelContent.Controls.Add(btnConfirm);
+            panelContent.Controls.Add(txtPurpose);
+            panelContent.Controls.Add(cmbGrade);
+            panelContent.Controls.Add(txtBorrower);
+            panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            panelContent.Location = new System.Drawing.Point(0, 64);
+            panelContent.Name = "panelContent";
+            panelContent.Size = new System.Drawing.Size(350, 340);
+
+            // txtBorrower
+            txtBorrower.BorderRadius = 6;
+            txtBorrower.Cursor = System.Windows.Forms.Cursors.IBeam;
+            txtBorrower.DefaultText = "";
+            txtBorrower.Font = new System.Drawing.Font("Segoe UI", 10F);
+            txtBorrower.PlaceholderText = "Borrower ID Number";
+            txtBorrower.Location = new System.Drawing.Point(30, 30);
+            txtBorrower.Name = "txtBorrower";
+            txtBorrower.Size = new System.Drawing.Size(290, 45);
+
+            // cmbGrade
+            cmbGrade.BackColor = System.Drawing.Color.Transparent;
+            cmbGrade.BorderRadius = 6;
+            cmbGrade.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            cmbGrade.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmbGrade.Font = new System.Drawing.Font("Segoe UI", 10F);
+            cmbGrade.ForeColor = System.Drawing.Color.FromArgb(68, 88, 112);
+            cmbGrade.Location = new System.Drawing.Point(30, 90);
+            cmbGrade.Name = "cmbGrade";
+            cmbGrade.Size = new System.Drawing.Size(290, 36);
+
+            // txtPurpose
+            txtPurpose.BorderRadius = 6;
+            txtPurpose.Cursor = System.Windows.Forms.Cursors.IBeam;
+            txtPurpose.DefaultText = "";
+            txtPurpose.Font = new System.Drawing.Font("Segoe UI", 10F);
+            txtPurpose.PlaceholderText = "Purpose of Borrowing (Optional)";
+            txtPurpose.Location = new System.Drawing.Point(30, 140);
+            txtPurpose.Name = "txtPurpose";
+            txtPurpose.Size = new System.Drawing.Size(290, 45);
 
             // btnConfirm
-            this.btnConfirm.BackColor = System.Drawing.Color.Teal;
-            this.btnConfirm.ForeColor = System.Drawing.Color.White;
-            this.btnConfirm.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.btnConfirm.Height = 50;
-            this.btnConfirm.Text = "CONFIRM BORROW";
-            this.btnConfirm.Click += new System.EventHandler(this.btnConfirm_Click);
+            btnConfirm.BorderRadius = 6;
+            btnConfirm.FillColor = System.Drawing.Color.FromArgb(33, 150, 243);
+            btnConfirm.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnConfirm.ForeColor = System.Drawing.Color.White;
+            btnConfirm.Location = new System.Drawing.Point(30, 210);
+            btnConfirm.Name = "btnConfirm";
+            btnConfirm.Size = new System.Drawing.Size(290, 45);
+            btnConfirm.Text = "CONFIRM CHECKOUT";
+            btnConfirm.Click += new System.EventHandler(btnConfirm_Click);
 
-            // Form Settings
-            this.ClientSize = new System.Drawing.Size(400, 420);
-            this.Controls.Add(this.lblItemHeader);
-            this.Controls.Add(this.btnConfirm);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.ResumeLayout(false);
+            // BorrowPopup
+            AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(350, 340);
+            Controls.Add(panelContent);
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "BorrowPopup";
+            Sizable = false;
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "Borrow Item";
+
+            panelContent.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
-        private System.Windows.Forms.Label lblItemHeader;
-        private System.Windows.Forms.TextBox txtBorrower;
-        private System.Windows.Forms.ComboBox cmbGrade;
-        private System.Windows.Forms.TextBox txtPurpose;
-        private System.Windows.Forms.Button btnConfirm;
+        private System.Windows.Forms.Panel panelContent;
+        private Guna.UI2.WinForms.Guna2TextBox txtBorrower;
+        private Guna.UI2.WinForms.Guna2ComboBox cmbGrade;
+        private Guna.UI2.WinForms.Guna2TextBox txtPurpose;
+        private Guna.UI2.WinForms.Guna2Button btnConfirm;
     }
 }

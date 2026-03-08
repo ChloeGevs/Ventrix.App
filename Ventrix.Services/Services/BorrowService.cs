@@ -26,7 +26,7 @@ namespace Ventrix.Application.Services
                 .ToListAsync();
         }
 
-        public async Task AddBorrowRecordAsync(int userId, int itemId, int quantity, string purpose, string gradeLevel)
+        public async Task AddBorrowRecordAsync(int userId, int itemId, int quantity, string purpose, GradeLevel gradeLevel)
         {
             var record = new BorrowRecord
             {
@@ -34,7 +34,7 @@ namespace Ventrix.Application.Services
                 InventoryItemId = itemId,
                 Quantity = quantity,
                 Purpose = purpose,
-                GradeLevel = Enum.Parse<Ventrix.Domain.Enums.GradeLevel>(gradeLevel),
+                GradeLevel = Enum.Parse<Ventrix.Domain.Enums.GradeLevel>(gradeLevel.ToString()),
                 BorrowDate = DateTime.Now,
                 Status = BorrowStatus.Active
             };
@@ -92,7 +92,7 @@ namespace Ventrix.Application.Services
                 throw new Exception($"Borrow limit exceeded. Faculty members are allowed up to 10 items.");
             }
 
-            // CRITICAL FIX: Map the User's Primary Key (Id) to the Record's Foreign Key (UserId)
+            // Map the User's Primary Key (Id) to the Record's Foreign Key (UserId)
             record.UserId = user.Id;
             record.InventoryItemId = itemId;
             record.BorrowDate = DateTime.Now;

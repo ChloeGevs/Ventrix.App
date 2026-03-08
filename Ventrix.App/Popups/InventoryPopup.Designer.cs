@@ -12,146 +12,103 @@
 
         private void InitializeComponent()
         {
-            txtName = new TextBox();
-            cmbCategory = new ComboBox();
-            cmbStatus = new ComboBox();
-            cmbCondition = new ComboBox();
-            btnSave = new Button();
-            lblTitle = new Label();
-            lblCategory = new Label();
-            lblStatus = new Label();
-            lblCondition = new Label();
+            panelContent = new System.Windows.Forms.Panel();
+            btnSave = new Guna.UI2.WinForms.Guna2Button();
+            cmbCondition = new Guna.UI2.WinForms.Guna2ComboBox();
+            cmbStatus = new Guna.UI2.WinForms.Guna2ComboBox();
+            cmbCategory = new Guna.UI2.WinForms.Guna2ComboBox();
+            txtName = new Guna.UI2.WinForms.Guna2TextBox();
+
+            panelContent.SuspendLayout();
             SuspendLayout();
-            // 
+
+            // panelContent
+            panelContent.BackColor = System.Drawing.Color.White;
+            panelContent.Controls.Add(btnSave);
+            panelContent.Controls.Add(cmbCondition);
+            panelContent.Controls.Add(cmbStatus);
+            panelContent.Controls.Add(cmbCategory);
+            panelContent.Controls.Add(txtName);
+            panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            panelContent.Location = new System.Drawing.Point(0, 64);
+            panelContent.Name = "panelContent";
+            panelContent.Size = new System.Drawing.Size(350, 360);
+
             // txtName
-            // 
-            txtName.Font = new Font("Segoe UI", 10F);
-            txtName.Location = new Point(48, 189);
-            txtName.Margin = new Padding(3, 4, 3, 4);
+            txtName.BorderRadius = 6;
+            txtName.Cursor = System.Windows.Forms.Cursors.IBeam;
+            txtName.DefaultText = "";
+            txtName.Font = new System.Drawing.Font("Segoe UI", 10F);
+            txtName.PlaceholderText = "Item";
+            txtName.Location = new System.Drawing.Point(30, 30);
             txtName.Name = "txtName";
-            txtName.PlaceholderText = "Enter Item Name";
-            txtName.Size = new Size(406, 30);
-            txtName.TabIndex = 1;
-            // 
+            txtName.Size = new System.Drawing.Size(290, 45);
+
             // cmbCategory
-            // 
-            cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbCategory.FormattingEnabled = true;
-            cmbCategory.Location = new Point(48, 274);
-            cmbCategory.Margin = new Padding(3, 4, 3, 4);
+            cmbCategory.BackColor = System.Drawing.Color.Transparent;
+            cmbCategory.BorderRadius = 6;
+            cmbCategory.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            cmbCategory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmbCategory.Font = new System.Drawing.Font("Segoe UI", 10F);
+            cmbCategory.ForeColor = System.Drawing.Color.FromArgb(68, 88, 112);
+            cmbCategory.Location = new System.Drawing.Point(30, 90);
             cmbCategory.Name = "cmbCategory";
-            cmbCategory.Size = new Size(406, 28);
-            cmbCategory.TabIndex = 2;
-            // 
+            cmbCategory.Size = new System.Drawing.Size(290, 36);
+
             // cmbStatus
-            // 
-            cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbStatus.FormattingEnabled = true;
-            cmbStatus.Location = new Point(48, 344);
-            cmbStatus.Margin = new Padding(3, 4, 3, 4);
+            cmbStatus.BackColor = System.Drawing.Color.Transparent;
+            cmbStatus.BorderRadius = 6;
+            cmbStatus.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            cmbStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmbStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+            cmbStatus.ForeColor = System.Drawing.Color.FromArgb(68, 88, 112);
+            cmbStatus.Location = new System.Drawing.Point(30, 140);
             cmbStatus.Name = "cmbStatus";
-            cmbStatus.Size = new Size(406, 28);
-            cmbStatus.TabIndex = 3;
-            // 
+            cmbStatus.Size = new System.Drawing.Size(290, 36);
+
             // cmbCondition
-            // 
-            cmbCondition.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbCondition.FormattingEnabled = true;
-            cmbCondition.Location = new Point(48, 424);
-            cmbCondition.Margin = new Padding(3, 4, 3, 4);
+            cmbCondition.BackColor = System.Drawing.Color.Transparent;
+            cmbCondition.BorderRadius = 6;
+            cmbCondition.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            cmbCondition.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmbCondition.Font = new System.Drawing.Font("Segoe UI", 10F);
+            cmbCondition.ForeColor = System.Drawing.Color.FromArgb(68, 88, 112);
+            cmbCondition.Location = new System.Drawing.Point(30, 190);
             cmbCondition.Name = "cmbCondition";
-            cmbCondition.Size = new Size(406, 28);
-            cmbCondition.TabIndex = 4;
-            // 
+            cmbCondition.Size = new System.Drawing.Size(290, 36);
+
             // btnSave
-            // 
-            btnSave.BackColor = Color.FromArgb(13, 71, 161);
-            btnSave.FlatStyle = FlatStyle.Flat;
-            btnSave.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            btnSave.ForeColor = Color.White;
-            btnSave.Location = new Point(25, 566);
-            btnSave.Margin = new Padding(3, 4, 3, 4);
+            btnSave.BorderRadius = 6;
+            btnSave.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
+            btnSave.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnSave.ForeColor = System.Drawing.Color.White;
+            btnSave.Location = new System.Drawing.Point(30, 250);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(449, 48);
-            btnSave.TabIndex = 5;
-            btnSave.Text = "SAVE CHANGES";
-            btnSave.UseVisualStyleBackColor = false;
-            btnSave.Click += btnSave_Click;
-            // 
-            // lblTitle
-            // 
-            lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Bold);
-            lblTitle.Location = new Point(48, 127);
-            lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(151, 29);
-            lblTitle.TabIndex = 0;
-            lblTitle.Text = "Item Details";
-            // 
-            // lblCategory
-            // 
-            lblCategory.AutoSize = true;
-            lblCategory.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblCategory.Location = new Point(48, 240);
-            lblCategory.Name = "lblCategory";
-            lblCategory.Size = new Size(86, 20);
-            lblCategory.TabIndex = 7;
-            lblCategory.Text = "CATEGORY";
-            // 
-            // lblStatus
-            // 
-            lblStatus.AutoSize = true;
-            lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblStatus.Location = new Point(48, 320);
-            lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(167, 20);
-            lblStatus.TabIndex = 6;
-            lblStatus.Text = "AVAILABILITY STATUS";
-            // 
-            // lblCondition
-            // 
-            lblCondition.AutoSize = true;
-            lblCondition.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblCondition.Location = new Point(48, 400);
-            lblCondition.Name = "lblCondition";
-            lblCondition.Size = new Size(94, 20);
-            lblCondition.TabIndex = 5;
-            lblCondition.Text = "CONDITION";
-            // 
+            btnSave.Size = new System.Drawing.Size(290, 45);
+            btnSave.Text = "SAVE ITEM RECORD";
+            btnSave.Click += new System.EventHandler(btnSave_Click);
+
             // InventoryPopup
-            // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(515, 720);
-            Controls.Add(cmbCondition);
-            Controls.Add(lblCondition);
-            Controls.Add(cmbStatus);
-            Controls.Add(lblStatus);
-            Controls.Add(cmbCategory);
-            Controls.Add(lblCategory);
-            Controls.Add(lblTitle);
-            Controls.Add(txtName);
-            Controls.Add(btnSave);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            Margin = new Padding(3, 4, 3, 4);
+            AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(350, 380);
+            Controls.Add(panelContent);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "InventoryPopup";
-            Padding = new Padding(3, 85, 3, 2);
-            StartPosition = FormStartPosition.CenterParent;
-            Text = "Ventrix | Inventory Management";
+            Sizable = false;
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "Inventory Item";
+
+            panelContent.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
-        private System.Windows.Forms.TextBox txtName;
-        private System.Windows.Forms.ComboBox cmbCategory;
-        private System.Windows.Forms.ComboBox cmbStatus;
-        private System.Windows.Forms.ComboBox cmbCondition;
-        private System.Windows.Forms.Button btnSave;
-        private System.Windows.Forms.Label lblTitle;
-        private System.Windows.Forms.Label lblCategory;
-        private System.Windows.Forms.Label lblStatus;
-        private System.Windows.Forms.Label lblCondition;
+        private System.Windows.Forms.Panel panelContent;
+        private Guna.UI2.WinForms.Guna2TextBox txtName;
+        private Guna.UI2.WinForms.Guna2ComboBox cmbCategory;
+        private Guna.UI2.WinForms.Guna2ComboBox cmbStatus;
+        private Guna.UI2.WinForms.Guna2ComboBox cmbCondition;
+        private Guna.UI2.WinForms.Guna2Button btnSave;
     }
 }

@@ -12,51 +12,75 @@
 
         private void InitializeComponent()
         {
-            lblHeader = new Label();
-            flowRepairList = new FlowLayoutPanel();
-            btnClose = new Button();
+            panelContent = new System.Windows.Forms.Panel();
+            lblHeader = new System.Windows.Forms.Label();
+            flowRepairList = new System.Windows.Forms.FlowLayoutPanel();
+            btnClose = new Guna.UI2.WinForms.Guna2Button();
+
+            panelContent.SuspendLayout();
             SuspendLayout();
-            // 
+
+            // panelContent
+            panelContent.BackColor = System.Drawing.Color.White; // Ensures modern white look
+            panelContent.Controls.Add(lblHeader);
+            panelContent.Controls.Add(flowRepairList);
+            panelContent.Controls.Add(btnClose);
+            panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            panelContent.Location = new System.Drawing.Point(0, 64); // Offset for Title Bar
+            panelContent.Name = "panelContent";
+            panelContent.Size = new System.Drawing.Size(600, 586);
+
             // lblHeader
-            // 
-            lblHeader.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblHeader.Location = new Point(41, 110);
+            lblHeader.AutoSize = true;
+            lblHeader.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            lblHeader.Location = new System.Drawing.Point(30, 25);
             lblHeader.Name = "lblHeader";
-            lblHeader.Size = new Size(500, 30);
-            lblHeader.TabIndex = 0;
-            // 
+            lblHeader.Size = new System.Drawing.Size(262, 25);
+            lblHeader.Text = "Items Requiring Attention";
+
             // flowRepairList
-            // 
             flowRepairList.AutoScroll = true;
-            flowRepairList.Location = new Point(41, 150);
+            flowRepairList.Location = new System.Drawing.Point(30, 70);
             flowRepairList.Name = "flowRepairList";
-            flowRepairList.Size = new Size(500, 420);
-            flowRepairList.TabIndex = 1;
-            // 
+            flowRepairList.Size = new System.Drawing.Size(540, 420);
+            flowRepairList.BackColor = System.Drawing.Color.White;
+
             // btnClose
-            // 
-            btnClose.Dock = DockStyle.Bottom;
-            btnClose.Location = new Point(3, 641);
+            btnClose.BorderRadius = 6;
+            btnClose.BorderThickness = 1;
+            btnClose.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnClose.FillColor = System.Drawing.Color.White;
+            btnClose.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnClose.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
+            btnClose.Location = new System.Drawing.Point(30, 510);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(580, 50);
-            btnClose.TabIndex = 2;
-            btnClose.Text = "CLOSE";
-            btnClose.Click += btnClose_Click;
-            // 
+            btnClose.Size = new System.Drawing.Size(540, 45);
+            btnClose.Text = "CLOSE WINDOW";
+            btnClose.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnClose.Click += new System.EventHandler(btnClose_Click);
+
             // RepairDetailsPopup
-            // 
-            ClientSize = new Size(586, 694);
-            Controls.Add(lblHeader);
-            Controls.Add(flowRepairList);
-            Controls.Add(btnClose);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
+            AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(600, 650);
+            Controls.Add(panelContent);
             Name = "RepairDetailsPopup";
-            StartPosition = FormStartPosition.CenterParent;
+
+            // Prevent maximizing and toolbars for standard popup behavior
+            MaximizeBox = false;
+            MinimizeBox = false;
+            ShowInTaskbar = false;
+            Sizable = false;
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+
+            panelContent.ResumeLayout(false);
+            panelContent.PerformLayout();
             ResumeLayout(false);
         }
 
+        private System.Windows.Forms.Panel panelContent;
         private System.Windows.Forms.Label lblHeader;
         private System.Windows.Forms.FlowLayoutPanel flowRepairList;
-        private System.Windows.Forms.Button btnClose;
+        private Guna.UI2.WinForms.Guna2Button btnClose;
     }
 }

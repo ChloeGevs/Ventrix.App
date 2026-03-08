@@ -154,7 +154,7 @@ namespace Ventrix.App
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges2;
             txtPassword.Size = new Size(480, 50);
             txtPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
-            txtPassword.TabIndex = 4;
+            txtPassword.TabIndex = 9;
             txtPassword.UseSystemPasswordChar = true;
             txtPassword.Visible = false;
             // 
@@ -169,7 +169,7 @@ namespace Ventrix.App
             btnAdminToggle.Name = "btnAdminToggle";
             btnAdminToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
             btnAdminToggle.Size = new Size(230, 55);
-            btnAdminToggle.TabIndex = 0;
+            btnAdminToggle.TabIndex = 1;
             btnAdminToggle.Text = "ADMIN";
             // 
             // btnStudentToggle
@@ -183,7 +183,7 @@ namespace Ventrix.App
             btnStudentToggle.Name = "btnStudentToggle";
             btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges6;
             btnStudentToggle.Size = new Size(230, 55);
-            btnStudentToggle.TabIndex = 1;
+            btnStudentToggle.TabIndex = 0;
             btnStudentToggle.Text = "BORROWER";
             // 
             // lblLoginHeader
@@ -213,7 +213,7 @@ namespace Ventrix.App
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges8;
             txtStudentId.Size = new Size(480, 50);
             txtStudentId.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
-            txtStudentId.TabIndex = 3;
+            txtStudentId.TabIndex = 2;
             // 
             // cmbListEquipments
             // 
@@ -230,7 +230,7 @@ namespace Ventrix.App
             cmbListEquipments.Name = "cmbListEquipments";
             cmbListEquipments.ShadowDecoration.CustomizableEdges = customizableEdges10;
             cmbListEquipments.Size = new Size(480, 36);
-            cmbListEquipments.TabIndex = 4;
+            cmbListEquipments.TabIndex = 3;
             // 
             // lblQuantity
             // 
@@ -255,7 +255,7 @@ namespace Ventrix.App
             numQuantity.Name = "numQuantity";
             numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges12;
             numQuantity.Size = new Size(117, 50);
-            numQuantity.TabIndex = 6;
+            numQuantity.TabIndex = 4;
             numQuantity.UpDownButtonFillColor = Color.FromArgb(240, 240, 240);
             numQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
@@ -283,7 +283,7 @@ namespace Ventrix.App
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges14;
             txtSubject.Size = new Size(317, 50);
             txtSubject.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
-            txtSubject.TabIndex = 8;
+            txtSubject.TabIndex = 5;
             // 
             // btnReturn
             // 
@@ -298,7 +298,7 @@ namespace Ventrix.App
             btnReturn.Name = "btnReturn";
             btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges16;
             btnReturn.Size = new Size(230, 55);
-            btnReturn.TabIndex = 9;
+            btnReturn.TabIndex = 7;
             btnReturn.Text = "RETURN";
             // 
             // btnBorrow
@@ -314,7 +314,7 @@ namespace Ventrix.App
             btnBorrow.Name = "btnBorrow";
             btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges18;
             btnBorrow.Size = new Size(230, 55);
-            btnBorrow.TabIndex = 10;
+            btnBorrow.TabIndex = 8;
             btnBorrow.Text = "BORROW";
             // 
             // btnLogin
@@ -329,7 +329,7 @@ namespace Ventrix.App
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges20;
             btnLogin.Size = new Size(480, 55);
-            btnLogin.TabIndex = 13;
+            btnLogin.TabIndex = 10;
             btnLogin.Text = "LOGIN";
             btnLogin.Visible = false;
             // 
@@ -350,7 +350,7 @@ namespace Ventrix.App
             cmbGradeLevel.ShadowDecoration.CustomizableEdges = customizableEdges22;
             cmbGradeLevel.Size = new Size(317, 36);
             cmbGradeLevel.StartIndex = 0;
-            cmbGradeLevel.TabIndex = 17;
+            cmbGradeLevel.TabIndex = 6;
             // 
             // BorrowerPortal
             // 
@@ -359,7 +359,7 @@ namespace Ventrix.App
             Name = "BorrowerPortal";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Ventrix | Borrower Portal";
-            mainTableLayout.ResumeLayout(false);
+            mainTableLayout.ResumeLayout(false);    
             pnlLoginCard.ResumeLayout(false);
             pnlLoginCard.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numQuantity).EndInit();

@@ -215,11 +215,11 @@ namespace Ventrix.App.Properties
         ///<summary>
         /// looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap burger_icon
+        internal static System.Drawing.Bitmap bar
         {
             get
             {
-                object obj = ResourceManager.GetObject("burger_icon", resourceCulture);
+                object obj = ResourceManager.GetObject("bar", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
 
@@ -287,11 +287,11 @@ namespace Ventrix.App.Properties
         ///<summary>
         /// looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap user__1_
+        internal static System.Drawing.Bitmap admin
         {
             get
             {
-                object obj = ResourceManager.GetObject("user__1_", resourceCulture);
+                object obj = ResourceManager.GetObject("admin", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
 

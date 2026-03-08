@@ -105,14 +105,15 @@ namespace Ventrix.App
             // 
             lblHeader.AutoSize = false;
             lblHeader.BackColor = Color.Transparent;
-            lblHeader.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
+            lblHeader.Font = new Font("Segoe UI", 21F, FontStyle.Bold);
             lblHeader.ForeColor = Color.FromArgb(13, 71, 161);
             lblHeader.Location = new Point(0, 45);
             lblHeader.Name = "lblHeader";
             lblHeader.Size = new Size(494, 90);
             lblHeader.TabIndex = 0;
-            lblHeader.Text = "STUDENT REGISTRATION";
+            lblHeader.Text = "BORROWER REGISTRATION";
             lblHeader.TextAlignment = ContentAlignment.TopCenter;
+            lblHeader.Click += lblHeader_Click;
             // 
             // cmbRole
             // 
