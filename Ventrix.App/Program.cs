@@ -45,9 +45,12 @@ namespace Ventrix.App
             services.AddTransient<BorrowerRegistration>(); // Good practice to register all your forms
 
             var serviceProvider = services.BuildServiceProvider();
-
             using (var scope = serviceProvider.CreateScope())
             {
+                // Ensure database is created and schema matches the current model before running queries
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.EnsureCreated();
+
                 var inventoryService = scope.ServiceProvider.GetRequiredService<InventoryService>();
 
                 // Fetch existing items using GetAwaiter().GetResult() since Main is not an async method
@@ -62,7 +65,7 @@ namespace Ventrix.App
 
             // 4. Start App
             var startForm = serviceProvider.GetRequiredService<InitializingApp>();
-            System.Windows.Forms.Application.Run(startForm);
+            System.Windows.Forms.Application.Run(startForm);    
         }
     }
 }

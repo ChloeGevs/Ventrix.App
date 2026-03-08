@@ -105,5 +105,11 @@ namespace Ventrix.Application.Services
 
             return newUser;
         }
+
+        // Add this method so the Dashboard can count total registered users
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            return await _context.Users.ToListAsync();
+        }
     }
 }
