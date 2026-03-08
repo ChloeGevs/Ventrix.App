@@ -199,7 +199,7 @@ namespace Ventrix.App
             SetLoadingState(true);
             try
             {
-                var loginDto = new Ventrix.Application.DTOs.LoginDto
+                var loginDto = new Ventrix.Application.DTOs.LoginDTO
                 {
                     UserId = txtStudentId.Text,
                     Password = txtPassword.Text

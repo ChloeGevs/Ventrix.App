@@ -22,5 +22,11 @@ namespace Ventrix.App.Popups
             InitializeComponent();
             this.Text = "Damaged Items Report";
         }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
     }
 }
