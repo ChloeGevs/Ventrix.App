@@ -163,12 +163,18 @@ namespace Ventrix.App
 
             if (sidebarTimer != null && btnHamburger != null)
             {
-                sidebarTimer.Interval = 16;
+                sidebarTimer.Interval = 10; // 10ms for higher framerate
                 btnHamburger.Click += (s, e) =>
                 {
                     if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = false;
                     if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = false;
                     if (pnlHistory != null) pnlHistory.ShadowDecoration.Enabled = false;
+
+                    // Immediately hide the text before retracting to prevent text squishing/lag
+                    if (isSidebarExpanded)
+                    {
+                        ToggleSidebarText(false);
+                    }
 
                     sidebarTimer.Start();
                 };
@@ -277,8 +283,8 @@ namespace Ventrix.App
             gridMenu.RenderStyle.SelectionForeColor = Color.White;
             gridMenu.Font = new System.Drawing.Font("Segoe UI", 10F);
 
-            ToolStripMenuItem manageOption = new ToolStripMenuItem("⚙️ Manage Item Group");
-            ToolStripMenuItem returnOption = new ToolStripMenuItem("📥 Process Return");
+            ToolStripMenuItem manageOption = new ToolStripMenuItem("Manage Item Group");
+            ToolStripMenuItem returnOption = new ToolStripMenuItem("Process Return");
 
             gridMenu.Items.Add(manageOption);
             gridMenu.Items.Add(returnOption);
@@ -459,52 +465,68 @@ namespace Ventrix.App
         {
             if (pnlSidebar == null || sidebarTimer == null) return;
 
-            Action finalizeAnimation = () => {
-                if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = true;
-                if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = true;
-                if (pnlHistory != null) pnlHistory.ShadowDecoration.Enabled = true;
-                RefreshLayout();
-            };
-
-            if (!this.ContainsFocus)
-            {
-                sidebarTimer.Stop();
-                finalizeAnimation();
-                return;
-            }
-
             int targetWidth = isSidebarExpanded ? sidebarMinWidth : sidebarMaxWidth;
             int distanceRemaining = Math.Abs(targetWidth - pnlSidebar.Width);
 
-            // Smoother easing: moves faster when far, slower when close, with a minimum step of 2 to prevent stalling
-            int step = Math.Max(2, distanceRemaining / 3);
+            // Smoother easing: 20% of the remaining distance per tick
+            // Creates a fast start and a very smooth deceleration
+            int step = (int)(distanceRemaining * 0.20);
+            if (step < 1) step = 1; // Soft landing
 
-            // If the remaining distance is less than or equal to the step, snap to target
             if (distanceRemaining <= step)
             {
+                // Snap to final position
                 pnlSidebar.Width = targetWidth;
                 isSidebarExpanded = !isSidebarExpanded;
                 sidebarTimer.Stop();
-                finalizeAnimation();
+
+                // Only show text AFTER full expansion
+                if (isSidebarExpanded) ToggleSidebarText(true);
+
+                // Re-enable heavy drop shadows
+                if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = true;
+                if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = true;
+                if (pnlHistory != null) pnlHistory.ShadowDecoration.Enabled = true;
+
+                UpdateSidebarInternalUI();
+                RefreshLayout();
             }
             else
             {
-                // Increment or decrement width based on state
+                // Animate width
                 if (isSidebarExpanded) pnlSidebar.Width -= step;
                 else pnlSidebar.Width += step;
 
-                // Move and resize main content to perfectly hug the sidebar
-                pnlMainContent.Location = new Point(pnlSidebar.Width, pnlMainContent.Location.Y);
-                pnlMainContent.Width = this.Width - pnlSidebar.Width;
+                // Instantly snap main content to the sidebar boundary
+                pnlMainContent.Left = pnlSidebar.Width;
+                pnlMainContent.Width = this.ClientSize.Width - pnlSidebar.Width;
 
-                // Animate the text/icons inside the sidebar simultaneously
+                // Animate the layout (bounds) of the icons ONLY
                 UpdateSidebarInternalUI();
 
-                // IMPORTANT: Force standard UI thread to repaint immediately. 
-                // This is the key to removing WinForms animation lag.
+                // Force quick repaint without full layout invalidation
                 pnlSidebar.Update();
                 pnlMainContent.Update();
             }
+        }
+
+        private void ToggleSidebarText(bool show)
+        {
+            var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
+            var navTexts = new[] { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "BORROWERS" };
+
+            for (int i = 0; i < navBtns.Length; i++)
+            {
+                if (navBtns[i] != null)
+                {
+                    navBtns[i].Text = show ? navTexts[i] : string.Empty;
+                    navBtns[i].TextOffset = show ? new Point(10, 0) : new Point(0, 0);
+                    navBtns[i].TextAlign = show ? HorizontalAlignment.Left : HorizontalAlignment.Center;
+                }
+            }
+
+            if (lblOwnerRole != null) lblOwnerRole.Visible = show;
+            if (cmbAccountActions != null) cmbAccountActions.Visible = show;
         }
 
         private void RefreshLayout()
@@ -550,49 +572,26 @@ namespace Ventrix.App
         private void UpdateSidebarInternalUI()
         {
             if (pnlSidebar == null) return;
-            pnlSidebar.SuspendLayout();
 
             int currentWidth = pnlSidebar.Width;
             int contentWidth = currentWidth - 20;
 
-            // Determine if expanded based on width threshold
-            bool expanded = currentWidth > 200;
+            // Smoothly animate profile picture size
+            int targetPicSize = (currentWidth > 150) ? 45 : 40;
+            if (picUser != null) picUser.SetBounds((currentWidth > 150) ? 15 : 12, 25, targetPicSize, targetPicSize);
 
-            // Adjust User Profile section
-            int picSize = expanded ? 45 : 40;
-            if (picUser != null) picUser.SetBounds(expanded ? 15 : 12, 25, picSize, picSize);
-            if (lblOwnerRole != null) lblOwnerRole.Visible = expanded;
-            if (cmbAccountActions != null) cmbAccountActions.Visible = expanded;
-
-            // --- MANAGE NAVIGATION BUTTONS ---
+            // Keep buttons resizing fluidly with the panel width
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
-            var navTexts = new[] { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "BORROWERS" };
-
             int btnY = 120;
-            for (int i = 0; i < navBtns.Length; i++)
+
+            foreach (var btn in navBtns)
             {
-                var btn = navBtns[i];
-                if (btn != null)
+                if (btn != null && btn.Visible)
                 {
-                    // If retracted (not expanded), hide the text to only show the icon
-                    btn.Text = expanded ? navTexts[i] : string.Empty;
-
-                    // Adjust text offset and alignment for a cleaner look
-                    btn.TextOffset = expanded ? new Point(10, 0) : new Point(0, 0);
-                    btn.TextAlign = expanded ? HorizontalAlignment.Left : HorizontalAlignment.Center;
-
-                    // Maintain visibility as long as the sidebar isn't at absolute minimum
-                    btn.Visible = currentWidth > sidebarMinWidth - 10;
-
-                    if (btn.Visible)
-                    {
-                        btn.SetBounds(10, btnY, contentWidth, 45);
-                        btnY += 60; // Slightly reduced spacing for a tighter look
-                    }
+                    btn.SetBounds(10, btnY, contentWidth, 45);
+                    btnY += 60;
                 }
             }
-
-            pnlSidebar.ResumeLayout(false);
         }
 
         private string GetGreeting()
@@ -836,7 +835,7 @@ namespace Ventrix.App
         }
 
 
-        private async Task OpenItemGroupDetails()
+        private async Task OpenItemGroupDetails() 
         {
             if (dgvInventory?.SelectedRows.Count == 0) return;
 

@@ -188,5 +188,10 @@ namespace Ventrix.App
 
             this.Hide();
         }
+
+        private void lblHeader_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using MaterialSkin;
+﻿using Guna.UI2.WinForms;
+using MaterialSkin;
 using MaterialSkin.Controls;
 using System.Drawing;
 using System.Windows.Forms;
@@ -61,6 +62,10 @@ namespace Ventrix.App
                 Color.FromArgb(30, 136, 229), // Accent
                 TextShade.WHITE
             );
+
+            Guna2Elipse elipse = new Guna2Elipse();
+            elipse.TargetControl = form;
+            elipse.BorderRadius = 20;
         }
     }
 }

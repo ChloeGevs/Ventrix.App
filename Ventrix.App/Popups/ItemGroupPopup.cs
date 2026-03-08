@@ -254,7 +254,7 @@ namespace Ventrix.App.Popups
             if (gridItems.SelectedRows.Count == 0) return;
 
             int id = Convert.ToInt32(gridItems.SelectedRows[0].Cells["ID"].Value);
-            string exactName = gridItems.SelectedRows[0].Cells["ExactName"].Value.ToString();
+            string exactName = gridItems.SelectedRows[0].Cells["Item"].Value.ToString();
 
             if (MessageBox.Show($"Are you sure you want to permanently delete {exactName} (Unit #{id})?", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
