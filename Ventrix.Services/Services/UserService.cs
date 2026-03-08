@@ -8,6 +8,7 @@ using Ventrix.Application.DTOs;
 using Ventrix.Infrastructure.Data;
 using Ventrix.Domain.Enums;
 
+
 namespace Ventrix.Application.Services
 {
     public class UserService
@@ -48,7 +49,7 @@ namespace Ventrix.Application.Services
             }
         }
 
-        public async Task<User> LoginAsync(LoginDto dto)
+        public async Task<User> LoginAsync(LoginDTO dto)
         {
             if (dto.UserId == "admin" && dto.Password == "admin123")
             {
@@ -70,13 +71,13 @@ namespace Ventrix.Application.Services
                 .FirstOrDefaultAsync(u => u.UserId == dto.UserId && u.Password == hashedPassword);
         }
 
-        public async Task<User> RegisterNewBorrowerAsync(RegisterDto dto)
+        public async Task<User> RegisterNewBorrowerAsync(RegisterDTO dto)
         {
             if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.LastName))
                 throw new ArgumentException("Names are required for registration.");
 
             // 1. Determine the Role Prefix ('S' for Student, 'F' for Faculty)
-            string rolePrefix = dto.Role == "Faculty" ? "F" : "S";
+            string rolePrefix = dto.Role == Ventrix.Domain.Enums.UserRole.Faculty ? "F" : "S";
 
             // 2. Get the current year
             string currentYear = DateTime.Now.Year.ToString();
@@ -94,7 +95,7 @@ namespace Ventrix.Application.Services
                 LastName = dto.LastName,
                 MiddleName = dto.MiddleName,
                 Suffix = dto.Suffix,
-                Role = Enum.TryParse<UserRole>(dto.Role, out var parsedRole) ? parsedRole : UserRole.Student,
+                Role = dto.Role,
                 Password = " ", 
                 CreatedAt = DateTime.Now
             };

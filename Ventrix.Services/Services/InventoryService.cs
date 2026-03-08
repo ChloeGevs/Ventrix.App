@@ -25,7 +25,7 @@ namespace Ventrix.Application.Services
                 Name = name,
                 Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category),
                 Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status),
-                Condition = condition,
+                Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition),
                 DateAdded = DateTime.Now
             };
 
@@ -69,7 +69,7 @@ namespace Ventrix.Application.Services
                 item.Name = name;
                 item.Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category);
                 item.Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status);
-                item.Condition = condition;
+                item.Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition);
                 await _context.SaveChangesAsync();
             }
         }

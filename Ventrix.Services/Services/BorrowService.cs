@@ -34,7 +34,7 @@ namespace Ventrix.Application.Services
                 InventoryItemId = itemId,
                 Quantity = quantity,
                 Purpose = purpose,
-                GradeLevel = gradeLevel,
+                GradeLevel = Enum.Parse<Ventrix.Domain.Enums.GradeLevel>(gradeLevel),
                 BorrowDate = DateTime.Now,
                 Status = BorrowStatus.Active
             };

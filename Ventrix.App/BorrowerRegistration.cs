@@ -117,13 +117,13 @@ namespace Ventrix.App
 
             try
             {
-                var registrationData = new RegisterDto
+                var registrationData = new RegisterDTO
                 {
                     FirstName = txtFirstName.Text.Trim(),
                     MiddleName = txtMiddleName.Text.Trim(),
                     LastName = txtLastName.Text.Trim(),
                     Suffix = chkNoSuffix.Checked ? "" : txtSuffix.Text.Trim(),
-                    Role = cmbRole.SelectedItem?.ToString() ?? "Student"
+                    Role = Enum.Parse<Ventrix.Domain.Enums.UserRole>(cmbRole.SelectedItem?.ToString() ?? "Student"),
                 };
 
                 var registeredUser = await _userService.RegisterNewBorrowerAsync(registrationData);

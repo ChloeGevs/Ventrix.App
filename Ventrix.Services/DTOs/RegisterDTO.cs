@@ -1,12 +1,14 @@
 ﻿namespace Ventrix.Application.DTOs
 {
-    public class RegisterDto
+    public class RegisterDTO 
     {
-        public string UserId { get; set; } // The ID number (2024-001)
+        public string Username { get; set; }
+        public string Password { get; set; }
         public string FirstName { get; set; }
+        public string MiddleName { get; set; }
         public string LastName { get; set; }
-        public string MiddleName { get; set; } 
-        public string Suffix { get; set; } 
-        public string Role { get; set; } // You can pass "Student" here
+        public string Suffix { get; set; }
+
+        public Ventrix.Domain.Enums.UserRole Role { get; set; }
     }
 }
