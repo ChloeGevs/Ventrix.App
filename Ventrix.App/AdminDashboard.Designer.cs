@@ -65,7 +65,6 @@ namespace Ventrix.App
             DataGridViewCellStyle dataGridViewCellStyle5 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle6 = new DataGridViewCellStyle();
             pnlHomeSummary = new Guna.UI2.WinForms.Guna2Panel();
-            lblUrgentHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             btnClearActivity = new Guna.UI2.WinForms.Guna2Button();
             flowRecentActivity = new FlowLayoutPanel();
             cardTotal = new Ventrix.App.Controls.MetricCard();
@@ -80,7 +79,7 @@ namespace Ventrix.App
             btnNavAvailable = new Guna.UI2.WinForms.Guna2Button();
             btnNavBorrowed = new Guna.UI2.WinForms.Guna2Button();
             btnNavBorrowers = new Guna.UI2.WinForms.Guna2Button();
-            lblOwnerRole = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            this.lblOwnerRole = new Guna.UI2.WinForms.Guna2HtmlLabel();
             cmbAccountActions = new Guna.UI2.WinForms.Guna2ComboBox();
             btnCreate = new Guna.UI2.WinForms.Guna2Button();
             btnEdit = new Guna.UI2.WinForms.Guna2Button();
@@ -115,7 +114,6 @@ namespace Ventrix.App
             // 
             pnlHomeSummary.BackColor = Color.Transparent;
             pnlHomeSummary.BorderRadius = 15;
-            pnlHomeSummary.Controls.Add(lblUrgentHeader);
             pnlHomeSummary.Controls.Add(btnClearActivity);
             pnlHomeSummary.Controls.Add(flowRecentActivity);
             pnlHomeSummary.Controls.Add(cardTotal);
@@ -130,18 +128,6 @@ namespace Ventrix.App
             pnlHomeSummary.Size = new Size(240, 450);
             pnlHomeSummary.TabIndex = 4;
             pnlHomeSummary.Visible = false;
-            // 
-            // lblUrgentHeader
-            // 
-            lblUrgentHeader.BackColor = Color.Transparent;
-            lblUrgentHeader.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblUrgentHeader.IsContextMenuEnabled = false;
-            lblUrgentHeader.IsSelectionEnabled = false;
-            lblUrgentHeader.Location = new Point(15, 100);
-            lblUrgentHeader.Name = "lblUrgentHeader";
-            lblUrgentHeader.Size = new Size(220, 27);
-            lblUrgentHeader.TabIndex = 0;
-            lblUrgentHeader.Text = "URGENT SYSTEM ALERTS";
             // 
             // btnClearActivity
             // 
@@ -222,7 +208,7 @@ namespace Ventrix.App
             pnlSidebar.Controls.Add(btnNavAvailable);
             pnlSidebar.Controls.Add(btnNavBorrowed);
             pnlSidebar.Controls.Add(btnNavBorrowers);
-            pnlSidebar.Controls.Add(lblOwnerRole);
+            pnlSidebar.Controls.Add(this.lblOwnerRole);
             pnlSidebar.Controls.Add(cmbAccountActions);
             pnlSidebar.CustomizableEdges = customizableEdges20;
             pnlSidebar.Dock = DockStyle.Left;
@@ -326,14 +312,14 @@ namespace Ventrix.App
             // 
             // lblOwnerRole
             // 
-            lblOwnerRole.BackColor = Color.Transparent;
-            lblOwnerRole.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            lblOwnerRole.ForeColor = Color.White;
-            lblOwnerRole.Location = new Point(71, 20);
-            lblOwnerRole.Name = "lblOwnerRole";
-            lblOwnerRole.Size = new Size(53, 25);
-            lblOwnerRole.TabIndex = 6;
-            lblOwnerRole.Text = "Admin";
+            this.lblOwnerRole.BackColor = Color.Transparent;
+            this.lblOwnerRole.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            this.lblOwnerRole.ForeColor = Color.White;
+            this.lblOwnerRole.Location = new Point(71, 20);
+            this.lblOwnerRole.Name = "lblOwnerRole";
+            this.lblOwnerRole.Size = new Size(53, 25);
+            this.lblOwnerRole.TabIndex = 6;
+            this.lblOwnerRole.Text = "Admin";
             // 
             // cmbAccountActions
             // 
@@ -676,7 +662,6 @@ namespace Ventrix.App
             Name = "AdminDashboard";
             StartPosition = FormStartPosition.CenterScreen;
             pnlHomeSummary.ResumeLayout(false);
-            pnlHomeSummary.PerformLayout();
             pnlSidebar.ResumeLayout(false);
             pnlSidebar.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picUser).EndInit();
@@ -701,7 +686,7 @@ namespace Ventrix.App
 
         private Guna.UI2.WinForms.Guna2ImageButton btnHamburger;
         private Guna.UI2.WinForms.Guna2CirclePictureBox picUser;
-        private Guna.UI2.WinForms.Guna2HtmlLabel lblOwnerRole, lblUrgentHeader;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblOwnerRole;
         private Guna.UI2.WinForms.Guna2ComboBox cmbAccountActions;
         private System.Windows.Forms.FlowLayoutPanel flowRecentActivity;
 
