@@ -13,31 +13,25 @@ namespace Ventrix.App
         [STAThread]
         static void Main()
         {
-            // 1. FIX BLURRY UI: Enable High DPI awareness before any UI is initialized
             System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
-            // 2. Setup Configuration
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            // 3. Setup DI Container
             var services = new ServiceCollection();
 
-            // Infrastructure (Database)
             string connectionString = config.GetConnectionString("DefaultConnection");
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
-            // Application Services (Business Logic)
             services.AddScoped<UserService>();
             services.AddScoped<InventoryService>();
             services.AddScoped<BorrowService>();
 
-            // UI Forms (InitializingApp removed)
             services.AddTransient<AdminDashboard>();
             services.AddTransient<BorrowerPortal>();
             services.AddTransient<BorrowerRegistration>();
@@ -45,23 +39,18 @@ namespace Ventrix.App
             var serviceProvider = services.BuildServiceProvider();
             using (var scope = serviceProvider.CreateScope())
             {
-                // Ensure database is created and schema matches the current model before running queries
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.EnsureCreated();
 
                 var inventoryService = scope.ServiceProvider.GetRequiredService<InventoryService>();
 
-                // Fetch existing items using GetAwaiter().GetResult() since Main is not an async method
                 var existingItems = inventoryService.GetAllItemsAsync().GetAwaiter().GetResult();
 
-                // If the database is completely empty, run the seeding process!
                 if (existingItems.Count == 0)
                 {
                     inventoryService.RunInitialSeed().GetAwaiter().GetResult();
                 }
             }
-
-            // 4. Start App (Now starting with BorrowerPortal)
             var startForm = serviceProvider.GetRequiredService<BorrowerPortal>();
             System.Windows.Forms.Application.Run(startForm);
         }

@@ -10,7 +10,6 @@ namespace Ventrix.Domain.Models
         [Key]
         public int Id { get; set; }
 
-        // Matches the string UserId in User.cs
         public string BorrowerId { get; set; }
 
         [ForeignKey("BorrowerId")]
@@ -21,12 +20,11 @@ namespace Ventrix.Domain.Models
         [ForeignKey("InventoryItemId")]
         public virtual InventoryItem InventoryItem { get; set; }
 
-        // Essential properties to resolve CS0117 errors
         public int Quantity { get; set; }
         public string Purpose { get; set; }
         public GradeLevel GradeLevel { get; set; }
 
-        public string ItemName { get; set; } // Real column for history display
+        public string ItemName { get; set; } 
         public DateTime BorrowDate { get; set; } = DateTime.Now;
         public DateTime? ReturnDate { get; set; }
         public BorrowStatus Status { get; set; } = BorrowStatus.Active;

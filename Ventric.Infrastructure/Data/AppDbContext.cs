@@ -5,7 +5,6 @@ namespace Ventrix.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
-        // THE FIX: This allows your original Factory to pass in the connection string
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }

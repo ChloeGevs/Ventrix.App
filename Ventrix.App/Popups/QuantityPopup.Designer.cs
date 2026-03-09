@@ -29,7 +29,7 @@
             panelContent.Controls.Add(txtQuantity);
             panelContent.Controls.Add(lblMessage);
             panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            panelContent.Location = new System.Drawing.Point(0, 64); // Offset for MaterialSkin title bar
+            panelContent.Location = new System.Drawing.Point(0, 64); 
             panelContent.Name = "panelContent";
             panelContent.Padding = new System.Windows.Forms.Padding(20);
             panelContent.Size = new System.Drawing.Size(350, 166);

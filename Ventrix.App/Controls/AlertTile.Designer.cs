@@ -23,7 +23,7 @@
             pnlAlert.BackColor = System.Drawing.Color.White;
             pnlAlert.Cursor = System.Windows.Forms.Cursors.Hand;
             pnlAlert.Dock = System.Windows.Forms.DockStyle.Fill;
-            pnlAlert.Controls.Add(lblAlertMsg); // Placed label inside the panel for better rendering
+            pnlAlert.Controls.Add(lblAlertMsg); 
 
             // 
             // lblAlertMsg
@@ -31,7 +31,6 @@
             lblAlertMsg.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             lblAlertMsg.Location = new System.Drawing.Point(10, 15);
 
-            // --- LAYOUT FIXES FOR RESPONSIVENESS ---
             lblAlertMsg.AutoSize = false;
             lblAlertMsg.Size = new System.Drawing.Size(380, 30);
             lblAlertMsg.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right; // Make it stretch with the tile

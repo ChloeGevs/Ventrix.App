@@ -20,9 +20,6 @@ namespace Ventrix.Application.Services
 
         public async Task<IEnumerable<BorrowRecord>> GetAllBorrowRecordsAsync()
         {
-            // IMPORTANT: The .Include(b => b.Borrower) tells Entity Framework to 
-            // automatically grab the User's profile data (First Name, Last Name) 
-            // attached to this ID so the Dashboard can display it!
             return await _context.BorrowRecords
                 .Include(b => b.Borrower)
                 .ToListAsync();
@@ -81,7 +78,7 @@ namespace Ventrix.Application.Services
             {
                 record.IsHiddenFromDashboard = true;
 
-            }
+            } 
             await _context.SaveChangesAsync();
         }
     }

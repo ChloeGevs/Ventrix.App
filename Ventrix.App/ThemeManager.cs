@@ -11,10 +11,8 @@ namespace Ventrix.App
         public static readonly Color VentrixBlue = Color.FromArgb(13, 71, 161);
         public static readonly Color VentrixLightBlue = Color.FromArgb(33, 150, 243);
 
-        // In ThemeManager.cs
         public static readonly Font HeaderFont = new Font("Segoe UI", 20F, FontStyle.Bold);
 
-        // Use "Segoe UI Semibold" as the string, and FontStyle.Regular
         public static readonly Font SubHeaderFont = new Font("Segoe UI Semibold", 12F, FontStyle.Regular);
         public static readonly Font ButtonFont = new Font("Segoe UI Semibold", 10F, FontStyle.Regular);
 
@@ -56,10 +54,10 @@ namespace Ventrix.App
             manager.AddFormToManage(form);
             manager.Theme = MaterialSkinManager.Themes.LIGHT;
             manager.ColorScheme = new ColorScheme(
-                Color.FromArgb(13, 71, 161),  // Primary
-                Color.FromArgb(10, 50, 120),  // Dark Primary
-                Color.FromArgb(33, 150, 243), // Light Primary
-                Color.FromArgb(30, 136, 229), // Accent
+                Color.FromArgb(13, 71, 161), 
+                Color.FromArgb(10, 50, 120),  
+                Color.FromArgb(33, 150, 243), 
+                Color.FromArgb(30, 136, 229), 
                 TextShade.WHITE
             );
 

@@ -20,7 +20,6 @@ namespace Ventrix.Application.Services
             _context = context;
         }
 
-        // Basic password hashing method
         private string HashPassword(string password)
         {
             if (string.IsNullOrEmpty(password)) return null;
@@ -39,7 +38,7 @@ namespace Ventrix.Application.Services
                 var admin = new User
                 {
                     UserId = "admin",
-                    Password = HashPassword("admin123"), // Securely hashed
+                    Password = HashPassword("admin123"), 
                     FirstName = "System",
                     LastName = "Admin",
                     Role = UserRole.Admin
@@ -55,7 +54,6 @@ namespace Ventrix.Application.Services
             {
                 var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == "admin");
 
-                // If the admin isn't in the DB yet, create a temporary object so the app doesn't crash
                 return adminUser ?? new User
                 {
                     UserId = "admin",
@@ -126,7 +124,6 @@ namespace Ventrix.Application.Services
             }
         }
 
-        // Add this method so the Dashboard can count total registered users
         public async Task<List<User>> GetAllUsersAsync()
         {
             return await _context.Users.ToListAsync();
