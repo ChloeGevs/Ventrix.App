@@ -272,21 +272,19 @@ namespace Ventrix.App
                     return;
                 }
 
-                // Trigger the upgraded multi-select popup
                 List<InventoryItem> selectedUnits = ShowMultiUnitSelectionPopup(specificUnits, baseItemName, requestedQty);
 
                 if (selectedUnits != null && selectedUnits.Count == requestedQty)
                 {
                     string safeGrade = cmbGradeLevel.Text.Replace(" ", "");
 
-                    // CREATE A SEPARATE RECORD FOR EACH PHYSICAL UNIT
                     foreach (var unit in selectedUnits)
                     {
                         var record = new BorrowRecord
                         {
                             BorrowerId = studentId,
                             ItemName = unit.Name,
-                            Quantity = 1, // ALWAYS 1 per record, because we are strictly tracking physical items
+                            Quantity = 1, 
                             Purpose = txtSubject.Text,
                             GradeLevel = Enum.Parse<GradeLevel>(safeGrade),
                             Status = BorrowStatus.Active,
@@ -300,18 +298,13 @@ namespace Ventrix.App
 
                     txtSubject.Clear();
                     await LoadEquipmentListAsync();
-                    await ValidateUserRoleAndLimits(); // Update limits instantly after borrowing
-                }
-                if (userAccount == null)
-                {
-                    MessageBox.Show("Student ID not found. Please register first.", "Not Registered", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    await ValidateUserRoleAndLimits(); 
                 }
             }
             catch (Exception ex)
             {
-                ErrorLogger.Log(ex, "BorrowerPortal - Login Failed");
-                MessageBox.Show("Login error: The database could not be reached.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorLogger.Log(ex, "BorrowerPortal - Borrowing Failed");
+                MessageBox.Show("Borrowing error: The database could not be reached or an unexpected error occurred.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally { SetLoadingState(false); }
         }
@@ -445,7 +438,6 @@ namespace Ventrix.App
             return hashIndex > 0 ? name.Substring(0, hashIndex).Trim() : name.Trim();
         }
 
-        // Programmatic popup prevents needing to create a new Designer file!
         private List<InventoryItem> ShowMultiUnitSelectionPopup(List<InventoryItem> units, string baseName, int requiredQuantity)
         {
             var selectedUnits = new List<InventoryItem>();
@@ -461,7 +453,6 @@ namespace Ventrix.App
 
                 Label lbl = new Label { Text = $"Please check exactly {requiredQuantity} unit(s) to borrow:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
 
-                // Upgraded to a CheckedListBox so they can check multiple boxes!
                 CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 320, Height = 110, Font = new Font("Segoe UI", 10) };
                 foreach (var unit in units)
                 {
@@ -470,14 +461,12 @@ namespace Ventrix.App
 
                 Button btnOk = new Button { Text = "Confirm", Location = new Point(130, 165), Width = 100, Height = 35, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
                 btnOk.Click += (s, e) => {
-                    // Strict check: They MUST select the exact quantity they asked for
                     if (clb.CheckedItems.Count != requiredQuantity)
                     {
                         MessageBox.Show($"You requested {requiredQuantity} item(s). Please check exactly {requiredQuantity} box(es).", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
-                    // Add all checked items to our List
                     foreach (UnitComboItem item in clb.CheckedItems) selectedUnits.Add(item.Unit);
                     popup.DialogResult = DialogResult.OK;
                 };
@@ -488,7 +477,6 @@ namespace Ventrix.App
                 popup.ShowDialog(this);
             }
 
-            // Returns the LIST of items back to the Borrow logic
             return selectedUnits;
         }
 
@@ -507,10 +495,10 @@ namespace Ventrix.App
             this.Hide();
         }
 
-        private void SetupFocusHighlighting() { /* Existing logic untouched */ }
-        private void TxtPassword_IconRightClick(object sender, EventArgs e) { /* Existing logic untouched */ }
-        private void txtPassword_MouseMove(object sender, MouseEventArgs e) { /* Existing logic untouched */ }
-        private void CmbGradeLevel_SelectedIndexChanged(object sender, EventArgs e) { /* Existing logic untouched */ }
+        private void SetupFocusHighlighting() {  }
+        private void TxtPassword_IconRightClick(object sender, EventArgs e) {  }
+        private void txtPassword_MouseMove(object sender, MouseEventArgs e) { }
+        private void CmbGradeLevel_SelectedIndexChanged(object sender, EventArgs e) {  }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -525,7 +513,6 @@ namespace Ventrix.App
         }
         #endregion
 
-        // Helper classes for clean ComboBox data binding
         private class RecordComboItem
         {
             public string Text { get; set; }

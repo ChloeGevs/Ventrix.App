@@ -56,9 +56,7 @@ namespace Ventrix.Application.Services
                 record.Status = BorrowStatus.Returned;
 
                 // 3. Find the physical unit and make it Available again
-                // We find it by matching the exact unique name (e.g., "Laptop #3")
-                var item = await _context.InventoryItems
-                    .FirstOrDefaultAsync(i => i.Name == record.ItemName);
+                var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
 
                 if (item != null)
                 {
@@ -75,20 +73,15 @@ namespace Ventrix.Application.Services
 
         public async Task ClearAllActivityAsync()
         {
-            // Deletes all history records from the database
-            var allRecords = await _context.BorrowRecords.ToListAsync();
-            _context.BorrowRecords.RemoveRange(allRecords);
-
-            // Failsafe: Reset any items that were stuck as "Borrowed" back to "Available"
-            var borrowedItems = await _context.InventoryItems
-                .Where(i => i.Status == ItemStatus.Borrowed)
+            var visibleRecords = await _context.BorrowRecords
+                .Where(b => b.IsHiddenFromDashboard == false)
                 .ToListAsync();
 
-            foreach (var item in borrowedItems)
+            foreach (var record in visibleRecords)
             {
-                item.Status = ItemStatus.Available;
-            }
+                record.IsHiddenFromDashboard = true;
 
+            }
             await _context.SaveChangesAsync();
         }
     }

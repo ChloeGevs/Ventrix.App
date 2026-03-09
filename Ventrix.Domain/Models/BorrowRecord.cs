@@ -30,5 +30,7 @@ namespace Ventrix.Domain.Models
         public DateTime BorrowDate { get; set; } = DateTime.Now;
         public DateTime? ReturnDate { get; set; }
         public BorrowStatus Status { get; set; } = BorrowStatus.Active;
+
+        public bool IsHiddenFromDashboard { get; set; } = false;
     }
 }

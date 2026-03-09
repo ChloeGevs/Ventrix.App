@@ -12,22 +12,39 @@
 
         private void InitializeComponent()
         {
-            this.pnlAlert = new System.Windows.Forms.Panel();
-            this.lblAlertMsg = new System.Windows.Forms.Label();
-            this.SuspendLayout();
+            pnlAlert = new System.Windows.Forms.Panel();
+            lblAlertMsg = new System.Windows.Forms.Label();
+            pnlAlert.SuspendLayout();
+            SuspendLayout();
 
-            this.pnlAlert.BackColor = System.Drawing.Color.White;
-            this.pnlAlert.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlAlert.Cursor = System.Windows.Forms.Cursors.Hand;
+            // 
+            // pnlAlert
+            // 
+            pnlAlert.BackColor = System.Drawing.Color.White;
+            pnlAlert.Cursor = System.Windows.Forms.Cursors.Hand;
+            pnlAlert.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlAlert.Controls.Add(lblAlertMsg); // Placed label inside the panel for better rendering
 
-            this.lblAlertMsg.Font = new System.Drawing.Font("Segoe UI", 12, System.Drawing.FontStyle.Bold);
-            this.lblAlertMsg.Location = new System.Drawing.Point(10, 15);
-            this.lblAlertMsg.AutoSize = true;
+            // 
+            // lblAlertMsg
+            // 
+            lblAlertMsg.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            lblAlertMsg.Location = new System.Drawing.Point(10, 15);
 
-            this.Controls.Add(this.lblAlertMsg);
-            this.Controls.Add(this.pnlAlert);
-            this.Size = new System.Drawing.Size(400, 60);
-            this.ResumeLayout(false);
+            // --- LAYOUT FIXES FOR RESPONSIVENESS ---
+            lblAlertMsg.AutoSize = false;
+            lblAlertMsg.Size = new System.Drawing.Size(380, 30);
+            lblAlertMsg.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right; // Make it stretch with the tile
+            lblAlertMsg.AutoEllipsis = true;
+
+            // 
+            // AlertTile
+            // 
+            Controls.Add(pnlAlert);
+            Size = new System.Drawing.Size(400, 60);
+
+            pnlAlert.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         private System.Windows.Forms.Panel pnlAlert;

@@ -48,6 +48,7 @@
             // 
             // lblMessage
             // 
+            lblMessage.BackColor = Color.White;
             lblMessage.AutoSize = true;
             lblMessage.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             lblMessage.Location = new Point(22, 18);
@@ -57,6 +58,7 @@
             // 
             // lblTimestamp
             // 
+            lblTimestamp.BackColor = Color.White;
             lblTimestamp.AutoSize = true;
             lblTimestamp.Font = new Font("Segoe UI", 8.5F);
             lblTimestamp.ForeColor = Color.DarkGray;

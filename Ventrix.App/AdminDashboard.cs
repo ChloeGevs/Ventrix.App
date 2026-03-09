@@ -176,6 +176,29 @@ namespace Ventrix.App
         {
             FormClosed += (s, e) => { if (!isSigningOut) System.Windows.Forms.Application.Exit(); };
 
+            if (flowRecentActivity != null)
+            {
+                // Dynamically resize cards whenever the dashboard size changes
+                flowRecentActivity.Resize += (s, e) => {
+                    flowRecentActivity.SuspendLayout();
+
+                    // Calculate the safe width minus paddings and scrollbar offsets
+                    int targetWidth = flowRecentActivity.ClientSize.Width - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+
+                    if (targetWidth > 0)
+                    {
+                        foreach (Control ctrl in flowRecentActivity.Controls)
+                        {
+                            if (ctrl is Ventrix.App.Controls.ActivityCard || ctrl is Ventrix.App.Controls.AlertTile)
+                            {
+                                ctrl.Width = targetWidth;
+                            }
+                        }
+                    }
+                    flowRecentActivity.ResumeLayout(true);
+                };
+            }
+
             var controlsToBuffer = new Control[] { pnlMainContent, pnlGridContainer, pnlHistory, pnlHomeSummary, flowRecentActivity, pnlSidebar, dgvInventory, dgvHistory };
             foreach (var ctrl in controlsToBuffer)
             {
@@ -699,10 +722,7 @@ namespace Ventrix.App
                 if (pnlHomeSummary != null) { pnlHomeSummary.Visible = true; pnlHomeSummary.BringToFront(); }
                 await LoadHomeContent();
 
-                // Dynamic Admin Greeting
-                var adminUser = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.Role == UserRole.Admin);
-                string adminName = adminUser != null ? adminUser.FirstName.ToUpper() : "ADMIN";
-                if (lblDashboardHeader != null) lblDashboardHeader.Text = $"{GetGreeting()}, {adminName}";
+                if (lblDashboardHeader != null) lblDashboardHeader.Text = $"{GetGreeting()}, ADMIN";
             }
             else if (viewName == "Inventory")
             {
@@ -849,7 +869,7 @@ namespace Ventrix.App
                 if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
             }
 
-            if (lblEmptyState != null) lblEmptyState.Visible = (dgvInventory.Rows.Count == 0);
+            ToggleNoResultsState(dgvInventory.Rows.Count == 0);
         }
 
         private string GetBaseItemName(string name)
@@ -873,7 +893,9 @@ namespace Ventrix.App
 
             flowRecentActivity?.Controls.Add(new Label { Text = "RECENT ACTIVITY LOG", Font = new DrawFont("Segoe UI", 12, FontStyle.Bold), AutoSize = true });
 
-            var rawLogs = await _borrowService.GetAllBorrowRecordsAsync();
+            var rawLogs = (await _borrowService.GetAllBorrowRecordsAsync())
+                  .Where(b => b.IsHiddenFromDashboard == false)
+                  .ToList();
 
             // THE MAGIC: Group records by User, Action (Borrow/Return), and the exact Minute they did it
             var groupedLogs = rawLogs
@@ -916,6 +938,11 @@ namespace Ventrix.App
         private void AddDashboardAlert(string message, DrawColor color)
         {
             var alert = new AlertTile(message, color);
+
+            // Dynamically calculate the safe width to prevent being cut off
+            int safeWidth = flowRecentActivity.ClientSize.Width > 0 ? flowRecentActivity.ClientSize.Width : flowRecentActivity.Width;
+            alert.Width = safeWidth - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+
             alert.AlertClicked += async (s, e) => {
                 if (message.Contains("REPAIR"))
                 {
@@ -932,7 +959,16 @@ namespace Ventrix.App
             flowRecentActivity?.Controls.Add(alert);
         }
 
-        private void AddActivityCard(string message, DateTime time, DrawColor statusColor) { var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor); card.Width = flowRecentActivity.Width - 30; flowRecentActivity?.Controls.Add(card); }
+        private void AddActivityCard(string message, DateTime time, DrawColor statusColor)
+        {
+            var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor);
+
+            // Dynamically calculate the safe width to prevent being cut off
+            int safeWidth = flowRecentActivity.ClientSize.Width > 0 ? flowRecentActivity.ClientSize.Width : flowRecentActivity.Width;
+            card.Width = safeWidth - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+
+            flowRecentActivity?.Controls.Add(card);
+        }
 
         private async Task<IEnumerable<BorrowRecord>> GetFilteredHistoryQuery()
         {
@@ -1021,6 +1057,8 @@ namespace Ventrix.App
             }
 
             if (lblPageInfo != null) lblPageInfo.Text = $"Page {historyCurrentPage} of {historyTotalPages} ({totalRecords} total items)";
+
+            ToggleNoResultsState(dgvHistory.Rows.Count == 0);
 
             dgvHistory.ResumeLayout();
         }
@@ -1538,6 +1576,19 @@ namespace Ventrix.App
                     else if (value == nameof(BorrowStatus.Active)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
                 }
                 if (colName == "RDate" && value == "---") e.CellStyle.ForeColor = DrawColor.LightGray;
+            }
+        }
+
+        private void ToggleNoResultsState(bool showNoResults)
+        {
+            if (pnlNoResults != null)
+            {
+                pnlNoResults.Visible = showNoResults;
+
+                if (showNoResults)
+                {
+                    pnlNoResults.BringToFront();
+                }
             }
         }
         #endregion
