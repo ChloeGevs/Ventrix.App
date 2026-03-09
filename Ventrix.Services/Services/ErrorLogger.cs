@@ -15,12 +15,11 @@ namespace Ventrix.Application.Services
                                     $"StackTrace: {ex.StackTrace}\n" +
                                     $"--------------------------------------------------\n";
 
-                // Appends the text to the file (creates the file if it doesn't exist)
                 File.AppendAllText(filePath, logMessage);
             }
             catch
             {
-                // We leave this empty. If the logger itself fails, we don't want it crashing the app!
+
             }
         }
     }

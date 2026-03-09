@@ -16,7 +16,6 @@ namespace Ventrix.App.Popups
         private readonly InventoryService _inventoryService;
         private readonly Func<Task> _onSaved;
 
-        // We declare a grid to visually hold the items
         private DataGridView dgvDamagedItems;
 
         public RepairDetailsPopup(List<InventoryItem> damagedItems, InventoryService inventoryService, Func<Task> onSaved)
@@ -28,19 +27,15 @@ namespace Ventrix.App.Popups
             InitializeComponent();
             this.Text = "Damaged Items Report";
 
-            // 1. Build the visual table
             SetupGrid();
-
-            // 2. Fill it with the damaged items
             LoadItems();
         }
 
         private void SetupGrid()
         {
-            // Programmatically creating the grid so it perfectly fits your white space
             dgvDamagedItems = new DataGridView
             {
-                Location = new Point(25, 120), // Positions it right below your "Items Requiring Attention" label
+                Location = new Point(25, 120), 
                 Size = new Size(this.Width - 50, this.Height - 220),
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
@@ -55,7 +50,6 @@ namespace Ventrix.App.Popups
                 GridColor = Color.FromArgb(230, 235, 240)
             };
 
-            // Styling to match your Ventrix theme
             dgvDamagedItems.ColumnHeadersHeight = 40;
             dgvDamagedItems.EnableHeadersVisualStyles = false;
             dgvDamagedItems.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(13, 71, 161);
@@ -69,14 +63,12 @@ namespace Ventrix.App.Popups
             dgvDamagedItems.Columns.Add("Name", "Item Name");
             dgvDamagedItems.Columns.Add("Category", "Category");
 
-            // --- THE UPGRADE: "Mark as Repaired" Context Menu ---
             ContextMenuStrip repairMenu = new ContextMenuStrip();
             var fixBtn = new ToolStripMenuItem("🔧 Mark Item as Repaired");
             fixBtn.Click += async (s, e) => await RepairSelectedItemAsync();
             repairMenu.Items.Add(fixBtn);
             dgvDamagedItems.ContextMenuStrip = repairMenu;
 
-            // Add the grid to your popup form
             this.Controls.Add(dgvDamagedItems);
             dgvDamagedItems.BringToFront();
         }
@@ -86,7 +78,6 @@ namespace Ventrix.App.Popups
             dgvDamagedItems.Rows.Clear();
             foreach (var item in _damagedItems)
             {
-                // This is the magic line that finally draws the data onto the screen!
                 dgvDamagedItems.Rows.Add(item.Id, item.Name, item.Category.ToString());
             }
         }
@@ -102,7 +93,6 @@ namespace Ventrix.App.Popups
                 {
                     try
                     {
-                        // Update the database
                         var itemToFix = await _inventoryService.GetItemByIdAsync(itemId);
                         if (itemToFix != null)
                         {
@@ -116,7 +106,6 @@ namespace Ventrix.App.Popups
                                 itemToFix.Condition
                             );
 
-                            // Remove it from our local list and redraw the grid
                             _damagedItems.RemoveAll(i => i.Id == itemId);
                             LoadItems();
 
@@ -131,7 +120,6 @@ namespace Ventrix.App.Popups
             }
         }
 
-        // We override OnFormClosing to ensure the Dashboard refreshes its numbers when this popup closes
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);

@@ -5,7 +5,6 @@ namespace Ventrix.App.Controls
 {
     public partial class MetricCard : UserControl
     {
-        // 1. Define the event so the Dashboard can "see" it
         public event EventHandler CardClicked;
 
         public MetricCard()

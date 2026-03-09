@@ -359,7 +359,7 @@ namespace Ventrix.App
             Name = "BorrowerPortal";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Ventrix | Borrower Portal";
-            mainTableLayout.ResumeLayout(false);    
+            mainTableLayout.ResumeLayout(false);
             pnlLoginCard.ResumeLayout(false);
             pnlLoginCard.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numQuantity).EndInit();

@@ -14,7 +14,6 @@ namespace Ventrix.App
         private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
 
-        // Store default border color for resets
         private readonly Color DefaultBorderColor = Color.FromArgb(213, 218, 223);
         private readonly Color ErrorBorderColor = Color.Red;
 
@@ -27,14 +26,12 @@ namespace Ventrix.App
             InitializeComponent();
             SetupEvents();
 
-            // Fade in effect
-            this.Opacity = 0;
-            this.Load += BorrowerRegistration_Load;
+            Opacity = 0;
+            Load += BorrowerRegistration_Load;
         }
 
         private async void BorrowerRegistration_Load(object sender, EventArgs e)
         {
-            // Subtle fade-in animation
             for (double i = 0; i <= 1; i += 0.1)
             {
                 this.Opacity = i;
@@ -46,26 +43,21 @@ namespace Ventrix.App
         {
             FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
 
-            // Button and Checkbox Actions
             btnRegister.Click += BtnRegister_Click;
             chkNoSuffix.CheckedChanged += ChkNoSuffix_CheckedChanged;
 
-            // Link Actions
             lblLoginLink.Click += LblLoginLink_Click;
             lblLoginLink.MouseEnter += (s, e) => lblLoginLink.Cursor = Cursors.Hand;
-
-            // Enter Key Support 
+ 
             KeyEventHandler enterKeyHandler = (s, e) => { if (e.KeyCode == Keys.Enter) btnRegister.PerformClick(); };
             txtFirstName.KeyDown += enterKeyHandler;
             txtLastName.KeyDown += enterKeyHandler;
             txtMiddleName.KeyDown += enterKeyHandler;
             txtSuffix.KeyDown += enterKeyHandler;
 
-            // Reset validation colors when typing
             txtFirstName.TextChanged += (s, e) => ResetValidation(txtFirstName);
             txtLastName.TextChanged += (s, e) => ResetValidation(txtLastName);
 
-            // Defaults
             cmbRole.SelectedIndex = 0;
             txtFirstName.Focus();
 
@@ -155,7 +147,7 @@ namespace Ventrix.App
             {
                 txtSuffix.Enabled = false;
                 txtSuffix.Clear();
-                txtSuffix.FillColor = Color.FromArgb(245, 245, 245); // Visual cue that it's disabled
+                txtSuffix.FillColor = Color.FromArgb(245, 245, 245); 
             }
             else
             {
@@ -172,7 +164,6 @@ namespace Ventrix.App
 
         private void NavigateToPortal()
         {
-            // Find the hidden portal
             var portal = System.Windows.Forms.Application.OpenForms.OfType<BorrowerPortal>().FirstOrDefault();
 
             if (portal != null)
@@ -187,11 +178,6 @@ namespace Ventrix.App
             }
 
             this.Hide();
-        }
-
-        private void lblHeader_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }

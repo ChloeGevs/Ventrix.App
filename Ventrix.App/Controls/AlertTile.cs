@@ -14,8 +14,13 @@ namespace Ventrix.App.Controls
             lblAlertMsg.Text = message;
             lblAlertMsg.ForeColor = alertColor;
 
-            // Attach clicks to the entire tile
-            this.Click += (s, e) => AlertClicked?.Invoke(this, e);
+            AutoSize = false;
+
+            Margin = new Padding(3);
+
+            MinimumSize = new Size(100, 60);
+
+            Click += (s, e) => AlertClicked?.Invoke(this, e);
             lblAlertMsg.Click += (s, e) => AlertClicked?.Invoke(this, e);
             pnlAlert.Click += (s, e) => AlertClicked?.Invoke(this, e);
         }

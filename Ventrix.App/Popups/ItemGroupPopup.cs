@@ -19,7 +19,7 @@ namespace Ventrix.App.Popups
         public ItemGroupPopup(InventoryService inventoryService, BorrowService borrowService, string itemName)
         {
             InitializeComponent();
-            ThemeManager.ApplyMaterialTheme(this); // Applies sleek colors
+            ThemeManager.ApplyMaterialTheme(this); 
 
             _inventoryService = inventoryService;
             _borrowService = borrowService;
@@ -27,26 +27,22 @@ namespace Ventrix.App.Popups
 
             this.Text = $"Manage Group: {itemName.ToUpper()}";
 
-            StyleGrid(); // Applies advanced styling to the datagrid
+            StyleGrid(); 
 
             gridItems.CellFormatting += GridItems_CellFormatting;
             gridItems.CellDoubleClick += GridItems_CellDoubleClick;
 
-            // --- NEW: ADD KEYBOARD SHORTCUTS TO GRID ---
             gridItems.KeyDown += GridItems_KeyDown;
         }
 
-        // --- NEW: GLOBAL POPUP SHORTCUTS ---
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            // Esc: Close the popup
             if (keyData == Keys.Escape)
             {
                 this.Close();
                 return true;
             }
 
-            // Ctrl + F: Focus on search box
             if (keyData == (Keys.Control | Keys.F))
             {
                 if (txtSearch != null)
@@ -60,7 +56,6 @@ namespace Ventrix.App.Popups
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // --- NEW: GRID SPECIFIC SHORTCUTS ---
         private void GridItems_KeyDown(object sender, KeyEventArgs e)
         {
             if (gridItems.SelectedRows.Count > 0)
@@ -94,7 +89,6 @@ namespace Ventrix.App.Popups
 
             gridItems.ThemeStyle.AlternatingRowsStyle.BackColor = Color.FromArgb(250, 252, 255);
 
-            // Cursor hover effect
             gridItems.CellMouseEnter += (s, e) => { if (e.RowIndex >= 0) gridItems.Cursor = Cursors.Hand; };
             gridItems.CellMouseLeave += (s, e) => { if (e.RowIndex >= 0) gridItems.Cursor = Cursors.Default; };
         }
@@ -134,7 +128,6 @@ namespace Ventrix.App.Popups
             int total = specificItems.Count;
             int available = specificItems.Count(x => x.Status == ItemStatus.Available);
 
-            // --- IMPROVED: Used the actual ItemStatus Enum instead of string "Lost" ---
             int damaged = specificItems.Count(x => x.Condition == Condition.Damaged || x.Status == ItemStatus.Lost);
 
             lblStats.Text = $"Total Units: {total}   |   Available: {available}   |   Needs Repair: {damaged}";

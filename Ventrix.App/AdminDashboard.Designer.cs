@@ -65,7 +65,6 @@ namespace Ventrix.App
             DataGridViewCellStyle dataGridViewCellStyle5 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle6 = new DataGridViewCellStyle();
             pnlHomeSummary = new Guna.UI2.WinForms.Guna2Panel();
-            lblUrgentHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             btnClearActivity = new Guna.UI2.WinForms.Guna2Button();
             flowRecentActivity = new FlowLayoutPanel();
             cardTotal = new Ventrix.App.Controls.MetricCard();
@@ -98,6 +97,9 @@ namespace Ventrix.App
             btnExportPDF = new Guna.UI2.WinForms.Guna2Button();
             pnlHistory = new Guna.UI2.WinForms.Guna2Panel();
             dgvHistory = new Guna.UI2.WinForms.Guna2DataGridView();
+            pnlNoResults = new Panel();
+            lblNoResultsSub = new Label();
+            lblNoResults = new Label();
             sidebarTimer = new System.Windows.Forms.Timer(components);
             searchTimer = new System.Windows.Forms.Timer(components);
             pnlHomeSummary.SuspendLayout();
@@ -109,13 +111,13 @@ namespace Ventrix.App
             ((System.ComponentModel.ISupportInitialize)dgvInventory).BeginInit();
             pnlHistory.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvHistory).BeginInit();
+            pnlNoResults.SuspendLayout();
             SuspendLayout();
             // 
             // pnlHomeSummary
             // 
             pnlHomeSummary.BackColor = Color.Transparent;
             pnlHomeSummary.BorderRadius = 15;
-            pnlHomeSummary.Controls.Add(lblUrgentHeader);
             pnlHomeSummary.Controls.Add(btnClearActivity);
             pnlHomeSummary.Controls.Add(flowRecentActivity);
             pnlHomeSummary.Controls.Add(cardTotal);
@@ -130,18 +132,6 @@ namespace Ventrix.App
             pnlHomeSummary.Size = new Size(240, 450);
             pnlHomeSummary.TabIndex = 4;
             pnlHomeSummary.Visible = false;
-            // 
-            // lblUrgentHeader
-            // 
-            lblUrgentHeader.BackColor = Color.Transparent;
-            lblUrgentHeader.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblUrgentHeader.IsContextMenuEnabled = false;
-            lblUrgentHeader.IsSelectionEnabled = false;
-            lblUrgentHeader.Location = new Point(15, 100);
-            lblUrgentHeader.Name = "lblUrgentHeader";
-            lblUrgentHeader.Size = new Size(220, 27);
-            lblUrgentHeader.TabIndex = 0;
-            lblUrgentHeader.Text = "URGENT SYSTEM ALERTS";
             // 
             // btnClearActivity
             // 
@@ -158,6 +148,7 @@ namespace Ventrix.App
             // flowRecentActivity
             // 
             flowRecentActivity.AutoScroll = true;
+            flowRecentActivity.BackColor = Color.White;
             flowRecentActivity.FlowDirection = FlowDirection.TopDown;
             flowRecentActivity.Location = new Point(0, 95);
             flowRecentActivity.Name = "flowRecentActivity";
@@ -482,6 +473,7 @@ namespace Ventrix.App
             pnlMainContent.Controls.Add(btnExportExcel);
             pnlMainContent.Controls.Add(btnExportPDF);
             pnlMainContent.Controls.Add(pnlHistory);
+            pnlMainContent.Controls.Add(pnlNoResults);
             pnlMainContent.CustomizableEdges = customizableEdges1;
             pnlMainContent.Dock = DockStyle.Fill;
             pnlMainContent.Location = new Point(3, 144);
@@ -667,6 +659,42 @@ namespace Ventrix.App
             dgvHistory.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvHistory.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
             // 
+            // pnlNoResults
+            // 
+            pnlNoResults.BackColor = Color.FromArgb(245, 245, 245);
+            pnlNoResults.Controls.Add(lblNoResultsSub);
+            pnlNoResults.Controls.Add(lblNoResults);
+            pnlNoResults.Dock = DockStyle.Fill;
+            pnlNoResults.Location = new Point(0, 0);
+            pnlNoResults.Name = "pnlNoResults";
+            pnlNoResults.Size = new Size(1274, 703);
+            pnlNoResults.TabIndex = 7;
+            pnlNoResults.Visible = false;
+            // 
+            // lblNoResultsSub
+            // 
+            lblNoResultsSub.Dock = DockStyle.Bottom;
+            lblNoResultsSub.Font = new Font("Segoe UI", 12F);
+            lblNoResultsSub.ForeColor = Color.DarkGray;
+            lblNoResultsSub.Location = new Point(0, 373);
+            lblNoResultsSub.Name = "lblNoResultsSub";
+            lblNoResultsSub.Size = new Size(1274, 330);
+            lblNoResultsSub.TabIndex = 1;
+            lblNoResultsSub.Text = "Try adjusting your search or filters.";
+            lblNoResultsSub.TextAlign = ContentAlignment.TopCenter;
+            // 
+            // lblNoResults
+            // 
+            lblNoResults.Dock = DockStyle.Fill;
+            lblNoResults.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            lblNoResults.ForeColor = Color.Gray;
+            lblNoResults.Location = new Point(0, 0);
+            lblNoResults.Name = "lblNoResults";
+            lblNoResults.Size = new Size(1274, 703);
+            lblNoResults.TabIndex = 0;
+            lblNoResults.Text = "🔍 No Results Found";
+            lblNoResults.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // AdminDashboard
             // 
             ClientSize = new Size(1280, 850);
@@ -676,7 +704,6 @@ namespace Ventrix.App
             Name = "AdminDashboard";
             StartPosition = FormStartPosition.CenterScreen;
             pnlHomeSummary.ResumeLayout(false);
-            pnlHomeSummary.PerformLayout();
             pnlSidebar.ResumeLayout(false);
             pnlSidebar.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picUser).EndInit();
@@ -687,6 +714,7 @@ namespace Ventrix.App
             ((System.ComponentModel.ISupportInitialize)dgvInventory).EndInit();
             pnlHistory.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvHistory).EndInit();
+            pnlNoResults.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -701,7 +729,7 @@ namespace Ventrix.App
 
         private Guna.UI2.WinForms.Guna2ImageButton btnHamburger;
         private Guna.UI2.WinForms.Guna2CirclePictureBox picUser;
-        private Guna.UI2.WinForms.Guna2HtmlLabel lblOwnerRole, lblUrgentHeader;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblOwnerRole;
         private Guna.UI2.WinForms.Guna2ComboBox cmbAccountActions;
         private System.Windows.Forms.FlowLayoutPanel flowRecentActivity;
 
@@ -715,5 +743,9 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2Button btnExportExcel;
         private Guna.UI2.WinForms.Guna2Button btnExportPDF;
         private System.Windows.Forms.Timer sidebarTimer;
+
+        private System.Windows.Forms.Panel pnlNoResults;
+        private System.Windows.Forms.Label lblNoResults;
+        private System.Windows.Forms.Label lblNoResultsSub;
     }
 }

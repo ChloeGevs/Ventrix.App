@@ -16,7 +16,6 @@ using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using Ventrix.Domain.Enums;
 
-// Explicitly define Drawing elements to avoid iTextSharp conflicts
 using DrawColor = System.Drawing.Color;
 using DrawPoint = System.Drawing.Point;
 using DrawSize = System.Drawing.Size;
@@ -83,8 +82,52 @@ namespace Ventrix.App
         }
 
         #region KEYBOARD SHORTCUTS
+        private Control GetFocusedControl()
+        {
+            Control focused = this.ActiveControl;
+            
+            while (focused is ContainerControl container)
+            {
+                focused = container.ActiveControl;
+            }
+            return focused;
+        }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (keyData == Keys.Tab || keyData == (Keys.Shift | Keys.Tab))
+            {
+                var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
+
+                Control focusedCtrl = GetFocusedControl();
+
+                int currentIndex = Array.IndexOf(navBtns, focusedCtrl);
+
+                if (currentIndex != -1)
+                {
+                    int nextIndex;
+                    if (keyData == Keys.Tab)
+                    {
+                        nextIndex = (currentIndex + 1) % navBtns.Length;
+                    }
+                    else
+                    {
+                        nextIndex = (currentIndex - 1 + navBtns.Length) % navBtns.Length;
+                    }
+
+                    var nextBtn = navBtns[nextIndex];
+                    nextBtn.Focus();
+
+                    if (nextBtn == btnHome) _ = SwitchView("Home");
+                    else if (nextBtn == btnHistoryNav) _ = SwitchView("History");
+                    else if (nextBtn == btnNavAllItems) _ = SwitchView("Inventory", "All");
+                    else if (nextBtn == btnNavAvailable) _ = SwitchView("Inventory", "Available");
+                    else if (nextBtn == btnNavBorrowed) _ = SwitchView("Inventory", "Borrowed");
+                    else if (nextBtn == btnNavBorrowers) _ = SwitchView("Inventory", "Borrowers");
+
+                    return true; 
+                }
+            }
+
             if (keyData == (Keys.Control | Keys.F))
             {
                 if (txtSearch != null && txtSearch.Visible)
@@ -100,13 +143,7 @@ namespace Ventrix.App
                 if (txtSearch != null && txtSearch.Focused)
                 {
                     _ = LoadFromDatabase("All");
-                    dgvInventory?.Focus();
-                    return true;
-                }
-
-                if (dgvInventory != null && dgvInventory.Focused && dgvInventory.SelectedRows.Count > 0)
-                {
-                    _ = OpenItemGroupDetails();
+                    if (dgvInventory != null) dgvInventory.Focus();
                     return true;
                 }
             }
@@ -116,7 +153,7 @@ namespace Ventrix.App
                 if (txtSearch != null && txtSearch.Focused)
                 {
                     txtSearch.Clear();
-                    dgvInventory?.Focus();
+                    if (dgvInventory != null) dgvInventory.Focus();
                     return true;
                 }
             }
@@ -128,6 +165,27 @@ namespace Ventrix.App
         private void ConfigureRuntimeUI()
         {
             FormClosed += (s, e) => { if (!isSigningOut) System.Windows.Forms.Application.Exit(); };
+
+            if (flowRecentActivity != null)
+            {
+                flowRecentActivity.Resize += (s, e) => {
+                    flowRecentActivity.SuspendLayout();
+
+                    int targetWidth = flowRecentActivity.ClientSize.Width - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+
+                    if (targetWidth > 0)
+                    {
+                        foreach (Control ctrl in flowRecentActivity.Controls)
+                        {
+                            if (ctrl is Ventrix.App.Controls.ActivityCard || ctrl is Ventrix.App.Controls.AlertTile)
+                            {
+                                ctrl.Width = targetWidth;
+                            }
+                        }
+                    }
+                    flowRecentActivity.ResumeLayout(true);
+                };
+            }
 
             var controlsToBuffer = new Control[] { pnlMainContent, pnlGridContainer, pnlHistory, pnlHomeSummary, flowRecentActivity, pnlSidebar, dgvInventory, dgvHistory };
             foreach (var ctrl in controlsToBuffer)
@@ -142,11 +200,11 @@ namespace Ventrix.App
 
             if (btnExportExcel != null) btnExportExcel.Click += async (s, e) => {
                 if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToExcelAsync();
-                else ExportToExcel(); // Keeps your existing Inventory export intact
+                else ExportToExcel(); 
             };
             if (btnExportPDF != null) btnExportPDF.Click += async (s, e) => {
                 if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToPDFAsync();
-                else ExportToPDF(); // Uses the old method for Inventory
+                else ExportToPDF(); 
             };
 
             if (btnHome != null) btnHome.Click += async (s, e) => await SwitchView("Home");
@@ -157,9 +215,18 @@ namespace Ventrix.App
             if (btnNavBorrowed != null) btnNavBorrowed.Click += async (s, e) => await SwitchView("Inventory", "Borrowed");
             if (btnNavBorrowers != null) btnNavBorrowers.Click += async (s, e) => await SwitchView("Inventory", "Borrowers");
 
+            var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
+            foreach (var btn in navBtns)
+            {
+                if (btn != null)
+                {
+                    btn.GotFocus += (s, e) => btn.FillColor = DrawColor.FromArgb(40, 255, 255, 255);
+                    btn.LostFocus += (s, e) => btn.FillColor = DrawColor.Transparent;
+                }
+            }
+
             if (btnClearActivity != null) btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
             if (cmbAccountActions != null) cmbAccountActions.SelectedIndexChanged += CmbAccountActions_SelectedIndexChanged;
-            if (lblUrgentHeader != null) lblUrgentHeader.Click += async (s, e) => await LblUrgentHeader_Click(s, e);
 
             if (cardTotal != null) cardTotal.CardClicked += async (s, e) => await SwitchView("Inventory", "All");
             if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
@@ -175,7 +242,14 @@ namespace Ventrix.App
             if (sidebarTimer != null && btnHamburger != null)
             {
                 sidebarTimer.Interval = 10;
-                btnHamburger.Click += (s, e) => sidebarTimer.Start();
+                btnHamburger.Click += (s, e) => {
+
+                    if (isSidebarExpanded)
+                    {
+                        UpdateSidebarInternalUI(false);
+                    }
+                    sidebarTimer.Start();
+                };
                 sidebarTimer.Tick += SidebarTimer_Tick;
             }
 
@@ -205,21 +279,20 @@ namespace Ventrix.App
             {
                 dgvHistory.CellFormatting += DgvHistory_CellFormatting;
 
-                // NEW: Handle clicking the headers for Ascending/Descending sorts
                 dgvHistory.ColumnHeaderMouseClick += async (s, e) => {
                     string clickedCol = dgvHistory.Columns[e.ColumnIndex].Name;
 
                     if (historySortColumn == clickedCol)
                     {
-                        historySortDescending = !historySortDescending; // Flip direction if clicking same column
+                        historySortDescending = !historySortDescending; 
                     }
                     else
                     {
                         historySortColumn = clickedCol;
-                        historySortDescending = false; // Default to A-Z when picking a new column
+                        historySortDescending = false; 
                     }
 
-                    historyCurrentPage = 1; // Always reset to page 1 when sorting changes
+                    historyCurrentPage = 1; 
                     await LoadHistoryData();
                 };
             }
@@ -234,7 +307,7 @@ namespace Ventrix.App
                         string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
                         await _userService.AddStrikeAsync(userId);
                         ToastNotification.Show(this, "Strike added to student account.", ToastType.Warning);
-                        await LoadFromDatabase("Borrowers"); // Refresh the grid instantly
+                        await LoadFromDatabase("Borrowers"); 
                     }
                 };
 
@@ -245,12 +318,12 @@ namespace Ventrix.App
                         string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
                         await _userService.ClearStrikesAsync(userId);
                         ToastNotification.Show(this, "Student account strikes have been cleared.", ToastType.Success);
-                        await LoadFromDatabase("Borrowers"); // Refresh the grid instantly
+                        await LoadFromDatabase("Borrowers"); 
                     }
                 };
 
                 strikeMenu.Items.Add(addStrikeBtn);
-                strikeMenu.Items.Add(new ToolStripSeparator()); // Adds a nice dividing line
+                strikeMenu.Items.Add(new ToolStripSeparator());
                 strikeMenu.Items.Add(clearStrikeBtn);
 
                 dgvInventory.ContextMenuStrip = strikeMenu;
@@ -287,8 +360,25 @@ namespace Ventrix.App
             pnlSidebar.BringToFront();
             pnlMainContent.BringToFront();
 
-            if (txtSearch != null) txtSearch.Location = new DrawPoint(pnlTopBar.Width - txtSearch.Width - 30, 20);
-            if (badgeHealth != null && txtSearch != null) badgeHealth.Location = new DrawPoint(txtSearch.Left - badgeHealth.Width - 20, 26);
+            if (btnHamburger != null)
+            {
+                btnHamburger.Location = new DrawPoint(25, (pnlTopBar.Height - btnHamburger.Height) / 2);
+            }
+
+            if (lblDashboardHeader != null && btnHamburger != null)
+            {
+                lblDashboardHeader.Location = new DrawPoint(btnHamburger.Right + 20, (pnlTopBar.Height - lblDashboardHeader.Height) / 2);
+
+            }
+            if (txtSearch != null)
+            {
+                txtSearch.Location = new DrawPoint(pnlTopBar.Width - txtSearch.Width - 30, (pnlTopBar.Height - txtSearch.Height) / 2);
+            }
+
+            if (badgeHealth != null && txtSearch != null)
+            {
+                badgeHealth.Location = new DrawPoint(txtSearch.Left - badgeHealth.Width - 20, (pnlTopBar.Height - badgeHealth.Height) / 2);
+            }
 
             int margin = 30;
             DrawRect safeArea = new DrawRect(margin, margin, pnlMainContent.Width - (margin * 2), pnlMainContent.Height - (margin * 2));
@@ -301,18 +391,27 @@ namespace Ventrix.App
             if (pnlGridContainer != null && pnlGridContainer.Visible) ArrangeInventoryView();
             if (pnlHistory != null && pnlHistory.Visible) ArrangeHistoryView();
 
-            UpdateSidebarInternalUI();
+            UpdateSidebarInternalUI(isSidebarExpanded);
         }
 
         private void ArrangeHomeView()
         {
             if (pnlHomeSummary == null) return;
 
-            if (lblUrgentHeader != null) { lblUrgentHeader.Parent = pnlHomeSummary; lblUrgentHeader.Location = new DrawPoint(25, 25); }
-            if (btnClearActivity != null) { btnClearActivity.Parent = pnlHomeSummary; btnClearActivity.Location = new DrawPoint(pnlHomeSummary.Width - btnClearActivity.Width - 25, 20); }
-
-            int cardY = 80;
             int spacing = 20;
+            int topMargin = 20;
+
+            if (btnClearActivity != null)
+            {
+                btnClearActivity.Parent = pnlHomeSummary;
+
+                btnClearActivity.Anchor = AnchorStyles.None;
+                btnClearActivity.Location = new DrawPoint(pnlHomeSummary.Width - btnClearActivity.Width - spacing, topMargin);
+                btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnClearActivity.BringToFront();
+            }
+
+            int cardY = 70;
             int cardWidth = (pnlHomeSummary.Width - (spacing * 5)) / 4;
 
             if (cardTotal != null) { cardTotal.Parent = pnlHomeSummary; cardTotal.SetBounds(spacing, cardY, cardWidth, 110); }
@@ -323,8 +422,15 @@ namespace Ventrix.App
             if (flowRecentActivity != null)
             {
                 flowRecentActivity.Parent = pnlHomeSummary;
-                flowRecentActivity.Location = new DrawPoint(20, cardTotal.Bottom + 30);
-                flowRecentActivity.Size = new DrawSize(pnlHomeSummary.Width - 40, pnlHomeSummary.Height - flowRecentActivity.Top - 20);
+
+                int activityY = cardTotal.Bottom + 30; 
+
+                flowRecentActivity.Anchor = AnchorStyles.None;
+                flowRecentActivity.Location = new DrawPoint(spacing, activityY);
+                flowRecentActivity.Size = new DrawSize(pnlHomeSummary.Width - (spacing * 2), pnlHomeSummary.Height - activityY - spacing);
+
+                flowRecentActivity.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+                flowRecentActivity.BringToFront();
             }
         }
 
@@ -335,20 +441,60 @@ namespace Ventrix.App
             int topRowY = 20;
             int margin = 25;
 
-            // Re-parent Export Buttons to Inventory Container
-            if (btnExportExcel != null) { btnExportExcel.Parent = pnlGridContainer; btnExportExcel.Location = new DrawPoint(margin, topRowY); btnExportExcel.BringToFront(); }
-            if (btnExportPDF != null) { btnExportPDF.Parent = pnlGridContainer; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY); btnExportPDF.BringToFront(); }
+            if (btnExportExcel != null)
+            {
+                btnExportExcel.Parent = pnlGridContainer;
+                btnExportExcel.Anchor = AnchorStyles.None; 
+                btnExportExcel.Location = new DrawPoint(margin, topRowY);
+                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left; 
+                btnExportExcel.BringToFront();
+            }
+            if (btnExportPDF != null)
+            {
+                btnExportPDF.Parent = pnlGridContainer;
+                btnExportPDF.Anchor = AnchorStyles.None;
+                btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY);
+                btnExportPDF.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnExportPDF.BringToFront();
+            }
 
-            if (btnCreate != null) { btnCreate.Parent = pnlGridContainer; btnCreate.Location = new DrawPoint(pnlGridContainer.Width - btnCreate.Width - margin, topRowY); btnCreate.BringToFront(); }
-            if (btnEdit != null) { btnEdit.Parent = pnlGridContainer; btnEdit.Location = new DrawPoint(btnCreate.Left - btnEdit.Width - 15, topRowY); btnEdit.BringToFront(); }
-            if (btnDelete != null) { btnDelete.Parent = pnlGridContainer; btnDelete.Location = new DrawPoint(btnEdit.Left - btnDelete.Width - 15, topRowY); btnDelete.BringToFront(); }
+            if (btnDelete != null)
+            {
+                btnDelete.Parent = pnlGridContainer;
+                btnDelete.Anchor = AnchorStyles.None;
+               
+                btnDelete.Location = new DrawPoint(pnlGridContainer.Width - btnDelete.Width - margin, topRowY);
+                btnDelete.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnDelete.BringToFront();
+            }
+            if (btnEdit != null)
+            {
+                btnEdit.Parent = pnlGridContainer;
+                btnEdit.Anchor = AnchorStyles.None;
+                
+                btnEdit.Location = new DrawPoint(btnDelete.Left - btnEdit.Width - 15, topRowY);
+                btnEdit.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnEdit.BringToFront();
+            }
+            if (btnCreate != null)
+            {
+                btnCreate.Parent = pnlGridContainer;
+                btnCreate.Anchor = AnchorStyles.None;
+                
+                btnCreate.Location = new DrawPoint(btnEdit.Left - btnCreate.Width - 15, topRowY);
+                btnCreate.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnCreate.BringToFront();
+            }
 
             if (dgvInventory != null)
             {
                 int gridY = topRowY + 50;
                 dgvInventory.Parent = pnlGridContainer;
+
+                dgvInventory.Anchor = AnchorStyles.None;
                 dgvInventory.Location = new DrawPoint(margin, gridY);
                 dgvInventory.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), pnlGridContainer.Height - gridY - margin);
+
                 dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 dgvInventory.BringToFront();
             }
@@ -359,71 +505,107 @@ namespace Ventrix.App
             if (pnlHistory == null) return;
 
             int topRowY = 20;
+            int margin = 25;
 
-            if (btnExportExcel != null) { btnExportExcel.Parent = pnlHistory; btnExportExcel.Location = new DrawPoint(25, topRowY); btnExportExcel.BringToFront(); }
-            if (btnExportPDF != null) { btnExportPDF.Parent = pnlHistory; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY); btnExportPDF.BringToFront(); }
-
-            // Layout Date Filters
-            if (dtpStartDate != null)
+            if (btnExportExcel != null)
             {
-                dtpStartDate.Parent = pnlHistory; dtpStartDate.Location = new DrawPoint(btnExportPDF.Right + 40, topRowY + 5); dtpStartDate.BringToFront();
-                Label lblTo = new Label { Text = "-", Parent = pnlHistory, Location = new DrawPoint(dtpStartDate.Right + 5, topRowY + 7), AutoSize = true };
-                dtpEndDate.Parent = pnlHistory; dtpEndDate.Location = new DrawPoint(lblTo.Right + 5, topRowY + 5); dtpEndDate.BringToFront();
-                btnApplyFilters.Parent = pnlHistory; btnApplyFilters.Location = new DrawPoint(dtpEndDate.Right + 10, topRowY + 4); btnApplyFilters.BringToFront();
+                btnExportExcel.Parent = pnlHistory;
+                btnExportExcel.Anchor = AnchorStyles.None;
+                btnExportExcel.Location = new DrawPoint(margin, topRowY);
+                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left; 
+                btnExportExcel.BringToFront();
+            }
+            if (btnExportPDF != null)
+            {
+                btnExportPDF.Parent = pnlHistory;
+                btnExportPDF.Anchor = AnchorStyles.None;
+                btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY);
+                btnExportPDF.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnExportPDF.BringToFront();
             }
 
             if (dgvHistory != null)
             {
-                int gridY = 75;
+                int gridY = topRowY + 50;
                 dgvHistory.Parent = pnlHistory;
-                dgvHistory.Location = new DrawPoint(25, gridY);
-                // Leave 60px of space at the bottom for pagination buttons
-                dgvHistory.Size = new DrawSize(pnlHistory.Width - 50, pnlHistory.Height - gridY - 60);
-                dgvHistory.BringToFront();
 
-                // Layout Pagination Controls
-                if (btnPrevPage != null)
-                {
-                    btnPrevPage.Parent = pnlHistory; btnPrevPage.Location = new DrawPoint(pnlHistory.Width / 2 - 150, dgvHistory.Bottom + 15); btnPrevPage.BringToFront();
-                    lblPageInfo.Parent = pnlHistory; lblPageInfo.Location = new DrawPoint(btnPrevPage.Right + 20, dgvHistory.Bottom + 20); lblPageInfo.BringToFront();
-                    btnNextPage.Parent = pnlHistory; btnNextPage.Location = new DrawPoint(lblPageInfo.Right + 20, dgvHistory.Bottom + 15); btnNextPage.BringToFront();
-                }
+                dgvHistory.Anchor = AnchorStyles.None;
+                dgvHistory.Location = new DrawPoint(margin, gridY);
+                dgvHistory.Size = new DrawSize(pnlHistory.Width - (margin * 2), pnlHistory.Height - gridY - margin);
+
+                dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+                dgvHistory.BringToFront();
             }
         }
 
-        private void UpdateSidebarInternalUI()
+        private void UpdateSidebarInternalUI(bool showDetails)
         {
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
             string[] navTexts = { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "BORROWERS" };
+
+            if (picUser != null) picUser.SetBounds((showDetails) ? 15 : 12, 25, (showDetails) ? 45 : 40, (showDetails) ? 45 : 40);
+            if (lblOwnerRole != null) lblOwnerRole.Visible = showDetails;
+            if (cmbAccountActions != null) cmbAccountActions.Visible = showDetails;
+
+            int startY = 130;
+            int endY = pnlSidebar.Height - 30;
+            int availableHeight = endY - startY;
+
+            int buttonHeight = 45;
+            int totalButtonHeight = navBtns.Length * buttonHeight;
+
+            int remainingSpace = availableHeight - totalButtonHeight;
+            int gap = remainingSpace / (navBtns.Length - 1);
+
+            if (gap < 5) gap = 5;
+            if (gap > 35) gap = 35;
+
+            int currentY = startY;
 
             for (int i = 0; i < navBtns.Length; i++)
             {
                 if (navBtns[i] != null)
                 {
                     navBtns[i].Width = pnlSidebar.Width - 20;
-                    navBtns[i].Text = isSidebarExpanded ? "   " + navTexts[i] : "";
+                    navBtns[i].Location = new DrawPoint(10, currentY);
+
+                    currentY += buttonHeight + gap;
+
+                    navBtns[i].ImageAlign = HorizontalAlignment.Left;
+
+                    if (showDetails)
+                    {
+                        navBtns[i].Text = "   " + navTexts[i];
+                    }
+                    else
+                    {
+                        navBtns[i].Text = "";
+                    }
                 }
             }
-            if (picUser != null) picUser.SetBounds((pnlSidebar.Width > 150) ? 15 : 12, 25, (pnlSidebar.Width > 150) ? 45 : 40, (pnlSidebar.Width > 150) ? 45 : 40);
-            if (lblOwnerRole != null) lblOwnerRole.Visible = isSidebarExpanded;
-            if (cmbAccountActions != null) cmbAccountActions.Visible = isSidebarExpanded;
         }
 
         private void SidebarTimer_Tick(object sender, EventArgs e)
         {
-            int step = 25;
-            if (isSidebarExpanded)
+            this.SuspendLayout();
+
+            int targetWidth = isSidebarExpanded ? sidebarMinWidth : sidebarMaxWidth;
+            int remainingDistance = Math.Abs(targetWidth - pnlSidebar.Width);
+
+            int step = remainingDistance / 2;
+            if (step < 40) step = 40;
+
+            if (isSidebarExpanded) 
             {
                 pnlSidebar.Width -= step;
                 if (pnlSidebar.Width <= sidebarMinWidth)
                 {
-                    pnlSidebar.Width = sidebarMinWidth;
+                    pnlSidebar.Width = sidebarMinWidth; 
                     isSidebarExpanded = false;
                     sidebarTimer.Stop();
-                    UpdateSidebarInternalUI();
                 }
             }
-            else
+            else 
             {
                 pnlSidebar.Width += step;
                 if (pnlSidebar.Width >= sidebarMaxWidth)
@@ -431,19 +613,35 @@ namespace Ventrix.App
                     pnlSidebar.Width = sidebarMaxWidth;
                     isSidebarExpanded = true;
                     sidebarTimer.Stop();
-                    UpdateSidebarInternalUI();
+
+                    UpdateSidebarInternalUI(true);
                 }
             }
 
-            pnlMainContent.Left = pnlSidebar.Width;
-            pnlMainContent.Width = this.ClientSize.Width - pnlSidebar.Width;
-        }
+            DrawRect safeClientArea = this.DisplayRectangle;
+            pnlMainContent.Left = pnlSidebar.Right;
+            pnlMainContent.Width = safeClientArea.Right - pnlSidebar.Right;
+
+            int margin = 30;
+            DrawRect innerSafeArea = new DrawRect(margin, margin, pnlMainContent.Width - (margin * 2), pnlMainContent.Height - (margin * 2));
+
+            if (pnlHomeSummary != null && pnlHomeSummary.Visible)
+            {
+                pnlHomeSummary.Bounds = innerSafeArea;
+               
+                ArrangeHomeView();
+            }
+
+            if (pnlGridContainer != null && pnlGridContainer.Visible) pnlGridContainer.Bounds = innerSafeArea;
+            if (pnlHistory != null && pnlHistory.Visible) pnlHistory.Bounds = innerSafeArea;
+
+            this.ResumeLayout(true);
+        }           
         #endregion
 
         #region Navigation & Data Loading
         private async Task<List<InventoryItem>> GetDamagedItemsAsync()
         {
-            // The bulletproof query that works with SQLite enums
             return (await _inventoryService.GetAllItemsAsync())
                 .Where(i => i.Condition.ToString() == "Damaged" ||
                             i.Condition.ToString() == "Broken" ||
@@ -492,10 +690,7 @@ namespace Ventrix.App
                 if (pnlHomeSummary != null) { pnlHomeSummary.Visible = true; pnlHomeSummary.BringToFront(); }
                 await LoadHomeContent();
 
-                // Dynamic Admin Greeting
-                var adminUser = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.Role == UserRole.Admin);
-                string adminName = adminUser != null ? adminUser.FirstName.ToUpper() : "ADMIN";
-                if (lblDashboardHeader != null) lblDashboardHeader.Text = $"{GetGreeting()}, {adminName}";
+                if (lblDashboardHeader != null) lblDashboardHeader.Text = $"{GetGreeting()}, ADMIN";
             }
             else if (viewName == "Inventory")
             {
@@ -642,7 +837,7 @@ namespace Ventrix.App
                 if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
             }
 
-            if (lblEmptyState != null) lblEmptyState.Visible = (dgvInventory.Rows.Count == 0);
+            ToggleNoResultsState(dgvInventory.Rows.Count == 0);
         }
 
         private string GetBaseItemName(string name)
@@ -655,7 +850,6 @@ namespace Ventrix.App
         private async Task LoadHomeContent()
         {
             if (flowRecentActivity == null) return;
-            // Bulletproof string-matching to bypass SQLite Enum mapping issues
             var damagedItems = await GetDamagedItemsAsync();
 
             flowRecentActivity.SuspendLayout();
@@ -666,9 +860,10 @@ namespace Ventrix.App
 
             flowRecentActivity?.Controls.Add(new Label { Text = "RECENT ACTIVITY LOG", Font = new DrawFont("Segoe UI", 12, FontStyle.Bold), AutoSize = true });
 
-            var rawLogs = await _borrowService.GetAllBorrowRecordsAsync();
+            var rawLogs = (await _borrowService.GetAllBorrowRecordsAsync())
+                  .Where(b => b.IsHiddenFromDashboard == false)
+                  .ToList();
 
-            // THE MAGIC: Group records by User, Action (Borrow/Return), and the exact Minute they did it
             var groupedLogs = rawLogs
                 .GroupBy(b => new {
                     b.BorrowerId,
@@ -676,7 +871,7 @@ namespace Ventrix.App
                     TimeKey = (b.Status == BorrowStatus.Active ? b.BorrowDate : (b.ReturnDate ?? b.BorrowDate)).ToString("yyyyMMddHHmm")
                 })
                 .OrderByDescending(g => g.Max(b => b.Status == BorrowStatus.Active ? b.BorrowDate : (b.ReturnDate ?? DateTime.MinValue)))
-                .Take(10) // Show only the 10 most recent grouped actions
+                .Take(10) 
                 .ToList();
 
             foreach (var group in groupedLogs)
@@ -688,10 +883,8 @@ namespace Ventrix.App
                     ? firstRecord.Borrower.FirstName
                     : (!string.IsNullOrWhiteSpace(firstRecord.BorrowerId) ? firstRecord.BorrowerId : "Unknown User");
 
-                // If they borrowed multiple, we extract the base name (e.g., "Laptop #1" becomes "Laptop")
                 string baseItemName = GetBaseItemName(firstRecord.ItemName ?? "Item");
 
-                // Formulate the clean UI text
                 string displayItem = itemCount > 1 ? $"{itemCount} {baseItemName}s" : (firstRecord.ItemName ?? "[Data Missing]");
 
                 string actionText = firstRecord.Status == BorrowStatus.Active
@@ -709,6 +902,10 @@ namespace Ventrix.App
         private void AddDashboardAlert(string message, DrawColor color)
         {
             var alert = new AlertTile(message, color);
+
+            int safeWidth = flowRecentActivity.ClientSize.Width > 0 ? flowRecentActivity.ClientSize.Width : flowRecentActivity.Width;
+            alert.Width = safeWidth - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+
             alert.AlertClicked += async (s, e) => {
                 if (message.Contains("REPAIR"))
                 {
@@ -725,20 +922,26 @@ namespace Ventrix.App
             flowRecentActivity?.Controls.Add(alert);
         }
 
-        private void AddActivityCard(string message, DateTime time, DrawColor statusColor) { var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor); card.Width = flowRecentActivity.Width - 30; flowRecentActivity?.Controls.Add(card); }
+        private void AddActivityCard(string message, DateTime time, DrawColor statusColor)
+        {
+            var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor);
+
+            int safeWidth = flowRecentActivity.ClientSize.Width > 0 ? flowRecentActivity.ClientSize.Width : flowRecentActivity.Width;
+            card.Width = safeWidth - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+
+            flowRecentActivity?.Controls.Add(card);
+        }
 
         private async Task<IEnumerable<BorrowRecord>> GetFilteredHistoryQuery()
         {
             var query = await _borrowService.GetAllBorrowRecordsAsync();
 
-            // 1. Apply Date Filters (Midnight to 11:59 PM)
             if (dtpStartDate != null && dtpEndDate != null)
             {
                 DateTime endOfDay = dtpEndDate.Value.Date.AddDays(1).AddTicks(-1);
                 query = query.Where(b => b.BorrowDate >= dtpStartDate.Value.Date && b.BorrowDate <= endOfDay);
             }
 
-            // 2. Apply Search Box
             if (txtSearch != null && !string.IsNullOrWhiteSpace(txtSearch.Text))
             {
                 string search = txtSearch.Text.ToLower();
@@ -748,7 +951,6 @@ namespace Ventrix.App
                     (l.BorrowerId != null && l.BorrowerId.ToLower().Contains(search)));
             }
 
-            // 3. NEW: Apply Dynamic Ascending/Descending Sorts
             switch (historySortColumn)
             {
                 case "Item":
@@ -773,14 +975,12 @@ namespace Ventrix.App
 
             if (dgvHistory.Columns.Count == 0)
             {
-                // REMOVED: The Record ID column
                 dgvHistory.Columns.Add("Item", "Item Name");
                 dgvHistory.Columns.Add("Borrower", "Borrower Name");
                 dgvHistory.Columns.Add("BTime", "Time Borrowed");
                 dgvHistory.Columns.Add("RTime", "Time Returned");
                 dgvHistory.Columns.Add("Status", "Status");
 
-                // Make sure columns can show sorting arrows
                 foreach (DataGridViewColumn col in dgvHistory.Columns)
                 {
                     col.SortMode = DataGridViewColumnSortMode.Programmatic;
@@ -802,11 +1002,9 @@ namespace Ventrix.App
                 string bStamp = log.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt");
                 string rStamp = log.ReturnDate.HasValue ? log.ReturnDate.Value.ToString("MMM dd, yyyy - hh:mm tt") : "---";
 
-                // REMOVED: log.Id from this list
                 dgvHistory.Rows.Add(log.ItemName, bName, bStamp, rStamp, log.Status.ToString());
             }
 
-            // Draw the little sorting arrows on the active column
             foreach (DataGridViewColumn col in dgvHistory.Columns) { col.HeaderCell.SortGlyphDirection = SortOrder.None; }
             if (dgvHistory.Columns.Contains(historySortColumn))
             {
@@ -814,6 +1012,8 @@ namespace Ventrix.App
             }
 
             if (lblPageInfo != null) lblPageInfo.Text = $"Page {historyCurrentPage} of {historyTotalPages} ({totalRecords} total items)";
+
+            ToggleNoResultsState(dgvHistory.Rows.Count == 0);
 
             dgvHistory.ResumeLayout();
         }
@@ -844,12 +1044,6 @@ namespace Ventrix.App
             cardPending?.UpdateMetrics("BORROWED", items.Count(x => x.Status == ItemStatus.Borrowed).ToString("N0"), DrawColor.FromArgb(192, 0, 0));
             cardBorrowers?.UpdateMetrics("RECORDS", records.Count.ToString("N0"), DrawColor.Orange);
 
-            if (lblUrgentHeader != null)
-            {
-                lblUrgentHeader.Text = damagedCount > 0 ? $"URGENT SYSTEM ALERTS ({damagedCount} ISSUES)" : "URGENT SYSTEM ALERTS";
-                lblUrgentHeader.ForeColor = damagedCount > 0 ? DrawColor.DarkRed : DrawColor.Teal;
-                lblUrgentHeader.Cursor = damagedCount > 0 ? Cursors.Hand : Cursors.Default;
-            }
         }
 
         private string GetGreeting()
@@ -1018,7 +1212,6 @@ namespace Ventrix.App
 
         private async Task ExportHistoryToExcelAsync()
         {
-            // Pulls ALL data matching the dates/search, bypassing the 100 item page limit
             var allData = (await GetFilteredHistoryQuery()).ToList();
 
             if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
@@ -1148,7 +1341,6 @@ namespace Ventrix.App
                         PdfPTable pdfTable = new PdfPTable(headers.Length);
                         pdfTable.WidthPercentage = 100;
 
-                        // Set relative column widths
                         float[] widths = new float[] { 8f, 15f, 12f, 15f, 10f, 12f, 15f, 15f, 10f };
                         pdfTable.SetWidths(widths);
 
@@ -1337,6 +1529,19 @@ namespace Ventrix.App
                     else if (value == nameof(BorrowStatus.Active)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
                 }
                 if (colName == "RDate" && value == "---") e.CellStyle.ForeColor = DrawColor.LightGray;
+            }
+        }
+
+        private void ToggleNoResultsState(bool showNoResults)
+        {
+            if (pnlNoResults != null)
+            {
+                pnlNoResults.Visible = showNoResults;
+
+                if (showNoResults)
+                {
+                    pnlNoResults.BringToFront();
+                }
             }
         }
         #endregion

@@ -17,7 +17,7 @@ namespace Ventrix.App
         private readonly BorrowService _borrowService;
         private readonly UserService _userService;
 
-        private bool isReturnMode = false; // Tracks if the UI is in "Return" state
+        private bool isReturnMode = false; 
 
         public BorrowerPortal(InventoryService invService, BorrowService borrowService, UserService userService)
         {
@@ -34,21 +34,18 @@ namespace Ventrix.App
         {
             FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
 
-            // Toggles
             btnAdminToggle.Click += (s, e) => ToggleMode("Admin");
             btnStudentToggle.Click += async (s, e) => { ToggleMode("Student"); await EnterBorrowMode(); };
 
-            // Actions
             btnLogin.Click += BtnLogin_Click;
             btnBorrow.Click += BtnBorrow_Click;
-            btnReturn.Click += BtnReturn_Click; // Added Return wiring
+            btnReturn.Click += BtnReturn_Click; 
             lblCreateAccount.Click += LblCreateAccount_Click;
             txtPassword.IconRightClick += TxtPassword_IconRightClick;
             txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
             txtStudentId.Leave += async (s, e) => await ValidateUserRoleAndLimits();
 
-            // Enter Key Support 
             txtPassword.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnLogin.PerformClick(); };
             txtSubject.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnBorrow.PerformClick(); };
 
@@ -89,7 +86,6 @@ namespace Ventrix.App
             lblLoginHeader.Text = isAdmin ? "ADMIN LOGIN" : "BORROWING PORTAL";
             txtStudentId.PlaceholderText = isAdmin ? "Username / Admin ID" : "Student/Faculty ID Number";
 
-            // Visibility
             txtPassword.Visible = isAdmin;
             btnLogin.Visible = isAdmin;
 
@@ -118,7 +114,6 @@ namespace Ventrix.App
         {
             isReturnMode = false;
 
-            // Restore all standard borrowing UI elements
             txtSubject.Visible = true;
             cmbGradeLevel.Visible = true;
             numQuantity.Visible = true;
@@ -134,7 +129,7 @@ namespace Ventrix.App
             lblLoginHeader.Text = "BORROWING PORTAL";
             lblEquipmentList.Text = "Select Equipment:";
 
-            txtStudentId.Enabled = true; // Let them change ID if needed
+            txtStudentId.Enabled = true; 
 
             await LoadEquipmentListAsync();
         }
@@ -144,7 +139,6 @@ namespace Ventrix.App
             SetLoadingState(true);
             try
             {
-                // Fetch only items THIS user is actively holding
                 var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync())
                     .Where(b => b.BorrowerId == studentId && b.Status == BorrowStatus.Active)
                     .ToList();
@@ -157,7 +151,6 @@ namespace Ventrix.App
 
                 isReturnMode = true;
 
-                // Hide unnecessary borrowing fields to make it perfectly intuitive
                 txtSubject.Visible = false;
                 cmbGradeLevel.Visible = false;
                 numQuantity.Visible = false;
@@ -167,7 +160,6 @@ namespace Ventrix.App
                 lblLoginHeader.Text = "RETURN PORTAL";
                 lblEquipmentList.Text = "Select Item to Return:";
 
-                // Lock ID so they don't change it mid-return
                 txtStudentId.Enabled = false;
 
                 btnBorrow.Text = "CANCEL / GO BACK";
@@ -176,7 +168,6 @@ namespace Ventrix.App
                 btnReturn.Text = "CONFIRM RETURN";
                 btnReturn.FillColor = Color.MediumSeaGreen;
 
-                // Populate dropdown with specific records
                 cmbListEquipments.Items.Clear();
                 foreach (var record in activeRecords)
                 {
@@ -272,21 +263,19 @@ namespace Ventrix.App
                     return;
                 }
 
-                // Trigger the upgraded multi-select popup
                 List<InventoryItem> selectedUnits = ShowMultiUnitSelectionPopup(specificUnits, baseItemName, requestedQty);
 
                 if (selectedUnits != null && selectedUnits.Count == requestedQty)
                 {
                     string safeGrade = cmbGradeLevel.Text.Replace(" ", "");
 
-                    // CREATE A SEPARATE RECORD FOR EACH PHYSICAL UNIT
                     foreach (var unit in selectedUnits)
                     {
                         var record = new BorrowRecord
                         {
                             BorrowerId = studentId,
                             ItemName = unit.Name,
-                            Quantity = 1, // ALWAYS 1 per record, because we are strictly tracking physical items
+                            Quantity = 1, 
                             Purpose = txtSubject.Text,
                             GradeLevel = Enum.Parse<GradeLevel>(safeGrade),
                             Status = BorrowStatus.Active,
@@ -300,18 +289,13 @@ namespace Ventrix.App
 
                     txtSubject.Clear();
                     await LoadEquipmentListAsync();
-                    await ValidateUserRoleAndLimits(); // Update limits instantly after borrowing
-                }
-                if (userAccount == null)
-                {
-                    MessageBox.Show("Student ID not found. Please register first.", "Not Registered", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    await ValidateUserRoleAndLimits(); 
                 }
             }
             catch (Exception ex)
             {
-                ErrorLogger.Log(ex, "BorrowerPortal - Login Failed");
-                MessageBox.Show("Login error: The database could not be reached.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorLogger.Log(ex, "BorrowerPortal - Borrowing Failed");
+                MessageBox.Show("Borrowing error: The database could not be reached or an unexpected error occurred.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally { SetLoadingState(false); }
         }
@@ -327,12 +311,10 @@ namespace Ventrix.App
 
             if (!isReturnMode)
             {
-                // Trigger the transition into Return Mode
                 await EnterReturnMode(studentId);
             }
             else
             {
-                // WE ARE ALREADY IN RETURN MODE -> Process the specific return
                 if (cmbListEquipments.SelectedItem is RecordComboItem selectedRecord)
                 {
                     SetLoadingState(true);
@@ -341,10 +323,8 @@ namespace Ventrix.App
                         await _borrowService.ReturnItemAsync(selectedRecord.RecordId);
                         MessageBox.Show("Item successfully returned to inventory!", "Return Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        // Refresh the return mode to see if they have other items
                         await EnterReturnMode(studentId);
 
-                        // If no items left, EnterReturnMode automatically kicks them out. We just need to reset if it failed.
                         if (!isReturnMode) await EnterBorrowMode();
                     }
                     catch (Exception ex)
@@ -366,30 +346,26 @@ namespace Ventrix.App
 
             if (userAccount != null)
             {
-                // 1. THE GATEKEEPER: Check for Lockout instantly
                 if (userAccount.Strikes >= 3 && userAccount.Role.ToString() != "Admin" && userAccount.Role.ToString() != "Faculty")
                 {
                     MessageBox.Show($"ACCOUNT LOCKED: You have accumulated {userAccount.Strikes} strikes for late or damaged returns.\n\nYou are prohibited from using the borrowing system until a faculty member clears your account.", "Security Lockout", MessageBoxButtons.OK, MessageBoxIcon.Stop);
 
-                    // Completely disable the UI so they cannot touch the system
                     cmbListEquipments.Enabled = false;
                     txtSubject.Enabled = false;
                     cmbGradeLevel.Enabled = false;
                     numQuantity.Enabled = false;
                     btnBorrow.Enabled = false;
                     btnBorrow.FillColor = Color.Gray;
-                    return; // Stop here, do not run the rest of the code!
+                    return; 
                 }
 
-                // 2. UNLOCK UI: If they are a student in good standing, ensure the UI is unlocked
                 cmbListEquipments.Enabled = true;
                 txtSubject.Enabled = true;
                 cmbGradeLevel.Enabled = true;
                 numQuantity.Enabled = true;
                 btnBorrow.Enabled = true;
-                btnBorrow.FillColor = Color.FromArgb(13, 71, 161); // Restore Ventrix Blue
-
-                // Count active items
+                btnBorrow.FillColor = Color.FromArgb(13, 71, 161); 
+               
                 var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync())
                     .Where(b => b.BorrowerId == inputId && b.Status == BorrowStatus.Active).ToList();
                 int currentlyHolding = activeRecords.Count;
@@ -412,7 +388,7 @@ namespace Ventrix.App
                     if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty") cmbGradeLevel.SelectedIndex = -1;
                     cmbGradeLevel.Enabled = true;
                 }
-                else // Faculty handling
+                else
                 {
                     numQuantity.Maximum = 50;
                     if (!cmbGradeLevel.Items.Contains("Faculty")) cmbGradeLevel.Items.Add("Faculty");
@@ -445,7 +421,6 @@ namespace Ventrix.App
             return hashIndex > 0 ? name.Substring(0, hashIndex).Trim() : name.Trim();
         }
 
-        // Programmatic popup prevents needing to create a new Designer file!
         private List<InventoryItem> ShowMultiUnitSelectionPopup(List<InventoryItem> units, string baseName, int requiredQuantity)
         {
             var selectedUnits = new List<InventoryItem>();
@@ -461,7 +436,6 @@ namespace Ventrix.App
 
                 Label lbl = new Label { Text = $"Please check exactly {requiredQuantity} unit(s) to borrow:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
 
-                // Upgraded to a CheckedListBox so they can check multiple boxes!
                 CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 320, Height = 110, Font = new Font("Segoe UI", 10) };
                 foreach (var unit in units)
                 {
@@ -470,14 +444,12 @@ namespace Ventrix.App
 
                 Button btnOk = new Button { Text = "Confirm", Location = new Point(130, 165), Width = 100, Height = 35, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
                 btnOk.Click += (s, e) => {
-                    // Strict check: They MUST select the exact quantity they asked for
                     if (clb.CheckedItems.Count != requiredQuantity)
                     {
                         MessageBox.Show($"You requested {requiredQuantity} item(s). Please check exactly {requiredQuantity} box(es).", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
-                    // Add all checked items to our List
                     foreach (UnitComboItem item in clb.CheckedItems) selectedUnits.Add(item.Unit);
                     popup.DialogResult = DialogResult.OK;
                 };
@@ -488,7 +460,6 @@ namespace Ventrix.App
                 popup.ShowDialog(this);
             }
 
-            // Returns the LIST of items back to the Borrow logic
             return selectedUnits;
         }
 
@@ -507,10 +478,10 @@ namespace Ventrix.App
             this.Hide();
         }
 
-        private void SetupFocusHighlighting() { /* Existing logic untouched */ }
-        private void TxtPassword_IconRightClick(object sender, EventArgs e) { /* Existing logic untouched */ }
-        private void txtPassword_MouseMove(object sender, MouseEventArgs e) { /* Existing logic untouched */ }
-        private void CmbGradeLevel_SelectedIndexChanged(object sender, EventArgs e) { /* Existing logic untouched */ }
+        private void SetupFocusHighlighting() {  }
+        private void TxtPassword_IconRightClick(object sender, EventArgs e) {  }
+        private void txtPassword_MouseMove(object sender, MouseEventArgs e) { }
+        private void CmbGradeLevel_SelectedIndexChanged(object sender, EventArgs e) {  }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -525,7 +496,6 @@ namespace Ventrix.App
         }
         #endregion
 
-        // Helper classes for clean ComboBox data binding
         private class RecordComboItem
         {
             public string Text { get; set; }

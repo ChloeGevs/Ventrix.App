@@ -8,17 +8,53 @@ using Ventrix.Infrastructure.Data;
 
 #nullable disable
 
-namespace Ventric.Infrastructure.Migrations
+namespace Ventrix.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260303041416_AddedMiddleNameAndSuffix")]
-    partial class AddedMiddleNameAndSuffix
+    [Migration("20260309182011_InitialSchema")]
+    partial class InitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
+
+            modelBuilder.Entity("User", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MiddleName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Strikes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Suffix")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Users");
+                });
 
             modelBuilder.Entity("Ventrix.Domain.Models.BorrowRecord", b =>
                 {
@@ -33,11 +69,13 @@ namespace Ventric.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("GradeLevel")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("GradeLevel")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("InventoryItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsHiddenFromDashboard")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ItemName")
@@ -57,14 +95,11 @@ namespace Ventric.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("InventoryItemId");
+                    b.HasIndex("BorrowerId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("InventoryItemId");
 
                     b.ToTable("BorrowRecords");
                 });
@@ -78,9 +113,8 @@ namespace Ventric.Infrastructure.Migrations
                     b.Property<int>("Category")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Condition")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Condition")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("DateAdded")
                         .HasColumnType("TEXT");
@@ -97,63 +131,23 @@ namespace Ventric.Infrastructure.Migrations
                     b.ToTable("InventoryItems");
                 });
 
-            modelBuilder.Entity("Ventrix.Domain.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("MiddleName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Suffix")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
-                });
-
             modelBuilder.Entity("Ventrix.Domain.Models.BorrowRecord", b =>
                 {
-                    b.HasOne("Ventrix.Domain.Models.InventoryItem", "Item")
+                    b.HasOne("User", "Borrower")
+                        .WithMany()
+                        .HasForeignKey("BorrowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ventrix.Domain.Models.InventoryItem", "InventoryItem")
                         .WithMany()
                         .HasForeignKey("InventoryItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Ventrix.Domain.Models.User", "Borrower")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Borrower");
 
-                    b.Navigation("Item");
+                    b.Navigation("InventoryItem");
                 });
 #pragma warning restore 612, 618
         }

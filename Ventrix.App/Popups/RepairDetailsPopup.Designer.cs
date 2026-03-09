@@ -21,12 +21,12 @@
             SuspendLayout();
 
             // panelContent
-            panelContent.BackColor = System.Drawing.Color.White; // Ensures modern white look
+            panelContent.BackColor = System.Drawing.Color.White; 
             panelContent.Controls.Add(lblHeader);
             panelContent.Controls.Add(flowRepairList);
             panelContent.Controls.Add(btnClose);
             panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            panelContent.Location = new System.Drawing.Point(0, 64); // Offset for Title Bar
+            panelContent.Location = new System.Drawing.Point(0, 64);
             panelContent.Name = "panelContent";
             panelContent.Size = new System.Drawing.Size(600, 586);
 
@@ -66,7 +66,6 @@
             Controls.Add(panelContent);
             Name = "RepairDetailsPopup";
 
-            // Prevent maximizing and toolbars for standard popup behavior
             MaximizeBox = false;
             MinimizeBox = false;
             ShowInTaskbar = false;

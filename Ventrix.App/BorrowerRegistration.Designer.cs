@@ -113,7 +113,6 @@ namespace Ventrix.App
             lblHeader.TabIndex = 0;
             lblHeader.Text = "BORROWER REGISTRATION";
             lblHeader.TextAlignment = ContentAlignment.TopCenter;
-            lblHeader.Click += lblHeader_Click;
             // 
             // cmbRole
             // 

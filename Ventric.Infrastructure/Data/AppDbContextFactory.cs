@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System.IO;
-using Ventrix.Infrastructure.Data; // Ensure this is here!
+using Ventrix.Infrastructure.Data; 
 
 namespace Ventrix.Infrastructure
 {
@@ -27,7 +27,6 @@ namespace Ventrix.Infrastructure
 
             builder.UseSqlite(connectionString);
 
-            // This line will now work because we added the constructor in Step 2!
             return new AppDbContext(builder.Options);
         }
     }

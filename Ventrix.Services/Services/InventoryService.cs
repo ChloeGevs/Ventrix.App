@@ -25,7 +25,7 @@ namespace Ventrix.Application.Services
                 Name = name,
                 Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category),
                 Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status),
-                Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition.ToString()),
+                Condition = condition,
                 DateAdded = DateTime.Now
             };
 
@@ -69,7 +69,7 @@ namespace Ventrix.Application.Services
                 item.Name = name;
                 item.Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category);
                 item.Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status);
-                item.Condition = Enum.Parse<Ventrix.Domain.Enums.Condition>(condition.ToString());
+                item.Condition = condition;
                 await _context.SaveChangesAsync();
             }
         }
@@ -98,7 +98,6 @@ namespace Ventrix.Application.Services
         {
             var itemsToSeed = new List<InventoryItem>();
 
-            // Local helper to generate multiple items for the list
             void PrepareItems(string name, int count, ItemCategory category)
             {
                 for (int i = 1; i <= count; i++)
@@ -107,13 +106,12 @@ namespace Ventrix.Application.Services
                     {
                         Name = count > 1 ? $"{name} #{i}" : name,
                         Category = category,
-                        Status = ItemStatus.Available, // Using your ItemStatus Enum
-                        Condition = Condition.Good     // FIX 1: Use the Condition Enum instead of a string
+                        Status = ItemStatus.Available,
+                        Condition = Condition.Good    
                     });
                 }
             }
 
-            // Mapping your specific list to the Enums
             PrepareItems("Laptop", 40, ItemCategory.Electronics);
             PrepareItems("Tablets", 50, ItemCategory.Electronics);
             PrepareItems("Projector", 2, ItemCategory.Electronics);
@@ -131,7 +129,6 @@ namespace Ventrix.Application.Services
             PrepareItems("Laptop bags", 40, ItemCategory.Others);
             PrepareItems("Chairs/mono blocks", 40, ItemCategory.Others);
 
-            // FIX 2: Call the method directly within the same class
             await SeedInventoryAsync(itemsToSeed);
         }
     }
