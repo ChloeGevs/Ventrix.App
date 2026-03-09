@@ -46,6 +46,7 @@ namespace Ventrix.App
             txtPassword.IconRightClick += TxtPassword_IconRightClick;
             txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
+            txtStudentId.Leave += async (s, e) => await ValidateUserRoleAndLimits();
 
             // Enter Key Support 
             txtPassword.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) btnLogin.PerformClick(); };
@@ -66,6 +67,8 @@ namespace Ventrix.App
             Load += async (s, e) =>
             {
                 await _userService.InitializeDefaultAdminAsync();
+                var backupService = new DatabaseBackupService();
+                _ = backupService.RunDailyBackupAsync(); 
                 ToggleMode("Student");
                 await EnterBorrowMode();
             };
@@ -240,8 +243,7 @@ namespace Ventrix.App
         {
             if (isReturnMode) { await EnterBorrowMode(); return; }
 
-            if (string.IsNullOrWhiteSpace(txtStudentId.Text) || cmbListEquipments.SelectedIndex == -1 ||
-                string.IsNullOrWhiteSpace(txtSubject.Text) || cmbGradeLevel.SelectedIndex == -1)
+            if (string.IsNullOrWhiteSpace(txtStudentId.Text) || cmbListEquipments.SelectedIndex == -1 || string.IsNullOrWhiteSpace(txtSubject.Text) || cmbGradeLevel.SelectedIndex == -1)
             {
                 MessageBox.Show("Please fill out all fields before borrowing.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -259,50 +261,57 @@ namespace Ventrix.App
                     return;
                 }
 
+                int requestedQty = (int)numQuantity.Value;
                 string baseItemName = cmbListEquipments.Text;
                 var allAvailableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
                 var specificUnits = allAvailableItems.Where(i => GetBaseItemName(i.Name).Equals(baseItemName, StringComparison.OrdinalIgnoreCase)).ToList();
 
-                if (!specificUnits.Any())
+                if (specificUnits.Count < requestedQty)
                 {
-                    MessageBox.Show("This item is currently out of stock.", "Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Not enough available stock. You requested {requestedQty}, but only {specificUnits.Count} are available.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                InventoryItem selectedUnit = ShowUnitSelectionPopup(specificUnits, baseItemName);
+                // Trigger the upgraded multi-select popup
+                List<InventoryItem> selectedUnits = ShowMultiUnitSelectionPopup(specificUnits, baseItemName, requestedQty);
 
-                if (selectedUnit != null)
+                if (selectedUnits != null && selectedUnits.Count == requestedQty)
                 {
-                    // FIX: GradeLevel space removal
                     string safeGrade = cmbGradeLevel.Text.Replace(" ", "");
 
-                    var record = new BorrowRecord
+                    // CREATE A SEPARATE RECORD FOR EACH PHYSICAL UNIT
+                    foreach (var unit in selectedUnits)
                     {
-                        BorrowerId = studentId,
-                        ItemName = selectedUnit.Name,
-                        Quantity = (int)numQuantity.Value,
-                        Purpose = txtSubject.Text,
-                        GradeLevel = Enum.Parse<GradeLevel>(safeGrade),
-                        Status = BorrowStatus.Active,
+                        var record = new BorrowRecord
+                        {
+                            BorrowerId = studentId,
+                            ItemName = unit.Name,
+                            Quantity = 1, // ALWAYS 1 per record, because we are strictly tracking physical items
+                            Purpose = txtSubject.Text,
+                            GradeLevel = Enum.Parse<GradeLevel>(safeGrade),
+                            Status = BorrowStatus.Active,
+                            InventoryItemId = unit.Id
+                        };
 
-                        // CRITICAL: Explicitly link the selected physical ID
-                        InventoryItemId = selectedUnit.Id
-                    };
+                        await _borrowService.ProcessBorrowAsync(record, unit.Id);
+                    }
 
-                    // Pass the record AND the specific ID to the service
-                    await _borrowService.ProcessBorrowAsync(record, selectedUnit.Id);
-
-                    MessageBox.Show($"Success! {selectedUnit.Name} has been recorded.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Success! {requestedQty} {baseItemName}(s) have been dispensed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     txtSubject.Clear();
                     await LoadEquipmentListAsync();
+                    await ValidateUserRoleAndLimits(); // Update limits instantly after borrowing
+                }
+                if (userAccount == null)
+                {
+                    MessageBox.Show("Student ID not found. Please register first.", "Not Registered", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             catch (Exception ex)
             {
-                string errorMsg = ex.Message;
-                if (ex.InnerException != null) errorMsg += "\n\nInner: " + ex.InnerException.Message;
-                MessageBox.Show($"Database Error: {errorMsg}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ErrorLogger.Log(ex, "BorrowerPortal - Login Failed");
+                MessageBox.Show("Login error: The database could not be reached.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally { SetLoadingState(false); }
         }
@@ -338,8 +347,77 @@ namespace Ventrix.App
                         // If no items left, EnterReturnMode automatically kicks them out. We just need to reset if it failed.
                         if (!isReturnMode) await EnterBorrowMode();
                     }
-                    catch (Exception ex) { MessageBox.Show($"Error processing return: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger.Log(ex, $"BorrowerPortal - Return Failed for ID {studentId}");
+                        MessageBox.Show("Error processing return. Please contact the lab technician.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                     finally { SetLoadingState(false); }
+                }
+            }
+        }
+
+        private async Task ValidateUserRoleAndLimits()
+        {
+            if (isReturnMode || string.IsNullOrWhiteSpace(txtStudentId.Text) || txtPassword.Visible) return;
+
+            string inputId = txtStudentId.Text.Trim();
+            var userAccount = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.UserId == inputId);
+
+            if (userAccount != null)
+            {
+                // 1. THE GATEKEEPER: Check for Lockout instantly
+                if (userAccount.Strikes >= 3 && userAccount.Role.ToString() != "Admin" && userAccount.Role.ToString() != "Faculty")
+                {
+                    MessageBox.Show($"ACCOUNT LOCKED: You have accumulated {userAccount.Strikes} strikes for late or damaged returns.\n\nYou are prohibited from using the borrowing system until a faculty member clears your account.", "Security Lockout", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+
+                    // Completely disable the UI so they cannot touch the system
+                    cmbListEquipments.Enabled = false;
+                    txtSubject.Enabled = false;
+                    cmbGradeLevel.Enabled = false;
+                    numQuantity.Enabled = false;
+                    btnBorrow.Enabled = false;
+                    btnBorrow.FillColor = Color.Gray;
+                    return; // Stop here, do not run the rest of the code!
+                }
+
+                // 2. UNLOCK UI: If they are a student in good standing, ensure the UI is unlocked
+                cmbListEquipments.Enabled = true;
+                txtSubject.Enabled = true;
+                cmbGradeLevel.Enabled = true;
+                numQuantity.Enabled = true;
+                btnBorrow.Enabled = true;
+                btnBorrow.FillColor = Color.FromArgb(13, 71, 161); // Restore Ventrix Blue
+
+                // Count active items
+                var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync())
+                    .Where(b => b.BorrowerId == inputId && b.Status == BorrowStatus.Active).ToList();
+                int currentlyHolding = activeRecords.Count;
+
+                if (userAccount.Role.ToString() == "Student")
+                {
+                    int remainingAllowed = 3 - currentlyHolding;
+                    if (remainingAllowed <= 0)
+                    {
+                        MessageBox.Show("You have reached your maximum limit of 3 items. Please return an item first.", "Limit Reached", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        numQuantity.Maximum = 0;
+                        btnBorrow.Enabled = false;
+                        btnBorrow.FillColor = Color.Gray;
+                    }
+                    else
+                    {
+                        numQuantity.Maximum = remainingAllowed;
+                    }
+
+                    if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty") cmbGradeLevel.SelectedIndex = -1;
+                    cmbGradeLevel.Enabled = true;
+                }
+                else // Faculty handling
+                {
+                    numQuantity.Maximum = 50;
+                    if (!cmbGradeLevel.Items.Contains("Faculty")) cmbGradeLevel.Items.Add("Faculty");
+                    cmbGradeLevel.SelectedItem = "Faculty";
+                    cmbGradeLevel.Enabled = false;
                 }
             }
         }
@@ -368,40 +446,50 @@ namespace Ventrix.App
         }
 
         // Programmatic popup prevents needing to create a new Designer file!
-        private InventoryItem ShowUnitSelectionPopup(List<InventoryItem> units, string baseName)
+        private List<InventoryItem> ShowMultiUnitSelectionPopup(List<InventoryItem> units, string baseName, int requiredQuantity)
         {
-            InventoryItem selected = null;
+            var selectedUnits = new List<InventoryItem>();
             using (Form popup = new Form())
             {
-                popup.Text = "Select Specific Unit";
-                popup.Size = new Size(350, 200);
+                popup.Text = $"Select {requiredQuantity} Specific Unit(s)";
+                popup.Size = new Size(380, 250);
                 popup.StartPosition = FormStartPosition.CenterParent;
                 popup.FormBorderStyle = FormBorderStyle.FixedDialog;
                 popup.MaximizeBox = false;
                 popup.MinimizeBox = false;
                 popup.BackColor = Color.White;
 
-                Label lbl = new Label { Text = $"Choose a specific {baseName} to borrow:", Location = new Point(20, 20), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-                ComboBox cmb = new ComboBox { Location = new Point(20, 50), Width = 290, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10) };
+                Label lbl = new Label { Text = $"Please check exactly {requiredQuantity} unit(s) to borrow:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
 
+                // Upgraded to a CheckedListBox so they can check multiple boxes!
+                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 320, Height = 110, Font = new Font("Segoe UI", 10) };
                 foreach (var unit in units)
                 {
-                    cmb.Items.Add(new UnitComboItem { Text = $"{unit.Name} (Condition: {unit.Condition})", Unit = unit });
+                    clb.Items.Add(new UnitComboItem { Text = $"{unit.Name} (Condition: {unit.Condition})", Unit = unit });
                 }
-                if (cmb.Items.Count > 0) cmb.SelectedIndex = 0;
 
-                Button btnOk = new Button { Text = "Confirm", Location = new Point(120, 100), Width = 100, Height = 35, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                Button btnOk = new Button { Text = "Confirm", Location = new Point(130, 165), Width = 100, Height = 35, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
                 btnOk.Click += (s, e) => {
-                    if (cmb.SelectedItem != null) { selected = ((UnitComboItem)cmb.SelectedItem).Unit; popup.DialogResult = DialogResult.OK; }
+                    // Strict check: They MUST select the exact quantity they asked for
+                    if (clb.CheckedItems.Count != requiredQuantity)
+                    {
+                        MessageBox.Show($"You requested {requiredQuantity} item(s). Please check exactly {requiredQuantity} box(es).", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // Add all checked items to our List
+                    foreach (UnitComboItem item in clb.CheckedItems) selectedUnits.Add(item.Unit);
+                    popup.DialogResult = DialogResult.OK;
                 };
 
                 popup.Controls.Add(lbl);
-                popup.Controls.Add(cmb);
+                popup.Controls.Add(clb);
                 popup.Controls.Add(btnOk);
-
                 popup.ShowDialog(this);
             }
-            return selected;
+
+            // Returns the LIST of items back to the Borrow logic
+            return selectedUnits;
         }
 
         private void SetLoadingState(bool isLoading)

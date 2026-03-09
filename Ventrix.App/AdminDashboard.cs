@@ -35,6 +35,18 @@ namespace Ventrix.App
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
         private const int sidebarMinWidth = 70;
+        private int historyCurrentPage = 1;
+        private int historyTotalPages = 1;
+        private const int historyPageSize = 100;
+        private string historySortColumn = "BTime"; 
+        private bool historySortDescending = true;  
+
+        private DateTimePicker dtpStartDate;
+        private DateTimePicker dtpEndDate;
+        private Button btnApplyFilters;
+        private Button btnPrevPage;
+        private Button btnNextPage;
+        private Label lblPageInfo;
 
         public AdminDashboard(InventoryService inventoryService, BorrowService borrowService, UserService userService)
         {
@@ -43,6 +55,7 @@ namespace Ventrix.App
             _userService = userService;
 
             InitializeComponent();
+            SetupHistoryAdvancedControls();
             ThemeManager.Initialize(this);
             InitializeMaterialSkin();
 
@@ -127,8 +140,14 @@ namespace Ventrix.App
             if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
             if (btnDelete != null) btnDelete.Click += async (s, e) => await btnDelete_Click(s, e);
 
-            if (btnExportExcel != null) btnExportExcel.Click += (s, e) => ExportToExcel();
-            if (btnExportPDF != null) btnExportPDF.Click += (s, e) => ExportToPDF();
+            if (btnExportExcel != null) btnExportExcel.Click += async (s, e) => {
+                if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToExcelAsync();
+                else ExportToExcel(); // Keeps your existing Inventory export intact
+            };
+            if (btnExportPDF != null) btnExportPDF.Click += async (s, e) => {
+                if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToPDFAsync();
+                else ExportToPDF(); // Uses the old method for Inventory
+            };
 
             if (btnHome != null) btnHome.Click += async (s, e) => await SwitchView("Home");
             if (btnHistoryNav != null) btnHistoryNav.Click += async (s, e) => await SwitchView("History");
@@ -146,6 +165,12 @@ namespace Ventrix.App
             if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
             if (cardPending != null) cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
             if (cardBorrowers != null) cardBorrowers.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowers");
+
+            if (badgeHealth != null)
+            {
+                badgeHealth.Cursor = Cursors.Hand;
+                badgeHealth.Click += async (s, e) => await LblUrgentHeader_Click(s, e); 
+            }
 
             if (sidebarTimer != null && btnHamburger != null)
             {
@@ -176,7 +201,66 @@ namespace Ventrix.App
                 dgvInventory.CellFormatting += DgvInventory_CellFormatting;
             }
 
-            if (dgvHistory != null) dgvHistory.CellFormatting += DgvHistory_CellFormatting;
+            if (dgvHistory != null)
+            {
+                dgvHistory.CellFormatting += DgvHistory_CellFormatting;
+
+                // NEW: Handle clicking the headers for Ascending/Descending sorts
+                dgvHistory.ColumnHeaderMouseClick += async (s, e) => {
+                    string clickedCol = dgvHistory.Columns[e.ColumnIndex].Name;
+
+                    if (historySortColumn == clickedCol)
+                    {
+                        historySortDescending = !historySortDescending; // Flip direction if clicking same column
+                    }
+                    else
+                    {
+                        historySortColumn = clickedCol;
+                        historySortDescending = false; // Default to A-Z when picking a new column
+                    }
+
+                    historyCurrentPage = 1; // Always reset to page 1 when sorting changes
+                    await LoadHistoryData();
+                };
+            }
+            if (dgvInventory != null)
+            {
+                ContextMenuStrip strikeMenu = new ContextMenuStrip();
+
+                var addStrikeBtn = new ToolStripMenuItem("⚠️ Add 1 Strike (Penalty)");
+                addStrikeBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        await _userService.AddStrikeAsync(userId);
+                        ToastNotification.Show(this, "Strike added to student account.", ToastType.Warning);
+                        await LoadFromDatabase("Borrowers"); // Refresh the grid instantly
+                    }
+                };
+
+                var clearStrikeBtn = new ToolStripMenuItem("✅ Clear All Strikes (Forgive)");
+                clearStrikeBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        await _userService.ClearStrikesAsync(userId);
+                        ToastNotification.Show(this, "Student account strikes have been cleared.", ToastType.Success);
+                        await LoadFromDatabase("Borrowers"); // Refresh the grid instantly
+                    }
+                };
+
+                strikeMenu.Items.Add(addStrikeBtn);
+                strikeMenu.Items.Add(new ToolStripSeparator()); // Adds a nice dividing line
+                strikeMenu.Items.Add(clearStrikeBtn);
+
+                dgvInventory.ContextMenuStrip = strikeMenu;
+                strikeMenu.Opening += (s, e) => {
+                    if (!dgvInventory.Columns.Contains("BorrowerID")) e.Cancel = true;
+                };
+
+                dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
+                dgvInventory.CellFormatting += DgvInventory_CellFormatting;
+            }
 
             this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); };
         }
@@ -274,17 +358,36 @@ namespace Ventrix.App
         {
             if (pnlHistory == null) return;
 
-            // Move Export Buttons to the History container
-            if (btnExportExcel != null) { btnExportExcel.Parent = pnlHistory; btnExportExcel.Location = new DrawPoint(25, 20); btnExportExcel.BringToFront(); }
-            if (btnExportPDF != null) { btnExportPDF.Parent = pnlHistory; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, 20); btnExportPDF.BringToFront(); }
+            int topRowY = 20;
+
+            if (btnExportExcel != null) { btnExportExcel.Parent = pnlHistory; btnExportExcel.Location = new DrawPoint(25, topRowY); btnExportExcel.BringToFront(); }
+            if (btnExportPDF != null) { btnExportPDF.Parent = pnlHistory; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY); btnExportPDF.BringToFront(); }
+
+            // Layout Date Filters
+            if (dtpStartDate != null)
+            {
+                dtpStartDate.Parent = pnlHistory; dtpStartDate.Location = new DrawPoint(btnExportPDF.Right + 40, topRowY + 5); dtpStartDate.BringToFront();
+                Label lblTo = new Label { Text = "-", Parent = pnlHistory, Location = new DrawPoint(dtpStartDate.Right + 5, topRowY + 7), AutoSize = true };
+                dtpEndDate.Parent = pnlHistory; dtpEndDate.Location = new DrawPoint(lblTo.Right + 5, topRowY + 5); dtpEndDate.BringToFront();
+                btnApplyFilters.Parent = pnlHistory; btnApplyFilters.Location = new DrawPoint(dtpEndDate.Right + 10, topRowY + 4); btnApplyFilters.BringToFront();
+            }
 
             if (dgvHistory != null)
             {
                 int gridY = 75;
                 dgvHistory.Parent = pnlHistory;
                 dgvHistory.Location = new DrawPoint(25, gridY);
-                dgvHistory.Size = new DrawSize(pnlHistory.Width - 50, pnlHistory.Height - gridY - 25);
+                // Leave 60px of space at the bottom for pagination buttons
+                dgvHistory.Size = new DrawSize(pnlHistory.Width - 50, pnlHistory.Height - gridY - 60);
                 dgvHistory.BringToFront();
+
+                // Layout Pagination Controls
+                if (btnPrevPage != null)
+                {
+                    btnPrevPage.Parent = pnlHistory; btnPrevPage.Location = new DrawPoint(pnlHistory.Width / 2 - 150, dgvHistory.Bottom + 15); btnPrevPage.BringToFront();
+                    lblPageInfo.Parent = pnlHistory; lblPageInfo.Location = new DrawPoint(btnPrevPage.Right + 20, dgvHistory.Bottom + 20); lblPageInfo.BringToFront();
+                    btnNextPage.Parent = pnlHistory; btnNextPage.Location = new DrawPoint(lblPageInfo.Right + 20, dgvHistory.Bottom + 15); btnNextPage.BringToFront();
+                }
             }
         }
 
@@ -338,6 +441,15 @@ namespace Ventrix.App
         #endregion
 
         #region Navigation & Data Loading
+        private async Task<List<InventoryItem>> GetDamagedItemsAsync()
+        {
+            // The bulletproof query that works with SQLite enums
+            return (await _inventoryService.GetAllItemsAsync())
+                .Where(i => i.Condition.ToString() == "Damaged" ||
+                            i.Condition.ToString() == "Broken" ||
+                            i.Condition.ToString() == "NeedsRepair")
+                .ToList();
+        }
         private void HighlightActiveButton(Guna2Button activeBtn)
         {
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
@@ -425,6 +537,23 @@ namespace Ventrix.App
             await UpdateDashboardCounts();
         }
 
+        private void SetupHistoryAdvancedControls()
+        {
+            dtpStartDate = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today.AddMonths(-1) };
+            dtpEndDate = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today };
+
+            btnApplyFilters = new Button { Text = "Filter Dates", BackColor = DrawColor.FromArgb(13, 71, 161), ForeColor = DrawColor.White, FlatStyle = FlatStyle.Flat, Height = 25, Width = 80 };
+            btnApplyFilters.Click += async (s, e) => { historyCurrentPage = 1; await LoadHistoryData(); };
+
+            btnPrevPage = new Button { Text = "< Prev", BackColor = DrawColor.FromArgb(240, 240, 240), FlatStyle = FlatStyle.Flat, Width = 70, Height = 30 };
+            btnPrevPage.Click += async (s, e) => { if (historyCurrentPage > 1) { historyCurrentPage--; await LoadHistoryData(); } };
+
+            btnNextPage = new Button { Text = "Next >", BackColor = DrawColor.FromArgb(240, 240, 240), FlatStyle = FlatStyle.Flat, Width = 70, Height = 30 };
+            btnNextPage.Click += async (s, e) => { if (historyCurrentPage < historyTotalPages) { historyCurrentPage++; await LoadHistoryData(); } };
+
+            lblPageInfo = new Label { Text = "Page 1 of 1", AutoSize = true, Font = new DrawFont("Segoe UI", 10, FontStyle.Bold) };
+        }
+
         private async Task LoadFromDatabase(string filter)
         {
             if (dgvInventory == null) return;
@@ -441,9 +570,8 @@ namespace Ventrix.App
 
             if (filter == "Borrowers")
             {
-                SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held");
+                SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held", "Strikes", "Account Status");
 
-                // FIX: This strictly filters out any Admin accounts from the grid
                 var users = (await _userService.GetAllUsersAsync())
                             .Where(u => u.Role != UserRole.Admin)
                             .ToList();
@@ -456,19 +584,39 @@ namespace Ventrix.App
                 foreach (var u in users)
                 {
                     int itemsHeld = records.Count(r => r.BorrowerId == u.UserId && r.Status == BorrowStatus.Active);
-                    dgvInventory.Rows.Add(u.UserId, $"{u.FirstName} {u.LastName}", u.Role.ToString(), itemsHeld);
+
+                    // Determine if the account is locked based on the 3-strike rule
+                    string accountStatus = u.Strikes >= 3 ? "LOCKED" : "ACTIVE";
+
+                    dgvInventory.Rows.Add(u.UserId, u.FullName, u.Role.ToString(), itemsHeld, u.Strikes, accountStatus);
                 }
             }
             else if (filter == "Borrowed")
             {
-                SetupColumns("Record ID", "Item Name", "Borrower Name", "Time Borrowed");
+                // We change the columns to show a clean summary instead of raw Record IDs
+                SetupColumns("Borrower Name", "Items Held", "Specific Units", "Time Borrowed");
                 var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Active).ToList();
 
-                foreach (var r in activeRecords)
+                // Group the active records by the Borrower and the exact time they borrowed them
+                var groupedBorrowed = activeRecords
+                    .GroupBy(b => new { b.BorrowerId, TimeKey = b.BorrowDate.ToString("yyyyMMddHHmm") })
+                    .OrderByDescending(g => g.First().BorrowDate)
+                    .ToList();
+
+                foreach (var group in groupedBorrowed)
                 {
-                    string bName = r.Borrower != null ? r.Borrower.FullName : r.BorrowerId;
-                    // Precise Time Formatting
-                    dgvInventory.Rows.Add(r.Id, r.ItemName, bName, r.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"));
+                    var first = group.First();
+                    string bName = first.Borrower != null ? first.Borrower.FullName : first.BorrowerId;
+                    int count = group.Count();
+
+                    // e.g., "3 Laptops" or "Flash drive #1"
+                    string baseItemName = GetBaseItemName(first.ItemName ?? "Item");
+                    string summary = count > 1 ? $"{count} {baseItemName}s" : first.ItemName;
+
+                    // A comma-separated list so the admin still knows EXACTLY which units are missing
+                    string detailedUnits = string.Join(", ", group.Select(g => g.ItemName));
+
+                    dgvInventory.Rows.Add(bName, summary, detailedUnits, first.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"));
                 }
             }
             else if (filter == "Available")
@@ -507,7 +655,8 @@ namespace Ventrix.App
         private async Task LoadHomeContent()
         {
             if (flowRecentActivity == null) return;
-            var damagedItems = (await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList();
+            // Bulletproof string-matching to bypass SQLite Enum mapping issues
+            var damagedItems = await GetDamagedItemsAsync();
 
             flowRecentActivity.SuspendLayout();
             flowRecentActivity.Controls.Clear();
@@ -517,23 +666,41 @@ namespace Ventrix.App
 
             flowRecentActivity?.Controls.Add(new Label { Text = "RECENT ACTIVITY LOG", Font = new DrawFont("Segoe UI", 12, FontStyle.Bold), AutoSize = true });
 
-            var logs = (await _borrowService.GetAllBorrowRecordsAsync()).OrderByDescending(b => b.BorrowDate).Take(10).ToList();
+            var rawLogs = await _borrowService.GetAllBorrowRecordsAsync();
 
-            foreach (var log in logs)
+            // THE MAGIC: Group records by User, Action (Borrow/Return), and the exact Minute they did it
+            var groupedLogs = rawLogs
+                .GroupBy(b => new {
+                    b.BorrowerId,
+                    b.Status,
+                    TimeKey = (b.Status == BorrowStatus.Active ? b.BorrowDate : (b.ReturnDate ?? b.BorrowDate)).ToString("yyyyMMddHHmm")
+                })
+                .OrderByDescending(g => g.Max(b => b.Status == BorrowStatus.Active ? b.BorrowDate : (b.ReturnDate ?? DateTime.MinValue)))
+                .Take(10) // Show only the 10 most recent grouped actions
+                .ToList();
+
+            foreach (var group in groupedLogs)
             {
-                // SAFETY: Fallback to ID or "Unknown User" if the database profile is missing
-                string friendlyName = log.Borrower != null && !string.IsNullOrWhiteSpace(log.Borrower.FirstName)
-                    ? log.Borrower.FirstName
-                    : (!string.IsNullOrWhiteSpace(log.BorrowerId) ? log.BorrowerId : "Unknown User");
+                var firstRecord = group.First();
+                int itemCount = group.Count();
 
-                // SAFETY: Fallback if the Item Name was corrupted in the database
-                string safeItemName = !string.IsNullOrWhiteSpace(log.ItemName) ? log.ItemName : "[Item Data Missing]";
+                string friendlyName = firstRecord.Borrower != null && !string.IsNullOrWhiteSpace(firstRecord.Borrower.FirstName)
+                    ? firstRecord.Borrower.FirstName
+                    : (!string.IsNullOrWhiteSpace(firstRecord.BorrowerId) ? firstRecord.BorrowerId : "Unknown User");
 
-                string actionText = log.Status == BorrowStatus.Active
-                    ? $"{friendlyName} borrowed {safeItemName}"
-                    : $"{safeItemName} was returned by {friendlyName}";
+                // If they borrowed multiple, we extract the base name (e.g., "Laptop #1" becomes "Laptop")
+                string baseItemName = GetBaseItemName(firstRecord.ItemName ?? "Item");
 
-                AddActivityCard(actionText, log.BorrowDate, log.Status == BorrowStatus.Active ? DrawColor.FromArgb(33, 150, 243) : DrawColor.Teal);
+                // Formulate the clean UI text
+                string displayItem = itemCount > 1 ? $"{itemCount} {baseItemName}s" : (firstRecord.ItemName ?? "[Data Missing]");
+
+                string actionText = firstRecord.Status == BorrowStatus.Active
+                    ? $"{friendlyName} borrowed {displayItem}"
+                    : $"{displayItem} were returned by {friendlyName}";
+
+                DateTime actionTime = firstRecord.Status == BorrowStatus.Active ? firstRecord.BorrowDate : (firstRecord.ReturnDate ?? firstRecord.BorrowDate);
+
+                AddActivityCard(actionText, actionTime, firstRecord.Status == BorrowStatus.Active ? DrawColor.FromArgb(33, 150, 243) : DrawColor.Teal);
             }
 
             flowRecentActivity.ResumeLayout(true);
@@ -545,7 +712,11 @@ namespace Ventrix.App
             alert.AlertClicked += async (s, e) => {
                 if (message.Contains("REPAIR"))
                 {
-                    using (var popup = new RepairDetailsPopup((await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList(), _inventoryService, async () => await LoadHomeContent()))
+                    var damagedItems = await GetDamagedItemsAsync();
+                    using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, async () => {
+                        await LoadHomeContent();
+                        await UpdateDashboardCounts();
+                    }))
                     {
                         ShowPopupWithFade(popup);
                     }
@@ -556,38 +727,101 @@ namespace Ventrix.App
 
         private void AddActivityCard(string message, DateTime time, DrawColor statusColor) { var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor); card.Width = flowRecentActivity.Width - 30; flowRecentActivity?.Controls.Add(card); }
 
+        private async Task<IEnumerable<BorrowRecord>> GetFilteredHistoryQuery()
+        {
+            var query = await _borrowService.GetAllBorrowRecordsAsync();
+
+            // 1. Apply Date Filters (Midnight to 11:59 PM)
+            if (dtpStartDate != null && dtpEndDate != null)
+            {
+                DateTime endOfDay = dtpEndDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(b => b.BorrowDate >= dtpStartDate.Value.Date && b.BorrowDate <= endOfDay);
+            }
+
+            // 2. Apply Search Box
+            if (txtSearch != null && !string.IsNullOrWhiteSpace(txtSearch.Text))
+            {
+                string search = txtSearch.Text.ToLower();
+                query = query.Where(l =>
+                    (l.ItemName != null && l.ItemName.ToLower().Contains(search)) ||
+                    (l.Borrower != null && l.Borrower.FullName.ToLower().Contains(search)) ||
+                    (l.BorrowerId != null && l.BorrowerId.ToLower().Contains(search)));
+            }
+
+            // 3. NEW: Apply Dynamic Ascending/Descending Sorts
+            switch (historySortColumn)
+            {
+                case "Item":
+                    return historySortDescending ? query.OrderByDescending(b => b.ItemName) : query.OrderBy(b => b.ItemName);
+                case "Borrower":
+                    return historySortDescending ? query.OrderByDescending(b => b.Borrower != null ? b.Borrower.FullName : b.BorrowerId) : query.OrderBy(b => b.Borrower != null ? b.Borrower.FullName : b.BorrowerId);
+                case "RTime":
+                    return historySortDescending ? query.OrderByDescending(b => b.ReturnDate ?? DateTime.MaxValue) : query.OrderBy(b => b.ReturnDate ?? DateTime.MinValue);
+                case "Status":
+                    return historySortDescending ? query.OrderByDescending(b => b.Status.ToString()) : query.OrderBy(b => b.Status.ToString());
+                case "BTime":
+                default:
+                    return historySortDescending ? query.OrderByDescending(b => b.BorrowDate) : query.OrderBy(b => b.BorrowDate);
+            }
+        }
+
         private async Task LoadHistoryData()
         {
             if (dgvHistory == null) return;
+            dgvHistory.SuspendLayout();
             dgvHistory.Rows.Clear();
-            dgvHistory.Columns.Clear();
 
-            dgvHistory.Columns.Add("ID", "Record ID");
-            dgvHistory.Columns.Add("Item", "Item Name");
-            dgvHistory.Columns.Add("Borrower", "Borrower Name");
-            dgvHistory.Columns.Add("BTime", "Time Borrowed");
-            dgvHistory.Columns.Add("RTime", "Time Returned");
-            dgvHistory.Columns.Add("Status", "Status");
+            if (dgvHistory.Columns.Count == 0)
+            {
+                // REMOVED: The Record ID column
+                dgvHistory.Columns.Add("Item", "Item Name");
+                dgvHistory.Columns.Add("Borrower", "Borrower Name");
+                dgvHistory.Columns.Add("BTime", "Time Borrowed");
+                dgvHistory.Columns.Add("RTime", "Time Returned");
+                dgvHistory.Columns.Add("Status", "Status");
 
-            // Fetching will now succeed because types are synced
-            var allLogs = (await _borrowService.GetAllBorrowRecordsAsync()).OrderByDescending(b => b.BorrowDate).ToList();
+                // Make sure columns can show sorting arrows
+                foreach (DataGridViewColumn col in dgvHistory.Columns)
+                {
+                    col.SortMode = DataGridViewColumnSortMode.Programmatic;
+                }
+            }
 
-            foreach (var log in allLogs)
+            var fullFilteredQuery = await GetFilteredHistoryQuery();
+
+            int totalRecords = fullFilteredQuery.Count();
+            historyTotalPages = (int)Math.Ceiling((double)totalRecords / historyPageSize);
+            if (historyTotalPages == 0) historyTotalPages = 1;
+            if (historyCurrentPage > historyTotalPages) historyCurrentPage = historyTotalPages;
+
+            var pagedLogs = fullFilteredQuery.Skip((historyCurrentPage - 1) * historyPageSize).Take(historyPageSize).ToList();
+
+            foreach (var log in pagedLogs)
             {
                 string bName = log.Borrower != null ? log.Borrower.FullName : log.BorrowerId;
-
-                // Accurate timestamp display
                 string bStamp = log.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt");
                 string rStamp = log.ReturnDate.HasValue ? log.ReturnDate.Value.ToString("MMM dd, yyyy - hh:mm tt") : "---";
 
-                dgvHistory.Rows.Add(log.Id, log.ItemName, bName, bStamp, rStamp, log.Status.ToString());
+                // REMOVED: log.Id from this list
+                dgvHistory.Rows.Add(log.ItemName, bName, bStamp, rStamp, log.Status.ToString());
             }
+
+            // Draw the little sorting arrows on the active column
+            foreach (DataGridViewColumn col in dgvHistory.Columns) { col.HeaderCell.SortGlyphDirection = SortOrder.None; }
+            if (dgvHistory.Columns.Contains(historySortColumn))
+            {
+                dgvHistory.Columns[historySortColumn].HeaderCell.SortGlyphDirection = historySortDescending ? SortOrder.Descending : SortOrder.Ascending;
+            }
+
+            if (lblPageInfo != null) lblPageInfo.Text = $"Page {historyCurrentPage} of {historyTotalPages} ({totalRecords} total items)";
+
+            dgvHistory.ResumeLayout();
         }
         private async Task UpdateDashboardCounts()
         {
             var items = (await _inventoryService.GetAllItemsAsync())?.ToList() ?? new List<InventoryItem>();
             var records = (await _borrowService.GetAllBorrowRecordsAsync())?.ToList() ?? new List<BorrowRecord>();
-            int damagedCount = items.Count(x => x.Condition == Condition.Damaged);
+            int damagedCount = (await GetDamagedItemsAsync()).Count;
 
             if (badgeHealth != null)
             {
@@ -681,13 +915,15 @@ namespace Ventrix.App
 
         private async Task LblUrgentHeader_Click(object sender, EventArgs e)
         {
-            var damagedItems = (await _inventoryService.GetAllItemsAsync()).Where(i => i.Condition == Condition.Damaged).ToList();
+            var damagedItems = await GetDamagedItemsAsync();
             if (damagedItems.Any())
             {
-                using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, async () => await LoadHomeContent()))
+                using (var popup = new RepairDetailsPopup(damagedItems, _inventoryService, async () => {
+                    await LoadHomeContent();
+                    await UpdateDashboardCounts();
+                }))
                 {
                     ShowPopupWithFade(popup);
-                    await UpdateDashboardCounts();
                 }
             }
         }
@@ -734,12 +970,9 @@ namespace Ventrix.App
 
         private void ExportToExcel()
         {
-            // Dynamically select the grid that is currently visible
-            DataGridView activeGrid = (pnlHistory != null && pnlHistory.Visible) ? dgvHistory : dgvInventory;
+            if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no inventory data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            if (activeGrid == null || activeGrid.Rows.Count == 0) { MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
-
-            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = "Ventrix_Data_Report.xlsx" })
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = "Ventrix_Inventory_Report.xlsx" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -747,46 +980,101 @@ namespace Ventrix.App
                     {
                         using (XLWorkbook workbook = new XLWorkbook())
                         {
-                            var worksheet = workbook.Worksheets.Add("Data Report");
+                            var worksheet = workbook.Worksheets.Add("Inventory Report");
                             int colIndex = 1;
-                            for (int i = 0; i < activeGrid.Columns.Count; i++)
+                            for (int i = 0; i < dgvInventory.Columns.Count; i++)
                             {
-                                if (!activeGrid.Columns[i].Visible) continue;
-                                worksheet.Cell(1, colIndex).Value = activeGrid.Columns[i].HeaderText;
+                                if (!dgvInventory.Columns[i].Visible) continue;
+                                worksheet.Cell(1, colIndex).Value = dgvInventory.Columns[i].HeaderText;
                                 worksheet.Cell(1, colIndex).Style.Font.Bold = true;
                                 worksheet.Cell(1, colIndex).Style.Fill.BackgroundColor = XLColor.FromHtml("#0D47A1");
                                 worksheet.Cell(1, colIndex).Style.Font.FontColor = XLColor.White;
                                 colIndex++;
                             }
 
-                            for (int i = 0; i < activeGrid.Rows.Count; i++)
+                            for (int i = 0; i < dgvInventory.Rows.Count; i++)
                             {
                                 int cellIndex = 1;
-                                for (int j = 0; j < activeGrid.Columns.Count; j++)
+                                for (int j = 0; j < dgvInventory.Columns.Count; j++)
                                 {
-                                    if (!activeGrid.Columns[j].Visible) continue;
-                                    worksheet.Cell(i + 2, cellIndex).Value = activeGrid.Rows[i].Cells[j].Value?.ToString() ?? "";
+                                    if (!dgvInventory.Columns[j].Visible) continue;
+                                    worksheet.Cell(i + 2, cellIndex).Value = dgvInventory.Rows[i].Cells[j].Value?.ToString() ?? "";
                                     cellIndex++;
                                 }
                             }
                             worksheet.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
-                            ToastNotification.Show(this, "Excel report exported successfully!", ToastType.Success);
+                            ToastNotification.Show(this, "Inventory Excel exported successfully!", ToastType.Success);
                         }
                     }
-                    catch (Exception ex) { MessageBox.Show("Error exporting to Excel: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger.Log(ex, "AdminDashboard - Export to Excel Failed");
+                        MessageBox.Show("Failed to save the Excel file. Please ensure the file is not currently open in another program.", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private async Task ExportHistoryToExcelAsync()
+        {
+            // Pulls ALL data matching the dates/search, bypassing the 100 item page limit
+            var allData = (await GetFilteredHistoryQuery()).ToList();
+
+            if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = $"Ventrix_Audit_History_{DateTime.Now:yyyyMMdd}.xlsx" })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (XLWorkbook workbook = new XLWorkbook())
+                        {
+                            var ws = workbook.Worksheets.Add("Audit History");
+                            string[] headers = { "Record ID", "Item Name", "Borrower ID", "Borrower Name", "Role/Grade", "Purpose", "Time Borrowed", "Time Returned", "Status" };
+
+                            for (int i = 0; i < headers.Length; i++)
+                            {
+                                ws.Cell(1, i + 1).Value = headers[i];
+                                ws.Cell(1, i + 1).Style.Font.Bold = true;
+                                ws.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#0D47A1");
+                                ws.Cell(1, i + 1).Style.Font.FontColor = XLColor.White;
+                            }
+
+                            for (int i = 0; i < allData.Count; i++)
+                            {
+                                var log = allData[i];
+                                ws.Cell(i + 2, 1).Value = log.Id;
+                                ws.Cell(i + 2, 2).Value = log.ItemName;
+                                ws.Cell(i + 2, 3).Value = log.BorrowerId;
+                                ws.Cell(i + 2, 4).Value = log.Borrower != null ? log.Borrower.FullName : "Unknown";
+                                ws.Cell(i + 2, 5).Value = log.GradeLevel.ToString();
+                                ws.Cell(i + 2, 6).Value = log.Purpose;
+                                ws.Cell(i + 2, 7).Value = log.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt");
+                                ws.Cell(i + 2, 8).Value = log.ReturnDate?.ToString("MMM dd, yyyy - hh:mm tt") ?? "---";
+                                ws.Cell(i + 2, 9).Value = log.Status.ToString();
+                            }
+
+                            ws.Columns().AdjustToContents();
+                            workbook.SaveAs(sfd.FileName);
+                            ToastNotification.Show(this, $"Successfully exported {allData.Count} records!", ToastType.Success);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger.Log(ex, "AdminDashboard - Export to Excel Failed");
+                        MessageBox.Show("Failed to save the Excel file. Please ensure the file is not currently open in another program.", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
         private void ExportToPDF()
         {
-            // Dynamically select the grid that is currently visible
-            DataGridView activeGrid = (pnlHistory != null && pnlHistory.Visible) ? dgvHistory : dgvInventory;
+            if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no inventory data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            if (activeGrid == null || activeGrid.Rows.Count == 0) { MessageBox.Show("There is no data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
-
-            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = "Ventrix_Data_Report.pdf" })
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = "Ventrix_Inventory_Report.pdf" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -797,14 +1085,14 @@ namespace Ventrix.App
                         pdfDoc.Open();
 
                         iTextSharp.text.Font titleFont = FontFactory.GetFont("Arial", 16, iTextSharp.text.Font.BOLD);
-                        Paragraph title = new Paragraph("VENTRIX SYSTEM - DATA REPORT\n\n", titleFont);
+                        Paragraph title = new Paragraph("VENTRIX SYSTEM - INVENTORY REPORT\n\n", titleFont);
                         title.Alignment = Element.ALIGN_CENTER;
                         pdfDoc.Add(title);
 
-                        PdfPTable pdfTable = new PdfPTable(activeGrid.Columns.Cast<DataGridViewColumn>().Count(c => c.Visible));
+                        PdfPTable pdfTable = new PdfPTable(dgvInventory.Columns.Cast<DataGridViewColumn>().Count(c => c.Visible));
                         pdfTable.WidthPercentage = 100;
 
-                        foreach (DataGridViewColumn column in activeGrid.Columns)
+                        foreach (DataGridViewColumn column in dgvInventory.Columns)
                         {
                             if (!column.Visible) continue;
                             PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, FontFactory.GetFont("Arial", 10, iTextSharp.text.Font.BOLD)));
@@ -814,11 +1102,11 @@ namespace Ventrix.App
                             pdfTable.AddCell(cell);
                         }
 
-                        foreach (DataGridViewRow row in activeGrid.Rows)
+                        foreach (DataGridViewRow row in dgvInventory.Rows)
                         {
                             foreach (DataGridViewCell cell in row.Cells)
                             {
-                                if (!activeGrid.Columns[cell.ColumnIndex].Visible) continue;
+                                if (!dgvInventory.Columns[cell.ColumnIndex].Visible) continue;
                                 PdfPCell pdfCell = new PdfPCell(new Phrase(cell.Value?.ToString() ?? "", FontFactory.GetFont("Arial", 9)));
                                 pdfCell.Padding = 5;
                                 pdfCell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -828,7 +1116,77 @@ namespace Ventrix.App
 
                         pdfDoc.Add(pdfTable);
                         pdfDoc.Close();
-                        ToastNotification.Show(this, "PDF report exported successfully!", ToastType.Success);
+                        ToastNotification.Show(this, "Inventory PDF exported successfully!", ToastType.Success);
+                    }
+                    catch (Exception ex) { MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                }
+            }
+        }
+
+        private async Task ExportHistoryToPDFAsync()
+        {
+            var allData = (await GetFilteredHistoryQuery()).ToList();
+
+            if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = $"Ventrix_Audit_History_{DateTime.Now:yyyyMMdd}.pdf" })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        iTextSharp.text.Document pdfDoc = new iTextSharp.text.Document(PageSize.A4.Rotate(), 20f, 20f, 20f, 20f);
+                        PdfWriter.GetInstance(pdfDoc, new FileStream(sfd.FileName, FileMode.Create));
+                        pdfDoc.Open();
+
+                        iTextSharp.text.Font titleFont = FontFactory.GetFont("Arial", 16, iTextSharp.text.Font.BOLD);
+                        Paragraph title = new Paragraph("VENTRIX SYSTEM - FULL AUDIT HISTORY\n\n", titleFont);
+                        title.Alignment = Element.ALIGN_CENTER;
+                        pdfDoc.Add(title);
+
+                        string[] headers = { "ID", "Item Name", "Borrower ID", "Borrower Name", "Role", "Purpose", "Time Borrowed", "Time Returned", "Status" };
+                        PdfPTable pdfTable = new PdfPTable(headers.Length);
+                        pdfTable.WidthPercentage = 100;
+
+                        // Set relative column widths
+                        float[] widths = new float[] { 8f, 15f, 12f, 15f, 10f, 12f, 15f, 15f, 10f };
+                        pdfTable.SetWidths(widths);
+
+                        foreach (var header in headers)
+                        {
+                            PdfPCell cell = new PdfPCell(new Phrase(header, FontFactory.GetFont("Arial", 9, iTextSharp.text.Font.BOLD)));
+                            cell.BackgroundColor = new BaseColor(13, 71, 161);
+                            cell.Padding = 5;
+                            cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            pdfTable.AddCell(cell);
+                        }
+
+                        foreach (var log in allData)
+                        {
+                            string[] rowData = {
+                                log.Id.ToString(),
+                                log.ItemName,
+                                log.BorrowerId,
+                                log.Borrower != null ? log.Borrower.FullName : "Unknown",
+                                log.GradeLevel.ToString(),
+                                log.Purpose,
+                                log.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"),
+                                log.ReturnDate?.ToString("MMM dd, yyyy - hh:mm tt") ?? "---",
+                                log.Status.ToString()
+                            };
+
+                            foreach (var data in rowData)
+                            {
+                                PdfPCell cell = new PdfPCell(new Phrase(data ?? "", FontFactory.GetFont("Arial", 8)));
+                                cell.Padding = 5;
+                                cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                                pdfTable.AddCell(cell);
+                            }
+                        }
+
+                        pdfDoc.Add(pdfTable);
+                        pdfDoc.Close();
+                        ToastNotification.Show(this, $"Successfully exported {allData.Count} PDF records!", ToastType.Success);
                     }
                     catch (Exception ex) { MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
                 }
@@ -949,6 +1307,17 @@ namespace Ventrix.App
                     if (value == nameof(ItemStatus.Available) || value == nameof(Condition.Good)) e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
                     else if (value == nameof(ItemStatus.Borrowed)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
                     else e.CellStyle.ForeColor = DrawColor.IndianRed;
+                }
+                if (colName == "AccountStatus")
+                {
+                    e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
+                    if (value == "ACTIVE") e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
+                    else if (value == "LOCKED") e.CellStyle.ForeColor = DrawColor.IndianRed;
+                }
+                if (colName == "Strikes" && value == "2")
+                {
+                    e.CellStyle.ForeColor = DrawColor.DarkOrange;
+                    e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
                 }
             }
         }

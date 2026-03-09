@@ -106,6 +106,26 @@ namespace Ventrix.Application.Services
             return newUser;
         }
 
+        public async Task AddStrikeAsync(string userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.Strikes++;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task ClearStrikesAsync(string userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.Strikes = 0; // Forgives the student
+                await _context.SaveChangesAsync();
+            }
+        }
+
         // Add this method so the Dashboard can count total registered users
         public async Task<List<User>> GetAllUsersAsync()
         {

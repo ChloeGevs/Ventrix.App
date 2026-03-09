@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
+using System.Windows.Forms;
 using Ventrix.Application.Services;
 using Ventrix.Infrastructure;
 using Ventrix.Infrastructure.Data;
@@ -14,6 +15,27 @@ namespace Ventrix.App
         [STAThread]
         static void Main()
         {
+            // --- NEW: GLOBAL EXCEPTION HANDLING ---
+            // Explicitly use System.Windows.Forms to avoid namespace collisions
+            System.Windows.Forms.Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+
+            // 1. Catch unexpected errors on the main UI thread (e.g., button clicks)
+            System.Windows.Forms.Application.ThreadException += (sender, args) =>
+            {
+                ErrorLogger.Log(args.Exception, "Unhandled UI Exception");
+                MessageBox.Show("An unexpected error occurred. The issue has been logged for IT support.", "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            };
+
+            // 2. Catch unexpected errors on background threads (e.g., async database tasks)
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                if (args.ExceptionObject is Exception ex)
+                {
+                    ErrorLogger.Log(ex, "Unhandled Background Exception");
+                }
+            };
+            // --------------------------------------
+
             // 1. FIX BLURRY UI: Enable High DPI awareness before any UI is initialized
             System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
@@ -41,22 +63,19 @@ namespace Ventrix.App
             // UI Forms
             services.AddTransient<InitializingApp>();
             services.AddTransient<AdminDashboard>();
-            services.AddTransient<BorrowerPortal>();       // Good practice to register all your forms
-            services.AddTransient<BorrowerRegistration>(); // Good practice to register all your forms
+            services.AddTransient<BorrowerPortal>();
+            services.AddTransient<BorrowerRegistration>();
 
             var serviceProvider = services.BuildServiceProvider();
             using (var scope = serviceProvider.CreateScope())
             {
-                // Ensure database is created and schema matches the current model before running queries
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.EnsureCreated();
 
                 var inventoryService = scope.ServiceProvider.GetRequiredService<InventoryService>();
 
-                // Fetch existing items using GetAwaiter().GetResult() since Main is not an async method
                 var existingItems = inventoryService.GetAllItemsAsync().GetAwaiter().GetResult();
 
-                // If the database is completely empty, run the seeding process!
                 if (existingItems.Count == 0)
                 {
                     inventoryService.RunInitialSeed().GetAwaiter().GetResult();
@@ -65,7 +84,7 @@ namespace Ventrix.App
 
             // 4. Start App
             var startForm = serviceProvider.GetRequiredService<InitializingApp>();
-            System.Windows.Forms.Application.Run(startForm);    
+            System.Windows.Forms.Application.Run(startForm);
         }
     }
 }
