@@ -34,7 +34,6 @@ namespace Ventrix.App
 
             services.AddTransient<AdminDashboard>();
             services.AddTransient<BorrowerPortal>();
-            services.AddTransient<BorrowerRegistration>();
 
             var serviceProvider = services.BuildServiceProvider();
             using (var scope = serviceProvider.CreateScope())

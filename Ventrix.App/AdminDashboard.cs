@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Ventrix.App.Controls;
 using Ventrix.App.Popups;
+using Ventrix.Application.DTOs;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using Ventrix.Domain.Enums;
@@ -37,8 +38,9 @@ namespace Ventrix.App
         private int historyCurrentPage = 1;
         private int historyTotalPages = 1;
         private const int historyPageSize = 100;
-        private string historySortColumn = "BTime"; 
-        private bool historySortDescending = true;  
+
+        private string historySortColumn = "Borrower";
+        private bool historySortDescending = false;
 
         private DateTimePicker dtpStartDate;
         private DateTimePicker dtpEndDate;
@@ -85,7 +87,7 @@ namespace Ventrix.App
         private Control GetFocusedControl()
         {
             Control focused = this.ActiveControl;
-            
+
             while (focused is ContainerControl container)
             {
                 focused = container.ActiveControl;
@@ -124,7 +126,7 @@ namespace Ventrix.App
                     else if (nextBtn == btnNavBorrowed) _ = SwitchView("Inventory", "Borrowed");
                     else if (nextBtn == btnNavBorrowers) _ = SwitchView("Inventory", "Borrowers");
 
-                    return true; 
+                    return true;
                 }
             }
 
@@ -198,13 +200,19 @@ namespace Ventrix.App
             if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
             if (btnDelete != null) btnDelete.Click += async (s, e) => await btnDelete_Click(s, e);
 
+            if (btnRegisterBorrower != null)
+            {
+                btnRegisterBorrower.Click -= BtnRegisterBorrower_Click;
+                btnRegisterBorrower.Click += BtnRegisterBorrower_Click;
+            }
+
             if (btnExportExcel != null) btnExportExcel.Click += async (s, e) => {
                 if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToExcelAsync();
-                else ExportToExcel(); 
+                else ExportToExcel();
             };
             if (btnExportPDF != null) btnExportPDF.Click += async (s, e) => {
                 if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToPDFAsync();
-                else ExportToPDF(); 
+                else ExportToPDF();
             };
 
             if (btnHome != null) btnHome.Click += async (s, e) => await SwitchView("Home");
@@ -213,7 +221,7 @@ namespace Ventrix.App
             if (btnNavAllItems != null) btnNavAllItems.Click += async (s, e) => await SwitchView("Inventory", "All");
             if (btnNavAvailable != null) btnNavAvailable.Click += async (s, e) => await SwitchView("Inventory", "Available");
             if (btnNavBorrowed != null) btnNavBorrowed.Click += async (s, e) => await SwitchView("Inventory", "Borrowed");
-            if (btnNavBorrowers != null) btnNavBorrowers.Click += async (s, e) => await SwitchView("Inventory", "Borrowers");
+            if (btnNavBorrowers != null) btnNavBorrowers.Click += async (s, e) => await SwitchView("Inventory", "Records");
 
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
             foreach (var btn in navBtns)
@@ -230,13 +238,13 @@ namespace Ventrix.App
 
             if (cardTotal != null) cardTotal.CardClicked += async (s, e) => await SwitchView("Inventory", "All");
             if (cardAvailable != null) cardAvailable.CardClicked += async (s, e) => await SwitchView("Inventory", "Available");
-            if (cardPending != null) cardPending.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
-            if (cardBorrowers != null) cardBorrowers.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowers");
+            if (cardBorrowed != null) cardBorrowed.CardClicked += async (s, e) => await SwitchView("Inventory", "Borrowed");
+            if (cardRecords != null) cardRecords.CardClicked += async (s, e) => await SwitchView("Inventory", "Records");
 
             if (badgeHealth != null)
             {
                 badgeHealth.Cursor = Cursors.Hand;
-                badgeHealth.Click += async (s, e) => await LblUrgentHeader_Click(s, e); 
+                badgeHealth.Click += async (s, e) => await LblUrgentHeader_Click(s, e);
             }
 
             if (sidebarTimer != null && btnHamburger != null)
@@ -260,7 +268,7 @@ namespace Ventrix.App
 
                 txtSearch.TextChanged += async (s, e) => {
                     txtSearch.IconRightSize = string.IsNullOrEmpty(txtSearch.Text) ? new DrawSize(0, 0) : new DrawSize(15, 15);
-                    if (pnlGridContainer != null && pnlGridContainer.Visible) await LoadFromDatabase("All");
+                    if (pnlGridContainer != null && pnlGridContainer.Visible) await LoadFromDatabase(lblDashboardHeader.Text.Split(':')[1].Trim());
                     else if (pnlHistory != null && pnlHistory.Visible) await LoadHistoryData();
                 };
 
@@ -269,8 +277,162 @@ namespace Ventrix.App
                 };
             }
 
+            // --- CONTEXT MENU FOR ACTIONS ---
             if (dgvInventory != null)
             {
+                ContextMenuStrip actionMenu = new ContextMenuStrip();
+
+                var addStrikeBtn = new ToolStripMenuItem("⚠️ Add 1 Strike (Penalty)");
+                addStrikeBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        await _userService.AddStrikeAsync(userId);
+                        ToastNotification.Show(this, "Strike added to student account.", ToastType.Warning);
+                        await LoadFromDatabase("Records");
+                    }
+                };
+
+                var clearStrikeBtn = new ToolStripMenuItem("✅ Clear All Strikes (Forgive)");
+                clearStrikeBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        await _userService.ClearStrikesAsync(userId);
+                        ToastNotification.Show(this, "Student account strikes have been cleared.", ToastType.Success);
+                        await LoadFromDatabase("Records");
+                    }
+                };
+
+                var approveBtn = new ToolStripMenuItem("✅ Approve Pending Request");
+                approveBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    {
+                        int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
+                        await _borrowService.ApproveBorrowAsync(recordId);
+                        ToastNotification.Show(this, "Transaction Approved & Active!", ToastType.Success);
+                        await LoadFromDatabase("Borrowed");
+                        await UpdateDashboardCounts();
+                    }
+                };
+
+                var confirmReturnBtn = new ToolStripMenuItem("✅ Confirm Returned Item");
+                confirmReturnBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    {
+                        int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
+                        await _borrowService.ReturnItemAsync(recordId);
+                        ToastNotification.Show(this, "Return Confirmed & Item Available!", ToastType.Success);
+                        await LoadFromDatabase("Borrowed");
+                        await UpdateDashboardCounts();
+                    }
+                };
+
+                // NEW: Confirm Return & Auto-Penalize
+                var confirmDamagedReturnBtn = new ToolStripMenuItem("⚠️ Confirm Return (Damaged - Auto Penalize)");
+                confirmDamagedReturnBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    {
+                        if (MessageBox.Show("Are you sure this item was damaged?\n\nThis will confirm the return, mark the physical item as Damaged, and automatically issue 1 Strike to the borrower.", "Confirm Damaged Return", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
+
+                            var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                            var record = allRecords.FirstOrDefault(r => r.Id == recordId);
+
+                            if (record != null)
+                            {
+                                await _borrowService.ReturnItemAsDamagedAsync(recordId);
+                                await _userService.AddStrikeAsync(record.BorrowerId);
+
+                                ToastNotification.Show(this, "Item marked Damaged & Strike issued!", ToastType.Warning);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
+
+                var returnBtn = new ToolStripMenuItem("🔙 Mark as Returned (Force Return)");
+                returnBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    {
+                        if (MessageBox.Show("Are you sure you want to forcibly mark this item as returned and place it back in available inventory?", "Confirm Return", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
+                            await _borrowService.ReturnItemAsync(recordId);
+                            ToastNotification.Show(this, "Item successfully returned to inventory!", ToastType.Success);
+                            await LoadFromDatabase("Borrowed");
+                            await UpdateDashboardCounts();
+                        }
+                    }
+                };
+
+                var overdueBtn = new ToolStripMenuItem("⏰ Mark as Overdue (Late)");
+                overdueBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    {
+                        if (MessageBox.Show("Mark this item as Overdue?", "Flag as Late", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
+                            await _borrowService.MarkAsOverdueAsync(recordId);
+                            ToastNotification.Show(this, "Item flagged as Overdue!", ToastType.Warning);
+                            await LoadFromDatabase("Borrowed");
+                        }
+                    }
+                };
+
+                actionMenu.Items.Add(addStrikeBtn);
+                actionMenu.Items.Add(clearStrikeBtn);
+                actionMenu.Items.Add(new ToolStripSeparator());
+                actionMenu.Items.Add(approveBtn);
+                actionMenu.Items.Add(confirmReturnBtn);
+                actionMenu.Items.Add(confirmDamagedReturnBtn);
+                actionMenu.Items.Add(overdueBtn);
+                actionMenu.Items.Add(returnBtn);
+
+                dgvInventory.ContextMenuStrip = actionMenu;
+
+                actionMenu.Opening += (s, e) => {
+                    bool isBorrowersTab = dgvInventory.Columns.Contains("BorrowerID");
+                    bool isBorrowedTab = dgvInventory.Columns.Contains("RecordID") && dgvInventory.Columns.Contains("Status");
+
+                    addStrikeBtn.Visible = isBorrowersTab;
+                    clearStrikeBtn.Visible = isBorrowersTab;
+
+                    approveBtn.Visible = false;
+                    confirmReturnBtn.Visible = false;
+                    confirmDamagedReturnBtn.Visible = false;
+                    returnBtn.Visible = false;
+                    overdueBtn.Visible = false;
+
+                    if (isBorrowedTab && dgvInventory.SelectedRows.Count > 0)
+                    {
+                        string status = dgvInventory.SelectedRows[0].Cells["Status"].Value?.ToString() ?? "";
+
+                        if (status == "Pending") approveBtn.Visible = true;
+                        if (status == "PendingReturn")
+                        {
+                            confirmReturnBtn.Visible = true;
+                            confirmDamagedReturnBtn.Visible = true;
+                        }
+
+                        if (status == "Active")
+                        {
+                            returnBtn.Visible = true;
+                            overdueBtn.Visible = true;
+                            confirmDamagedReturnBtn.Visible = true;
+                        }
+                        if (status == "Overdue")
+                        {
+                            returnBtn.Visible = true;
+                            confirmDamagedReturnBtn.Visible = true;
+                        }
+                    }
+
+                    if (!isBorrowersTab && !isBorrowedTab) e.Cancel = true;
+                };
+
                 dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
                 dgvInventory.CellFormatting += DgvInventory_CellFormatting;
             }
@@ -284,55 +446,17 @@ namespace Ventrix.App
 
                     if (historySortColumn == clickedCol)
                     {
-                        historySortDescending = !historySortDescending; 
+                        historySortDescending = !historySortDescending;
                     }
                     else
                     {
                         historySortColumn = clickedCol;
-                        historySortDescending = false; 
+                        historySortDescending = false;
                     }
 
-                    historyCurrentPage = 1; 
+                    historyCurrentPage = 1;
                     await LoadHistoryData();
                 };
-            }
-            if (dgvInventory != null)
-            {
-                ContextMenuStrip strikeMenu = new ContextMenuStrip();
-
-                var addStrikeBtn = new ToolStripMenuItem("⚠️ Add 1 Strike (Penalty)");
-                addStrikeBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
-                    {
-                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
-                        await _userService.AddStrikeAsync(userId);
-                        ToastNotification.Show(this, "Strike added to student account.", ToastType.Warning);
-                        await LoadFromDatabase("Borrowers"); 
-                    }
-                };
-
-                var clearStrikeBtn = new ToolStripMenuItem("✅ Clear All Strikes (Forgive)");
-                clearStrikeBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
-                    {
-                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
-                        await _userService.ClearStrikesAsync(userId);
-                        ToastNotification.Show(this, "Student account strikes have been cleared.", ToastType.Success);
-                        await LoadFromDatabase("Borrowers"); 
-                    }
-                };
-
-                strikeMenu.Items.Add(addStrikeBtn);
-                strikeMenu.Items.Add(new ToolStripSeparator());
-                strikeMenu.Items.Add(clearStrikeBtn);
-
-                dgvInventory.ContextMenuStrip = strikeMenu;
-                strikeMenu.Opening += (s, e) => {
-                    if (!dgvInventory.Columns.Contains("BorrowerID")) e.Cancel = true;
-                };
-
-                dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
-                dgvInventory.CellFormatting += DgvInventory_CellFormatting;
             }
 
             this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); };
@@ -368,7 +492,6 @@ namespace Ventrix.App
             if (lblDashboardHeader != null && btnHamburger != null)
             {
                 lblDashboardHeader.Location = new DrawPoint(btnHamburger.Right + 20, (pnlTopBar.Height - lblDashboardHeader.Height) / 2);
-
             }
             if (txtSearch != null)
             {
@@ -404,7 +527,6 @@ namespace Ventrix.App
             if (btnClearActivity != null)
             {
                 btnClearActivity.Parent = pnlHomeSummary;
-
                 btnClearActivity.Anchor = AnchorStyles.None;
                 btnClearActivity.Location = new DrawPoint(pnlHomeSummary.Width - btnClearActivity.Width - spacing, topMargin);
                 btnClearActivity.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -416,14 +538,14 @@ namespace Ventrix.App
 
             if (cardTotal != null) { cardTotal.Parent = pnlHomeSummary; cardTotal.SetBounds(spacing, cardY, cardWidth, 110); }
             if (cardAvailable != null) { cardAvailable.Parent = pnlHomeSummary; cardAvailable.SetBounds(cardTotal.Right + spacing, cardY, cardWidth, 110); }
-            if (cardPending != null) { cardPending.Parent = pnlHomeSummary; cardPending.SetBounds(cardAvailable.Right + spacing, cardY, cardWidth, 110); }
-            if (cardBorrowers != null) { cardBorrowers.Parent = pnlHomeSummary; cardBorrowers.SetBounds(cardPending.Right + spacing, cardY, cardWidth, 110); }
+            if (cardBorrowed != null) { cardBorrowed.Parent = pnlHomeSummary; cardBorrowed.SetBounds(cardAvailable.Right + spacing, cardY, cardWidth, 110); }
+            if (cardRecords != null) { cardRecords.Parent = pnlHomeSummary; cardRecords.SetBounds(cardBorrowed.Right + spacing, cardY, cardWidth, 110); }
 
             if (flowRecentActivity != null)
             {
                 flowRecentActivity.Parent = pnlHomeSummary;
 
-                int activityY = cardTotal.Bottom + 30; 
+                int activityY = cardTotal.Bottom + 30;
 
                 flowRecentActivity.Anchor = AnchorStyles.None;
                 flowRecentActivity.Location = new DrawPoint(spacing, activityY);
@@ -444,9 +566,9 @@ namespace Ventrix.App
             if (btnExportExcel != null)
             {
                 btnExportExcel.Parent = pnlGridContainer;
-                btnExportExcel.Anchor = AnchorStyles.None; 
+                btnExportExcel.Anchor = AnchorStyles.None;
                 btnExportExcel.Location = new DrawPoint(margin, topRowY);
-                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left; 
+                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
                 btnExportExcel.BringToFront();
             }
             if (btnExportPDF != null)
@@ -462,7 +584,7 @@ namespace Ventrix.App
             {
                 btnDelete.Parent = pnlGridContainer;
                 btnDelete.Anchor = AnchorStyles.None;
-               
+
                 btnDelete.Location = new DrawPoint(pnlGridContainer.Width - btnDelete.Width - margin, topRowY);
                 btnDelete.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 btnDelete.BringToFront();
@@ -471,7 +593,7 @@ namespace Ventrix.App
             {
                 btnEdit.Parent = pnlGridContainer;
                 btnEdit.Anchor = AnchorStyles.None;
-                
+
                 btnEdit.Location = new DrawPoint(btnDelete.Left - btnEdit.Width - 15, topRowY);
                 btnEdit.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 btnEdit.BringToFront();
@@ -480,15 +602,28 @@ namespace Ventrix.App
             {
                 btnCreate.Parent = pnlGridContainer;
                 btnCreate.Anchor = AnchorStyles.None;
-                
+
                 btnCreate.Location = new DrawPoint(btnEdit.Left - btnCreate.Width - 15, topRowY);
                 btnCreate.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 btnCreate.BringToFront();
             }
 
+            int gridY = topRowY + 50;
+
+            if (pnlRegisterBorrower != null && pnlRegisterBorrower.Visible)
+            {
+                pnlRegisterBorrower.Parent = pnlGridContainer;
+                pnlRegisterBorrower.Anchor = AnchorStyles.None;
+                pnlRegisterBorrower.Location = new DrawPoint(margin, gridY);
+                pnlRegisterBorrower.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), 100);
+                pnlRegisterBorrower.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+                pnlRegisterBorrower.BringToFront();
+
+                gridY += pnlRegisterBorrower.Height + 20;
+            }
+
             if (dgvInventory != null)
             {
-                int gridY = topRowY + 50;
                 dgvInventory.Parent = pnlGridContainer;
 
                 dgvInventory.Anchor = AnchorStyles.None;
@@ -497,6 +632,12 @@ namespace Ventrix.App
 
                 dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 dgvInventory.BringToFront();
+
+                if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlGridContainer)
+                {
+                    lblEmptyState.Bounds = dgvInventory.Bounds;
+                    lblEmptyState.BringToFront();
+                }
             }
         }
 
@@ -512,7 +653,7 @@ namespace Ventrix.App
                 btnExportExcel.Parent = pnlHistory;
                 btnExportExcel.Anchor = AnchorStyles.None;
                 btnExportExcel.Location = new DrawPoint(margin, topRowY);
-                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left; 
+                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
                 btnExportExcel.BringToFront();
             }
             if (btnExportPDF != null)
@@ -535,13 +676,19 @@ namespace Ventrix.App
 
                 dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 dgvHistory.BringToFront();
+
+                if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlHistory)
+                {
+                    lblEmptyState.Bounds = dgvHistory.Bounds;
+                    lblEmptyState.BringToFront();
+                }
             }
         }
 
         private void UpdateSidebarInternalUI(bool showDetails)
         {
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
-            string[] navTexts = { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "BORROWERS" };
+            string[] navTexts = { "HOME PAGE", "HISTORY", "ALL ITEMS", "AVAILABLE", "BORROWED", "RECORDS" };
 
             if (picUser != null) picUser.SetBounds((showDetails) ? 15 : 12, 25, (showDetails) ? 45 : 40, (showDetails) ? 45 : 40);
             if (lblOwnerRole != null) lblOwnerRole.Visible = showDetails;
@@ -595,17 +742,17 @@ namespace Ventrix.App
             int step = remainingDistance / 2;
             if (step < 40) step = 40;
 
-            if (isSidebarExpanded) 
+            if (isSidebarExpanded)
             {
                 pnlSidebar.Width -= step;
                 if (pnlSidebar.Width <= sidebarMinWidth)
                 {
-                    pnlSidebar.Width = sidebarMinWidth; 
+                    pnlSidebar.Width = sidebarMinWidth;
                     isSidebarExpanded = false;
                     sidebarTimer.Stop();
                 }
             }
-            else 
+            else
             {
                 pnlSidebar.Width += step;
                 if (pnlSidebar.Width >= sidebarMaxWidth)
@@ -628,7 +775,7 @@ namespace Ventrix.App
             if (pnlHomeSummary != null && pnlHomeSummary.Visible)
             {
                 pnlHomeSummary.Bounds = innerSafeArea;
-               
+
                 ArrangeHomeView();
             }
 
@@ -636,7 +783,7 @@ namespace Ventrix.App
             if (pnlHistory != null && pnlHistory.Visible) pnlHistory.Bounds = innerSafeArea;
 
             this.ResumeLayout(true);
-        }           
+        }
         #endregion
 
         #region Navigation & Data Loading
@@ -648,6 +795,7 @@ namespace Ventrix.App
                             i.Condition.ToString() == "NeedsRepair")
                 .ToList();
         }
+
         private void HighlightActiveButton(Guna2Button activeBtn)
         {
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
@@ -699,7 +847,7 @@ namespace Ventrix.App
                 if (filter == "All") HighlightActiveButton(btnNavAllItems);
                 else if (filter == "Available") HighlightActiveButton(btnNavAvailable);
                 else if (filter == "Borrowed") HighlightActiveButton(btnNavBorrowed);
-                else if (filter == "Borrowers") HighlightActiveButton(btnNavBorrowers);
+                else if (filter == "Records") HighlightActiveButton(btnNavBorrowers);
 
                 if (pnlGridContainer != null) { pnlGridContainer.Visible = true; pnlGridContainer.BringToFront(); }
 
@@ -708,7 +856,12 @@ namespace Ventrix.App
                 if (btnEdit != null) { btnEdit.Visible = showCrud; btnEdit.BringToFront(); }
                 if (btnDelete != null) { btnDelete.Visible = showCrud; btnDelete.BringToFront(); }
 
-                // Show Exports for Inventory
+                if (pnlRegisterBorrower != null)
+                {
+                    pnlRegisterBorrower.Visible = (filter == "Records");
+                    if (pnlRegisterBorrower.Visible) pnlRegisterBorrower.BringToFront();
+                }
+
                 if (btnExportExcel != null) { btnExportExcel.Visible = true; btnExportExcel.BringToFront(); }
                 if (btnExportPDF != null) { btnExportPDF.Visible = true; btnExportPDF.BringToFront(); }
 
@@ -721,7 +874,6 @@ namespace Ventrix.App
 
                 if (pnlHistory != null) { pnlHistory.Visible = true; pnlHistory.BringToFront(); }
 
-                // Show Exports for History
                 if (btnExportExcel != null) { btnExportExcel.Visible = true; btnExportExcel.BringToFront(); }
                 if (btnExportPDF != null) { btnExportPDF.Visible = true; btnExportPDF.BringToFront(); }
 
@@ -763,7 +915,26 @@ namespace Ventrix.App
                 items = items.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToString().ToLower().Contains(search)).ToList();
             }
 
-            if (filter == "Borrowers")
+            if (filter == "All")
+            {
+                SetupColumns("Item Name", "Category", "Total Units", "Available", "Borrowed", "Damaged");
+                var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
+
+                var unconfirmedRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                var outRecords = unconfirmedRecords.Where(r => r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue).ToList();
+
+                foreach (var group in groupedItems)
+                {
+                    int total = group.Count();
+                    int avail = group.Count(x => x.Status == ItemStatus.Available);
+                    int borrowed = outRecords.Count(r => GetBaseItemName(r.ItemName ?? "") == group.Key.BaseName);
+                    int damaged = group.Count(x => x.Condition == Condition.Damaged);
+
+                    dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), total, avail, borrowed, damaged);
+                }
+                if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
+            }
+            else if (filter == "Records")
             {
                 SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held", "Strikes", "Account Status");
 
@@ -779,8 +950,6 @@ namespace Ventrix.App
                 foreach (var u in users)
                 {
                     int itemsHeld = records.Count(r => r.BorrowerId == u.UserId && r.Status == BorrowStatus.Active);
-
-                    // Determine if the account is locked based on the 3-strike rule
                     string accountStatus = u.Strikes >= 3 ? "LOCKED" : "ACTIVE";
 
                     dgvInventory.Rows.Add(u.UserId, u.FullName, u.Role.ToString(), itemsHeld, u.Strikes, accountStatus);
@@ -788,30 +957,26 @@ namespace Ventrix.App
             }
             else if (filter == "Borrowed")
             {
-                // We change the columns to show a clean summary instead of raw Record IDs
-                SetupColumns("Borrower Name", "Items Held", "Specific Units", "Time Borrowed");
-                var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.Status == BorrowStatus.Active).ToList();
+                // 1. Changed "Borrower" to "Borrower ID" in the column headers
+                SetupColumns("Record ID", "Borrower ID", "Item", "Requested On", "Status");
+                dgvInventory.Columns["RecordID"].Visible = false;
 
-                // Group the active records by the Borrower and the exact time they borrowed them
-                var groupedBorrowed = activeRecords
-                    .GroupBy(b => new { b.BorrowerId, TimeKey = b.BorrowDate.ToString("yyyyMMddHHmm") })
-                    .OrderByDescending(g => g.First().BorrowDate)
+                var pendingAndActive = (await _borrowService.GetAllBorrowRecordsAsync())
+                    .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
+                    .OrderBy(b => b.Status)
+                    .ThenByDescending(b => b.BorrowDate)
                     .ToList();
 
-                foreach (var group in groupedBorrowed)
+                foreach (var record in pendingAndActive)
                 {
-                    var first = group.First();
-                    string bName = first.Borrower != null ? first.Borrower.FullName : first.BorrowerId;
-                    int count = group.Count();
-
-                    // e.g., "3 Laptops" or "Flash drive #1"
-                    string baseItemName = GetBaseItemName(first.ItemName ?? "Item");
-                    string summary = count > 1 ? $"{count} {baseItemName}s" : first.ItemName;
-
-                    // A comma-separated list so the admin still knows EXACTLY which units are missing
-                    string detailedUnits = string.Join(", ", group.Select(g => g.ItemName));
-
-                    dgvInventory.Rows.Add(bName, summary, detailedUnits, first.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"));
+                    // 2. Insert record.BorrowerId directly instead of parsing the FullName
+                    dgvInventory.Rows.Add(
+                        record.Id,
+                        record.BorrowerId,
+                        record.ItemName,
+                        record.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"),
+                        record.Status.ToString()
+                    );
                 }
             }
             else if (filter == "Available")
@@ -820,20 +985,6 @@ namespace Ventrix.App
                 var groupedItems = items.Where(i => i.Status == ItemStatus.Available).GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
 
                 foreach (var group in groupedItems) dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), group.Count());
-                if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
-            }
-            else
-            {
-                SetupColumns("Item Name", "Category", "Total Units", "Available", "Damaged");
-                var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
-
-                foreach (var group in groupedItems)
-                {
-                    int total = group.Count();
-                    int avail = group.Count(x => x.Status == ItemStatus.Available);
-                    int damaged = group.Count(x => x.Condition == Condition.Damaged);
-                    dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), total, avail, damaged);
-                }
                 if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
             }
 
@@ -862,38 +1013,78 @@ namespace Ventrix.App
 
             var rawLogs = (await _borrowService.GetAllBorrowRecordsAsync())
                   .Where(b => b.IsHiddenFromDashboard == false)
+                  .OrderByDescending(b => b.Status == BorrowStatus.Returned ? (b.ReturnDate ?? b.BorrowDate) : b.BorrowDate)
                   .ToList();
 
-            var groupedLogs = rawLogs
-                .GroupBy(b => new {
-                    b.BorrowerId,
-                    b.Status,
-                    TimeKey = (b.Status == BorrowStatus.Active ? b.BorrowDate : (b.ReturnDate ?? b.BorrowDate)).ToString("yyyyMMddHHmm")
-                })
-                .OrderByDescending(g => g.Max(b => b.Status == BorrowStatus.Active ? b.BorrowDate : (b.ReturnDate ?? DateTime.MinValue)))
-                .Take(10) 
-                .ToList();
+            var displayGroups = new List<List<BorrowRecord>>();
 
-            foreach (var group in groupedLogs)
+            foreach (var record in rawLogs)
+            {
+                var recordTime = record.Status == BorrowStatus.Returned ? (record.ReturnDate ?? record.BorrowDate) : record.BorrowDate;
+                bool isReturned = record.Status == BorrowStatus.Returned;
+
+                var existingGroup = displayGroups.FirstOrDefault(g =>
+                    g.First().BorrowerId == record.BorrowerId &&
+                    (g.First().Status == BorrowStatus.Returned) == isReturned &&
+                    Math.Abs(((g.First().Status == BorrowStatus.Returned ? (g.First().ReturnDate ?? g.First().BorrowDate) : g.First().BorrowDate) - recordTime).TotalMinutes) <= 5
+                );
+
+                if (existingGroup != null)
+                {
+                    existingGroup.Add(record);
+                }
+                else
+                {
+                    displayGroups.Add(new List<BorrowRecord> { record });
+                }
+            }
+
+            foreach (var group in displayGroups.Take(10))
             {
                 var firstRecord = group.First();
-                int itemCount = group.Count();
 
                 string friendlyName = firstRecord.Borrower != null && !string.IsNullOrWhiteSpace(firstRecord.Borrower.FirstName)
                     ? firstRecord.Borrower.FirstName
                     : (!string.IsNullOrWhiteSpace(firstRecord.BorrowerId) ? firstRecord.BorrowerId : "Unknown User");
 
-                string baseItemName = GetBaseItemName(firstRecord.ItemName ?? "Item");
+                var itemSummaries = group
+                    .GroupBy(b => GetBaseItemName(b.ItemName ?? "Item"))
+                    .Select(g => $"{g.Count()} {g.Key}" + (g.Count() > 1 && !g.Key.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? "s" : ""))
+                    .ToList();
 
-                string displayItem = itemCount > 1 ? $"{itemCount} {baseItemName}s" : (firstRecord.ItemName ?? "[Data Missing]");
+                string displayItem = string.Join(", ", itemSummaries);
 
-                string actionText = firstRecord.Status == BorrowStatus.Active
-                    ? $"{friendlyName} borrowed {displayItem}"
-                    : $"{displayItem} were returned by {friendlyName}";
+                bool isReturned = firstRecord.Status == BorrowStatus.Returned;
+                bool isPendingReturn = group.Any(b => b.Status == BorrowStatus.PendingReturn);
+                bool hasActive = group.Any(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue);
 
-                DateTime actionTime = firstRecord.Status == BorrowStatus.Active ? firstRecord.BorrowDate : (firstRecord.ReturnDate ?? firstRecord.BorrowDate);
+                string actionText;
+                DrawColor statusColor;
 
-                AddActivityCard(actionText, actionTime, firstRecord.Status == BorrowStatus.Active ? DrawColor.FromArgb(33, 150, 243) : DrawColor.Teal);
+                if (isReturned)
+                {
+                    actionText = $"{displayItem} returned by {friendlyName}";
+                    statusColor = DrawColor.Teal;
+                }
+                else if (isPendingReturn)
+                {
+                    actionText = $"{friendlyName} requested to return {displayItem}";
+                    statusColor = DrawColor.DarkMagenta;
+                }
+                else if (hasActive)
+                {
+                    actionText = $"{friendlyName} borrowed {displayItem}";
+                    statusColor = DrawColor.FromArgb(33, 150, 243);
+                }
+                else
+                {
+                    actionText = $"{friendlyName} requested {displayItem}";
+                    statusColor = DrawColor.Goldenrod;
+                }
+
+                DateTime actionTime = isReturned ? (firstRecord.ReturnDate ?? firstRecord.BorrowDate) : firstRecord.BorrowDate;
+
+                AddActivityCard(actionText, actionTime, statusColor);
             }
 
             flowRecentActivity.ResumeLayout(true);
@@ -955,8 +1146,10 @@ namespace Ventrix.App
             {
                 case "Item":
                     return historySortDescending ? query.OrderByDescending(b => b.ItemName) : query.OrderBy(b => b.ItemName);
+
                 case "Borrower":
-                    return historySortDescending ? query.OrderByDescending(b => b.Borrower != null ? b.Borrower.FullName : b.BorrowerId) : query.OrderBy(b => b.Borrower != null ? b.Borrower.FullName : b.BorrowerId);
+                    return historySortDescending ? query.OrderByDescending(b => b.BorrowerId).ThenByDescending(b => b.BorrowDate) : query.OrderBy(b => b.BorrowerId).ThenByDescending(b => b.BorrowDate);
+
                 case "RTime":
                     return historySortDescending ? query.OrderByDescending(b => b.ReturnDate ?? DateTime.MaxValue) : query.OrderBy(b => b.ReturnDate ?? DateTime.MinValue);
                 case "Status":
@@ -976,7 +1169,12 @@ namespace Ventrix.App
             if (dgvHistory.Columns.Count == 0)
             {
                 dgvHistory.Columns.Add("Item", "Item Name");
-                dgvHistory.Columns.Add("Borrower", "Borrower Name");
+                dgvHistory.Columns.Add("Borrower", "Borrower ID");
+
+                // ADDED THESE TWO LINES
+                dgvHistory.Columns.Add("Grade", "Grade/Role");
+                dgvHistory.Columns.Add("Purpose", "Purpose");
+
                 dgvHistory.Columns.Add("BTime", "Time Borrowed");
                 dgvHistory.Columns.Add("RTime", "Time Returned");
                 dgvHistory.Columns.Add("Status", "Status");
@@ -996,13 +1194,19 @@ namespace Ventrix.App
 
             var pagedLogs = fullFilteredQuery.Skip((historyCurrentPage - 1) * historyPageSize).Take(historyPageSize).ToList();
 
+            string lastBorrower = null;
+
             foreach (var log in pagedLogs)
             {
-                string bName = log.Borrower != null ? log.Borrower.FullName : log.BorrowerId;
                 string bStamp = log.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt");
                 string rStamp = log.ReturnDate.HasValue ? log.ReturnDate.Value.ToString("MMM dd, yyyy - hh:mm tt") : "---";
 
-                dgvHistory.Rows.Add(log.ItemName, bName, bStamp, rStamp, log.Status.ToString());
+                string displayBorrower = (historySortColumn == "Borrower" && log.BorrowerId == lastBorrower) ? "" : log.BorrowerId;
+
+                // ADDED: log.GradeLevel.ToString() and log.Purpose
+                dgvHistory.Rows.Add(log.ItemName, displayBorrower, log.GradeLevel.ToString(), log.Purpose, bStamp, rStamp, log.Status.ToString());
+
+                lastBorrower = log.BorrowerId;
             }
 
             foreach (DataGridViewColumn col in dgvHistory.Columns) { col.HeaderCell.SortGlyphDirection = SortOrder.None; }
@@ -1017,11 +1221,14 @@ namespace Ventrix.App
 
             dgvHistory.ResumeLayout();
         }
+
         private async Task UpdateDashboardCounts()
         {
             var items = (await _inventoryService.GetAllItemsAsync())?.ToList() ?? new List<InventoryItem>();
             var records = (await _borrowService.GetAllBorrowRecordsAsync())?.ToList() ?? new List<BorrowRecord>();
+            var users = (await _userService.GetAllUsersAsync())?.ToList() ?? new List<User>();
             int damagedCount = (await GetDamagedItemsAsync()).Count;
+            int borrowerCount = users.Count(u => u.Role != UserRole.Admin);
 
             if (badgeHealth != null)
             {
@@ -1039,10 +1246,12 @@ namespace Ventrix.App
                 }
             }
 
+            int borrowedCount = records.Count(x => x.Status == BorrowStatus.Active || x.Status == BorrowStatus.PendingReturn || x.Status == BorrowStatus.Overdue);
+
             cardTotal?.UpdateMetrics("TOTAL ITEMS", items.Count.ToString("N0"), DrawColor.FromArgb(13, 71, 161));
             cardAvailable?.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == ItemStatus.Available).ToString("N0"), DrawColor.Teal);
-            cardPending?.UpdateMetrics("BORROWED", items.Count(x => x.Status == ItemStatus.Borrowed).ToString("N0"), DrawColor.FromArgb(192, 0, 0));
-            cardBorrowers?.UpdateMetrics("RECORDS", records.Count.ToString("N0"), DrawColor.Orange);
+            cardBorrowed?.UpdateMetrics("BORROWED", borrowedCount.ToString("N0"), DrawColor.FromArgb(192, 0, 0));
+            cardRecords?.UpdateMetrics("RECORDS", records.Count.ToString("N0"), DrawColor.Orange);
 
         }
 
@@ -1055,7 +1264,89 @@ namespace Ventrix.App
         }
         #endregion
 
-        #region CRUD Actions
+        #region CRUD & User Registration Actions
+
+        private async void BtnRegisterBorrower_Click(object sender, EventArgs e)
+        {
+            if (txtRegFirstName == null || txtRegLastName == null || cmbRegRole == null) return;
+
+            string firstName = txtRegFirstName.Text.Trim();
+            string lastName = txtRegLastName.Text.Trim();
+
+            // Get suffix, default to empty string if blank or control doesn't exist
+            string suffix = txtRegSuffix != null ? txtRegSuffix.Text.Trim() : "";
+
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            {
+                MessageBox.Show("Please enter both First Name and Last Name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (cmbRegRole.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a Role.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!Enum.TryParse<UserRole>(cmbRegRole.SelectedItem.ToString(), out UserRole role))
+            {
+                MessageBox.Show("Invalid role selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            this.Cursor = Cursors.WaitCursor;
+            try
+            {
+                // Duplicate Name Check (Now accounts for the Suffix)
+                var existingUsers = await _userService.GetAllUsersAsync();
+                bool nameExists = existingUsers.Any(u =>
+                    u.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                    u.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                    (u.Suffix ?? "").Equals(suffix, StringComparison.OrdinalIgnoreCase));
+
+                if (nameExists)
+                {
+                    this.Cursor = Cursors.Default;
+                    MessageBox.Show("A borrower with this exact First Name, Last Name, and Suffix is already registered.", "Duplicate Name Detected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var registerDto = new RegisterDTO
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Suffix = suffix, // Pass the suffix to the database
+                    Role = role
+                };
+
+                var newUser = await _userService.RegisterNewBorrowerAsync(registerDto);
+
+                // Format name cleanly for the success popup
+                string displayFullName = string.IsNullOrWhiteSpace(newUser.Suffix)
+                    ? $"{newUser.FirstName} {newUser.LastName}"
+                    : $"{newUser.FirstName} {newUser.LastName} {newUser.Suffix}";
+
+                MessageBox.Show($"Borrower registered successfully!\n\nID: {newUser.UserId}\nName: {displayFullName}\nRole: {newUser.Role}\n\nPlease provide this exact ID to the borrower.", "Registration Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Clear inputs
+                txtRegFirstName.Clear();
+                txtRegLastName.Clear();
+                if (txtRegSuffix != null) txtRegSuffix.Clear();
+                if (cmbRegRole.Items.Count > 0) cmbRegRole.SelectedIndex = 0;
+
+                await LoadFromDatabase("Records");
+                await UpdateDashboardCounts();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to register borrower: {ex.Message}", "Registration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
         private async Task btnCreate_Click(object sender, EventArgs e)
         {
             using (var popup = new InventoryPopup(_inventoryService))
@@ -1166,7 +1457,18 @@ namespace Ventrix.App
         {
             if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no inventory data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = "Ventrix_Inventory_Report.xlsx" })
+            // 1. Check which page the admin is currently on
+            string currentFilter = lblDashboardHeader.Text.Replace("INVENTORY:", "").Trim();
+            string filePrefix = "Ventrix_Data";
+
+            // 2. Set a unique file name prefix based on the page
+            if (currentFilter == "ALL") filePrefix = "Ventrix_All_Items";
+            else if (currentFilter == "AVAILABLE") filePrefix = "Ventrix_Available_Items";
+            else if (currentFilter == "BORROWED") filePrefix = "Ventrix_Borrowed_Items";
+            else if (currentFilter == "RECORDS") filePrefix = "Ventrix_Records_List";
+
+            // 3. Inject the dynamic prefix and the sortable date into the filename
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = $"{filePrefix}_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.xlsx" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -1174,7 +1476,8 @@ namespace Ventrix.App
                     {
                         using (XLWorkbook workbook = new XLWorkbook())
                         {
-                            var worksheet = workbook.Worksheets.Add("Inventory Report");
+                            // Make the Excel sheet name match the page too
+                            var worksheet = workbook.Worksheets.Add(currentFilter);
                             int colIndex = 1;
                             for (int i = 0; i < dgvInventory.Columns.Count; i++)
                             {
@@ -1198,7 +1501,7 @@ namespace Ventrix.App
                             }
                             worksheet.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
-                            ToastNotification.Show(this, "Inventory Excel exported successfully!", ToastType.Success);
+                            ToastNotification.Show(this, $"{filePrefix.Replace("_", " ")} exported successfully!", ToastType.Success);
                         }
                     }
                     catch (Exception ex)
@@ -1216,7 +1519,8 @@ namespace Ventrix.App
 
             if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = $"Ventrix_Audit_History_{DateTime.Now:yyyyMMdd}.xlsx" })
+            // UPDATED: Filename timestamp appended
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = $"Ventrix_Audit_History_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.xlsx" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -1267,7 +1571,19 @@ namespace Ventrix.App
         {
             if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no inventory data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = "Ventrix_Inventory_Report.pdf" })
+            // 1. Check which page the admin is currently on
+            string currentFilter = lblDashboardHeader.Text.Replace("INVENTORY:", "").Trim();
+            string filePrefix = "Ventrix_Data";
+            string reportTitle = "VENTRIX SYSTEM REPORT";
+
+            // 2. Set unique prefixes and titles based on the page
+            if (currentFilter == "ALL") { filePrefix = "Ventrix_All_Items"; reportTitle = "VENTRIX SYSTEM - ALL ITEMS REPORT\n\n"; }
+            else if (currentFilter == "AVAILABLE") { filePrefix = "Ventrix_Available_Items"; reportTitle = "VENTRIX SYSTEM - AVAILABLE ITEMS\n\n"; }
+            else if (currentFilter == "BORROWED") { filePrefix = "Ventrix_Borrowed_Items"; reportTitle = "VENTRIX SYSTEM - ACTIVELY BORROWED ITEMS\n\n"; }
+            else if (currentFilter == "RECORDS") { filePrefix = "Ventrix_RecordsList"; reportTitle = "VENTRIX SYSTEM - REGISTERED RECORDS\n\n"; }
+
+            // 3. Inject the dynamic prefix and the sortable date into the filename
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = $"{filePrefix}_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.pdf" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -1278,7 +1594,9 @@ namespace Ventrix.App
                         pdfDoc.Open();
 
                         iTextSharp.text.Font titleFont = FontFactory.GetFont("Arial", 16, iTextSharp.text.Font.BOLD);
-                        Paragraph title = new Paragraph("VENTRIX SYSTEM - INVENTORY REPORT\n\n", titleFont);
+
+                        // Dynamically use the correct report title inside the PDF document
+                        Paragraph title = new Paragraph(reportTitle, titleFont);
                         title.Alignment = Element.ALIGN_CENTER;
                         pdfDoc.Add(title);
 
@@ -1309,7 +1627,7 @@ namespace Ventrix.App
 
                         pdfDoc.Add(pdfTable);
                         pdfDoc.Close();
-                        ToastNotification.Show(this, "Inventory PDF exported successfully!", ToastType.Success);
+                        ToastNotification.Show(this, $"{filePrefix.Replace("_", " ")} exported successfully!", ToastType.Success);
                     }
                     catch (Exception ex) { MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
                 }
@@ -1322,7 +1640,8 @@ namespace Ventrix.App
 
             if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = $"Ventrix_Audit_History_{DateTime.Now:yyyyMMdd}.pdf" })
+            // UPDATED: Filename timestamp appended
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = $"Ventrix_Audit_History_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.pdf" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -1496,16 +1815,22 @@ namespace Ventrix.App
                 if (colName == "Status" || colName == "Condition")
                 {
                     e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
+
                     if (value == nameof(ItemStatus.Available) || value == nameof(Condition.Good)) e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
-                    else if (value == nameof(ItemStatus.Borrowed)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
+                    else if (value == nameof(BorrowStatus.Active) || value == nameof(ItemStatus.Borrowed)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
+                    else if (value == nameof(BorrowStatus.Pending)) e.CellStyle.ForeColor = DrawColor.Goldenrod;
+                    else if (value == nameof(BorrowStatus.PendingReturn)) e.CellStyle.ForeColor = DrawColor.DarkMagenta;
+                    else if (value == nameof(BorrowStatus.Overdue)) e.CellStyle.ForeColor = DrawColor.Red;
                     else e.CellStyle.ForeColor = DrawColor.IndianRed;
                 }
+
                 if (colName == "AccountStatus")
                 {
                     e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
                     if (value == "ACTIVE") e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
                     else if (value == "LOCKED") e.CellStyle.ForeColor = DrawColor.IndianRed;
                 }
+
                 if (colName == "Strikes" && value == "2")
                 {
                     e.CellStyle.ForeColor = DrawColor.DarkOrange;
@@ -1527,6 +1852,7 @@ namespace Ventrix.App
                     e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
                     if (value == nameof(BorrowStatus.Returned)) e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
                     else if (value == nameof(BorrowStatus.Active)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
+                    else if (value == nameof(BorrowStatus.PendingReturn)) e.CellStyle.ForeColor = DrawColor.DarkMagenta;
                 }
                 if (colName == "RDate" && value == "---") e.CellStyle.ForeColor = DrawColor.LightGray;
             }
@@ -1534,13 +1860,28 @@ namespace Ventrix.App
 
         private void ToggleNoResultsState(bool showNoResults)
         {
-            if (pnlNoResults != null)
+            if (pnlNoResults != null) pnlNoResults.Visible = false;
+
+            if (lblEmptyState != null)
             {
-                pnlNoResults.Visible = showNoResults;
+                lblEmptyState.Visible = showNoResults;
 
                 if (showNoResults)
                 {
-                    pnlNoResults.BringToFront();
+                    lblEmptyState.Dock = DockStyle.None;
+
+                    if (pnlGridContainer != null && pnlGridContainer.Visible && dgvInventory != null)
+                    {
+                        lblEmptyState.Parent = pnlGridContainer;
+                        lblEmptyState.Bounds = dgvInventory.Bounds;
+                        lblEmptyState.BringToFront();
+                    }
+                    else if (pnlHistory != null && pnlHistory.Visible && dgvHistory != null)
+                    {
+                        lblEmptyState.Parent = pnlHistory;
+                        lblEmptyState.Bounds = dgvHistory.Bounds;
+                        lblEmptyState.BringToFront();
+                    }
                 }
             }
         }

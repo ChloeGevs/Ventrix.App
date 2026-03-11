@@ -27,32 +27,59 @@ namespace Ventrix.Application.Services
 
         public async Task ProcessBorrowAsync(BorrowRecord record, int specificItemId)
         {
-            // Ensure we map the ID directly to the model property
             record.InventoryItemId = specificItemId;
             record.BorrowDate = DateTime.Now;
-            record.Status = BorrowStatus.Active;
-
-            var item = await _context.InventoryItems.FindAsync(specificItemId);
-            if (item != null)
-            {
-                item.Status = ItemStatus.Borrowed;
-            }
+            record.Status = BorrowStatus.Pending;
 
             _context.BorrowRecords.Add(record);
             await _context.SaveChangesAsync();
         }
 
+        public async Task ApproveBorrowAsync(int recordId)
+        {
+            var record = await _context.BorrowRecords.FindAsync(recordId);
+
+            if (record != null && record.Status == BorrowStatus.Pending)
+            {
+                record.Status = BorrowStatus.Active;
+                record.BorrowDate = DateTime.Now;
+
+                var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
+                if (item != null)
+                {
+                    item.Status = ItemStatus.Borrowed;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new Exception("Borrow record not found or is no longer pending.");
+            }
+        }
+
+        public async Task RequestReturnAsync(int recordId)
+        {
+            var record = await _context.BorrowRecords.FindAsync(recordId);
+            if (record != null && (record.Status == BorrowStatus.Active || record.Status == BorrowStatus.Overdue))
+            {
+                record.Status = BorrowStatus.PendingReturn;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new Exception("Borrow record not found or cannot be returned.");
+            }
+        }
+
         public async Task ReturnItemAsync(int recordId)
         {
-            // 1. Find the active borrow record
             var record = await _context.BorrowRecords.FindAsync(recordId);
             if (record != null)
             {
-                // 2. Capture the EXACT time they clicked return
                 record.ReturnDate = DateTime.Now;
                 record.Status = BorrowStatus.Returned;
 
-                // 3. Find the physical unit and make it Available again
                 var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
 
                 if (item != null)
@@ -68,6 +95,46 @@ namespace Ventrix.Application.Services
             }
         }
 
+        // NEW METHOD: Used when an item is confirmed to be damaged upon return
+        public async Task ReturnItemAsDamagedAsync(int recordId)
+        {
+            var record = await _context.BorrowRecords.FindAsync(recordId);
+            if (record != null)
+            {
+                record.ReturnDate = DateTime.Now;
+                record.Status = BorrowStatus.Returned;
+
+                var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
+
+                if (item != null)
+                {
+                    item.Status = ItemStatus.Available;
+                    item.Condition = Condition.Damaged; // Specifically mark the physical condition as Damaged
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new Exception("Borrow record not found in the database.");
+            }
+        }
+
+        public async Task MarkAsOverdueAsync(int recordId)
+        {
+            var record = await _context.BorrowRecords.FindAsync(recordId);
+
+            if (record != null && record.Status == BorrowStatus.Active)
+            {
+                record.Status = BorrowStatus.Overdue;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new Exception("Record not found or is not currently Active.");
+            }
+        }
+
         public async Task ClearAllActivityAsync()
         {
             var visibleRecords = await _context.BorrowRecords
@@ -78,7 +145,7 @@ namespace Ventrix.Application.Services
             {
                 record.IsHiddenFromDashboard = true;
 
-            } 
+            }
             await _context.SaveChangesAsync();
         }
     }

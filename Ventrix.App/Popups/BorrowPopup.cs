@@ -51,7 +51,7 @@ namespace Ventrix.App.Popups
                 Purpose = txtPurpose.Text,
                 GradeLevel = Enum.Parse<GradeLevel>(cmbGrade.Text.Replace(" ", "")), 
                 BorrowDate = DateTime.Now,
-                Status = BorrowStatus.Active
+                Status = BorrowStatus.Pending
             };
 
             await _borrowService.ProcessBorrowAsync(record, _itemId);
