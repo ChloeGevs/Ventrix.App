@@ -71,7 +71,7 @@ namespace Ventrix.App
             // 
             // mainTableLayout
             // 
-            mainTableLayout.BackColor = Color.Transparent;
+            mainTableLayout.BackColor = Color.FromArgb(243, 244, 246);
             mainTableLayout.BackgroundImage = Properties.Resources._5_imresizer__1_;
             mainTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
             mainTableLayout.ColumnCount = 3;
@@ -92,7 +92,7 @@ namespace Ventrix.App
             // pnlLoginCard
             // 
             pnlLoginCard.BackColor = Color.Transparent;
-            pnlLoginCard.BorderRadius = 20;
+            pnlLoginCard.BorderRadius = 16;
             pnlLoginCard.Controls.Add(lblEquipmentList);
             pnlLoginCard.Controls.Add(lblCreateAccount);
             pnlLoginCard.Controls.Add(btnAdminToggle);
@@ -117,103 +117,112 @@ namespace Ventrix.App
             pnlLoginCard.FillColor = Color.White;
             pnlLoginCard.Location = new Point(303, 28);
             pnlLoginCard.Name = "pnlLoginCard";
-            pnlLoginCard.ShadowDecoration.BorderRadius = 24;
-            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(40, 0, 0, 0);
+            pnlLoginCard.ShadowDecoration.BorderRadius = 16;
+            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(20, 0, 0, 0);
             pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges28;
             pnlLoginCard.ShadowDecoration.Enabled = true;
-            pnlLoginCard.ShadowDecoration.Shadow = new Padding(0, 0, 10, 10);
+            pnlLoginCard.ShadowDecoration.Shadow = new Padding(0, 5, 10, 10);
             pnlLoginCard.Size = new Size(594, 744);
             pnlLoginCard.TabIndex = 0;
             // 
             // lblEquipmentList
             // 
             lblEquipmentList.BackColor = Color.Transparent;
-            lblEquipmentList.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            lblEquipmentList.ForeColor = Color.DimGray;
-            lblEquipmentList.Location = new Point(60, 259);
+            lblEquipmentList.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            lblEquipmentList.ForeColor = Color.FromArgb(107, 114, 128);
+            lblEquipmentList.Location = new Point(60, 262);
             lblEquipmentList.Name = "lblEquipmentList";
             lblEquipmentList.Size = new Size(144, 25);
             lblEquipmentList.TabIndex = 16;
-            lblEquipmentList.Text = "List of Equipments";
+            lblEquipmentList.Text = "Select Equipment";
             // 
             // lblCreateAccount
             // 
             lblCreateAccount.BackColor = Color.Transparent;
             lblCreateAccount.Cursor = Cursors.Hand;
-            lblCreateAccount.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCreateAccount.Location = new Point(161, 689);
+            lblCreateAccount.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCreateAccount.ForeColor = Color.FromArgb(156, 163, 175);
+            lblCreateAccount.Location = new Point(171, 689);
             lblCreateAccount.Name = "lblCreateAccount";
             lblCreateAccount.Size = new Size(288, 25);
             lblCreateAccount.TabIndex = 12;
-            lblCreateAccount.Text = "No account? Register through Admin";
+            lblCreateAccount.Text = "Need an account? See administrator.";
             // 
             // btnAdminToggle
             // 
-            btnAdminToggle.BorderRadius = 12;
+            btnAdminToggle.BorderRadius = 8;
             btnAdminToggle.Cursor = Cursors.Hand;
             btnAdminToggle.CustomizableEdges = customizableEdges1;
-            btnAdminToggle.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
+            btnAdminToggle.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             btnAdminToggle.ForeColor = Color.White;
             btnAdminToggle.Location = new Point(60, 116);
             btnAdminToggle.Name = "btnAdminToggle";
             btnAdminToggle.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            btnAdminToggle.Size = new Size(230, 55);
+            btnAdminToggle.Size = new Size(230, 48);
             btnAdminToggle.TabIndex = 1;
-            btnAdminToggle.Text = "ADMIN";
+            btnAdminToggle.Text = "Admin Mode";
             // 
             // btnStudentToggle
             // 
-            btnStudentToggle.BorderRadius = 12;
+            btnStudentToggle.BorderRadius = 8;
             btnStudentToggle.Cursor = Cursors.Hand;
             btnStudentToggle.CustomizableEdges = customizableEdges3;
-            btnStudentToggle.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
+            btnStudentToggle.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             btnStudentToggle.ForeColor = Color.White;
             btnStudentToggle.Location = new Point(310, 116);
             btnStudentToggle.Name = "btnStudentToggle";
             btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnStudentToggle.Size = new Size(230, 55);
+            btnStudentToggle.Size = new Size(230, 48);
             btnStudentToggle.TabIndex = 0;
-            btnStudentToggle.Text = "BORROWER";
+            btnStudentToggle.Text = "Student Mode";
             // 
             // lblLoginHeader
             // 
             lblLoginHeader.AutoSize = false;
             lblLoginHeader.BackColor = Color.Transparent;
-            lblLoginHeader.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
-            lblLoginHeader.ForeColor = Color.FromArgb(13, 71, 161);
-            lblLoginHeader.Location = new Point(0, 25);
+            lblLoginHeader.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
+            lblLoginHeader.ForeColor = Color.FromArgb(31, 41, 55);
+            lblLoginHeader.Location = new Point(0, 35);
             lblLoginHeader.Name = "lblLoginHeader";
-            lblLoginHeader.Size = new Size(594, 90);
+            lblLoginHeader.Size = new Size(594, 60);
             lblLoginHeader.TabIndex = 13;
-            lblLoginHeader.Text = "BORROWING PORTAL";
+            lblLoginHeader.Text = "Borrowing Portal";
             lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
             // 
             // txtStudentId
             // 
+            txtStudentId.BorderRadius = 8;
+            txtStudentId.BorderColor = Color.FromArgb(229, 231, 235);
             txtStudentId.CustomizableEdges = customizableEdges5;
             txtStudentId.DefaultText = "";
-            txtStudentId.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.FillColor = Color.FromArgb(249, 250, 251);
+            txtStudentId.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.ForeColor = Color.FromArgb(31, 41, 55);
             txtStudentId.IconLeft = Properties.Resources.user;
+            txtStudentId.IconLeftOffset = new Point(5, 0);
+            txtStudentId.TextOffset = new Point(5, 0);
             txtStudentId.Location = new Point(60, 195);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
-            txtStudentId.PlaceholderText = "";
+            txtStudentId.PlaceholderText = "Enter ID Number";
             txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            txtStudentId.Size = new Size(480, 50);
-            txtStudentId.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            txtStudentId.Size = new Size(480, 46);
+            txtStudentId.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Default;
             txtStudentId.TabIndex = 2;
             // 
             // cmbListEquipments
             // 
             cmbListEquipments.BackColor = Color.Transparent;
             cmbListEquipments.BorderRadius = 8;
+            cmbListEquipments.BorderColor = Color.FromArgb(229, 231, 235);
+            cmbListEquipments.FillColor = Color.FromArgb(249, 250, 251);
             cmbListEquipments.CustomizableEdges = customizableEdges7;
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbListEquipments.FocusedColor = Color.Empty;
-            cmbListEquipments.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            cmbListEquipments.ForeColor = Color.FromArgb(68, 88, 112);
+            cmbListEquipments.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cmbListEquipments.ForeColor = Color.FromArgb(31, 41, 55);
             cmbListEquipments.ItemHeight = 30;
             cmbListEquipments.Location = new Point(60, 291);
             cmbListEquipments.Name = "cmbListEquipments";
@@ -224,114 +233,123 @@ namespace Ventrix.App
             // lblQuantity
             // 
             lblQuantity.BackColor = Color.Transparent;
-            lblQuantity.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            lblQuantity.ForeColor = Color.DimGray;
-            lblQuantity.Location = new Point(60, 333);
+            lblQuantity.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            lblQuantity.ForeColor = Color.FromArgb(107, 114, 128);
+            lblQuantity.Location = new Point(60, 340);
             lblQuantity.Name = "lblQuantity";
             lblQuantity.Size = new Size(35, 25);
             lblQuantity.TabIndex = 14;
-            lblQuantity.Text = "QTY";
+            lblQuantity.Text = "Qty";
             // 
             // numQuantity
             // 
             numQuantity.BackColor = Color.Transparent;
             numQuantity.BorderRadius = 8;
+            numQuantity.BorderColor = Color.FromArgb(229, 231, 235);
+            numQuantity.FillColor = Color.FromArgb(249, 250, 251);
             numQuantity.CustomizableEdges = customizableEdges9;
-            numQuantity.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            numQuantity.Location = new Point(60, 365);
+            numQuantity.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            numQuantity.Location = new Point(60, 368);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
             numQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQuantity.Name = "numQuantity";
             numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            numQuantity.Size = new Size(117, 50);
+            numQuantity.Size = new Size(117, 46);
             numQuantity.TabIndex = 4;
-            numQuantity.UpDownButtonFillColor = Color.FromArgb(240, 240, 240);
+            numQuantity.UpDownButtonFillColor = Color.FromArgb(229, 231, 235);
             numQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // lblSubject
             // 
             lblSubject.BackColor = Color.Transparent;
-            lblSubject.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            lblSubject.ForeColor = Color.DimGray;
-            lblSubject.Location = new Point(223, 333);
+            lblSubject.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            lblSubject.ForeColor = Color.FromArgb(107, 114, 128);
+            lblSubject.Location = new Point(223, 340);
             lblSubject.Name = "lblSubject";
             lblSubject.Size = new Size(161, 25);
             lblSubject.TabIndex = 15;
-            lblSubject.Text = "SUBJECT / PURPOSE";
+            lblSubject.Text = "Subject / Purpose";
             // 
             // txtSubject
             // 
+            txtSubject.BorderRadius = 8;
+            txtSubject.BorderColor = Color.FromArgb(229, 231, 235);
+            txtSubject.FillColor = Color.FromArgb(249, 250, 251);
             txtSubject.CustomizableEdges = customizableEdges11;
             txtSubject.DefaultText = "";
-            txtSubject.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtSubject.Location = new Point(223, 365);
+            txtSubject.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtSubject.ForeColor = Color.FromArgb(31, 41, 55);
+            txtSubject.TextOffset = new Point(5, 0);
+            txtSubject.Location = new Point(223, 368);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
             txtSubject.PlaceholderText = "e.g., IT 211";
             txtSubject.SelectedText = "";
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            txtSubject.Size = new Size(317, 50);
-            txtSubject.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            txtSubject.Size = new Size(317, 46);
+            txtSubject.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Default;
             txtSubject.TabIndex = 5;
             // 
             // btnReturn
             // 
-            btnReturn.BorderRadius = 12;
+            btnReturn.BorderRadius = 8;
             btnReturn.Cursor = Cursors.Hand;
             btnReturn.CustomizableEdges = customizableEdges13;
-            btnReturn.FillColor = Color.FromArgb(230, 230, 230);
+            btnReturn.FillColor = Color.FromArgb(243, 244, 246);
             btnReturn.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
-            btnReturn.ForeColor = Color.FromArgb(64, 64, 64);
-            btnReturn.HoverState.FillColor = Color.FromArgb(210, 210, 210);
+            btnReturn.ForeColor = Color.FromArgb(31, 41, 55);
+            btnReturn.HoverState.FillColor = Color.FromArgb(229, 231, 235);
             btnReturn.Location = new Point(60, 612);
             btnReturn.Name = "btnReturn";
             btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            btnReturn.Size = new Size(230, 55);
+            btnReturn.Size = new Size(230, 52);
             btnReturn.TabIndex = 7;
-            btnReturn.Text = "RETURN";
+            btnReturn.Text = "Return Items";
             // 
             // btnBorrow
             // 
-            btnBorrow.BorderRadius = 12;
+            btnBorrow.BorderRadius = 8;
             btnBorrow.Cursor = Cursors.Hand;
             btnBorrow.CustomizableEdges = customizableEdges15;
-            btnBorrow.FillColor = Color.FromArgb(13, 71, 161);
+            btnBorrow.FillColor = Color.FromArgb(37, 99, 235);
             btnBorrow.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             btnBorrow.ForeColor = Color.White;
-            btnBorrow.HoverState.FillColor = Color.FromArgb(9, 50, 115);
+            btnBorrow.HoverState.FillColor = Color.FromArgb(29, 78, 216);
             btnBorrow.Location = new Point(310, 612);
             btnBorrow.Name = "btnBorrow";
             btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            btnBorrow.Size = new Size(230, 55);
+            btnBorrow.Size = new Size(230, 52);
             btnBorrow.TabIndex = 8;
-            btnBorrow.Text = "CHECKOUT ALL";
+            btnBorrow.Text = "Checkout Cart";
             // 
             // btnLogin
             // 
-            btnLogin.BorderRadius = 12;
+            btnLogin.BorderRadius = 8;
             btnLogin.CustomizableEdges = customizableEdges17;
-            btnLogin.FillColor = Color.FromArgb(13, 71, 161);
+            btnLogin.FillColor = Color.FromArgb(37, 99, 235);
             btnLogin.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
-            btnLogin.HoverState.FillColor = Color.FromArgb(9, 50, 115);
+            btnLogin.HoverState.FillColor = Color.FromArgb(29, 78, 216);
             btnLogin.Location = new Point(60, 595);
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            btnLogin.Size = new Size(480, 55);
+            btnLogin.Size = new Size(480, 52);
             btnLogin.TabIndex = 10;
-            btnLogin.Text = "LOGIN";
+            btnLogin.Text = "Login to Dashboard";
             btnLogin.Visible = false;
             // 
             // cmbGradeLevel
             // 
             cmbGradeLevel.BackColor = Color.Transparent;
             cmbGradeLevel.BorderRadius = 8;
+            cmbGradeLevel.BorderColor = Color.FromArgb(229, 231, 235);
+            cmbGradeLevel.FillColor = Color.FromArgb(249, 250, 251);
             cmbGradeLevel.CustomizableEdges = customizableEdges19;
             cmbGradeLevel.DrawMode = DrawMode.OwnerDrawFixed;
             cmbGradeLevel.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbGradeLevel.FocusedColor = Color.Empty;
-            cmbGradeLevel.Font = new Font("Segoe UI", 11F);
-            cmbGradeLevel.ForeColor = Color.FromArgb(68, 88, 112);
+            cmbGradeLevel.Font = new Font("Segoe UI", 10.5F);
+            cmbGradeLevel.ForeColor = Color.FromArgb(31, 41, 55);
             cmbGradeLevel.ItemHeight = 30;
             cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Faculty" });
             cmbGradeLevel.Location = new Point(223, 422);
@@ -346,59 +364,71 @@ namespace Ventrix.App
             btnAddToCart.BorderRadius = 8;
             btnAddToCart.Cursor = Cursors.Hand;
             btnAddToCart.CustomizableEdges = customizableEdges21;
-            btnAddToCart.FillColor = Color.Teal;
+            btnAddToCart.FillColor = Color.FromArgb(243, 244, 246);
             btnAddToCart.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
-            btnAddToCart.ForeColor = Color.White;
-            btnAddToCart.Location = new Point(60, 489);
+            btnAddToCart.ForeColor = Color.FromArgb(37, 99, 235);
+            btnAddToCart.HoverState.FillColor = Color.FromArgb(229, 231, 235);
+            btnAddToCart.Location = new Point(60, 480);
             btnAddToCart.Name = "btnAddToCart";
             btnAddToCart.ShadowDecoration.CustomizableEdges = customizableEdges22;
-            btnAddToCart.Size = new Size(144, 36);
+            btnAddToCart.Size = new Size(144, 42);
             btnAddToCart.TabIndex = 17;
-            btnAddToCart.Text = "ADD TO CART";
+            btnAddToCart.Text = "Add to Cart";
             // 
             // btnClearCart
             // 
             btnClearCart.BorderRadius = 8;
             btnClearCart.Cursor = Cursors.Hand;
             btnClearCart.CustomizableEdges = customizableEdges23;
-            btnClearCart.FillColor = Color.Brown;
+            btnClearCart.FillColor = Color.White;
+            btnClearCart.BorderColor = Color.FromArgb(254, 226, 226);
+            btnClearCart.BorderThickness = 1;
             btnClearCart.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
-            btnClearCart.ForeColor = Color.White;
-            btnClearCart.Location = new Point(60, 531);
+            btnClearCart.ForeColor = Color.FromArgb(239, 68, 68);
+            btnClearCart.HoverState.FillColor = Color.FromArgb(254, 242, 242);
+            btnClearCart.Location = new Point(60, 532);
             btnClearCart.Name = "btnClearCart";
             btnClearCart.ShadowDecoration.CustomizableEdges = customizableEdges24;
-            btnClearCart.Size = new Size(144, 35);
+            btnClearCart.Size = new Size(144, 42);
             btnClearCart.TabIndex = 18;
-            btnClearCart.Text = "CLEAR CART";
+            btnClearCart.Text = "Clear Cart";
             // 
             // lstCart
             // 
-            lstCart.BackColor = Color.AliceBlue;
-            lstCart.Font = new Font("Segoe UI", 10F);
-            lstCart.ForeColor = Color.FromArgb(64, 64, 64);
+            lstCart.BackColor = Color.FromArgb(249, 250, 251);
+            lstCart.BorderStyle = BorderStyle.None;
+            lstCart.Font = new Font("Segoe UI", 10.5F);
+            lstCart.ForeColor = Color.FromArgb(31, 41, 55);
             lstCart.FormattingEnabled = true;
-            lstCart.Location = new Point(223, 480);
+            lstCart.ItemHeight = 19;
+            lstCart.Location = new Point(231, 480);
             lstCart.Name = "lstCart";
-            lstCart.Size = new Size(317, 96);
+            lstCart.Size = new Size(309, 95);
             lstCart.TabIndex = 19;
             // 
             // txtPassword
             // 
+            txtPassword.BorderRadius = 8;
+            txtPassword.BorderColor = Color.FromArgb(229, 231, 235);
             txtPassword.Cursor = Cursors.IBeam;
             txtPassword.CustomizableEdges = customizableEdges25;
             txtPassword.DefaultText = "";
-            txtPassword.Font = new Font("Segoe UI", 11F);
+            txtPassword.FillColor = Color.FromArgb(249, 250, 251);
+            txtPassword.Font = new Font("Segoe UI", 10.5F);
+            txtPassword.ForeColor = Color.FromArgb(31, 41, 55);
             txtPassword.IconLeft = Properties.Resources.locked;
+            txtPassword.IconLeftOffset = new Point(5, 0);
             txtPassword.IconRight = Properties.Resources.eye;
+            txtPassword.TextOffset = new Point(5, 0);
             txtPassword.Location = new Point(60, 291);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '●';
-            txtPassword.PlaceholderText = "Password";
+            txtPassword.PlaceholderText = "Enter Password";
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges26;
-            txtPassword.Size = new Size(480, 50);
-            txtPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Material;
+            txtPassword.Size = new Size(480, 46);
+            txtPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Default;
             txtPassword.TabIndex = 9;
             txtPassword.UseSystemPasswordChar = true;
             txtPassword.Visible = false;
@@ -434,8 +464,6 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2TextBox txtPassword;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblEquipmentList;
         private Guna.UI2.WinForms.Guna2ComboBox cmbGradeLevel;
-
-        // NEW Cart Form Attributes
         private Guna.UI2.WinForms.Guna2Button btnAddToCart;
         private Guna.UI2.WinForms.Guna2Button btnClearCart;
         private System.Windows.Forms.ListBox lstCart;

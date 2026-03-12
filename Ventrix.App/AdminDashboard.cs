@@ -124,7 +124,7 @@ namespace Ventrix.App
                     else if (nextBtn == btnNavAllItems) _ = SwitchView("Inventory", "All");
                     else if (nextBtn == btnNavAvailable) _ = SwitchView("Inventory", "Available");
                     else if (nextBtn == btnNavBorrowed) _ = SwitchView("Inventory", "Borrowed");
-                    else if (nextBtn == btnNavBorrowers) _ = SwitchView("Inventory", "Borrowers");
+                    else if (nextBtn == btnNavBorrowers) _ = SwitchView("Inventory", "Records");
 
                     return true;
                 }
@@ -282,70 +282,83 @@ namespace Ventrix.App
             {
                 ContextMenuStrip actionMenu = new ContextMenuStrip();
 
-                var addStrikeBtn = new ToolStripMenuItem("⚠️ Add 1 Strike (Penalty)");
+                // Helper to get all IDs associated with a grouped row
+                List<int> GetSelectedRecordIds()
+                {
+                    if (dgvInventory.SelectedRows.Count == 0 || !dgvInventory.Columns.Contains("RecordIDs")) return new List<int>();
+                    string idsStr = dgvInventory.SelectedRows[0].Cells["RecordIDs"].Value?.ToString() ?? "";
+                    return idsStr.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+                }
+
+                // --- RECORDS TAB ACTIONS ---
+                var addStrikeBtn = new ToolStripMenuItem("⚠️ Issue Warning (Add 1 Strike)");
                 addStrikeBtn.Click += async (s, e) => {
                     if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
                     {
                         string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
                         await _userService.AddStrikeAsync(userId);
-                        ToastNotification.Show(this, "Strike added to student account.", ToastType.Warning);
+                        ToastNotification.Show(this, "1 Strike added to student account.", ToastType.Warning);
                         await LoadFromDatabase("Records");
                     }
                 };
 
-                var clearStrikeBtn = new ToolStripMenuItem("✅ Clear All Strikes (Forgive)");
-                clearStrikeBtn.Click += async (s, e) => {
+                var lockAccountBtn = new ToolStripMenuItem("🔒 Lock Account (Force 3 Strikes)");
+                lockAccountBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        if (MessageBox.Show("Are you sure you want to lock this account?\n\nThis will prevent the student from borrowing any equipment until an admin clears them.", "Lock Account", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                            // Apply strikes until locked
+                            await _userService.AddStrikeAsync(userId);
+                            await _userService.AddStrikeAsync(userId);
+                            await _userService.AddStrikeAsync(userId);
+
+                            ToastNotification.Show(this, "Account is now LOCKED.", ToastType.Warning);
+                            await LoadFromDatabase("Records");
+                        }
+                    }
+                };
+
+                var unlockAccountBtn = new ToolStripMenuItem("🔓 Unlock Account (Clear All Strikes)");
+                unlockAccountBtn.Click += async (s, e) => {
                     if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
                     {
                         string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
                         await _userService.ClearStrikesAsync(userId);
-                        ToastNotification.Show(this, "Student account strikes have been cleared.", ToastType.Success);
+                        ToastNotification.Show(this, "Account UNLOCKED. Strikes reset to 0.", ToastType.Success);
                         await LoadFromDatabase("Records");
                     }
                 };
 
-                var approveBtn = new ToolStripMenuItem("✅ Approve Pending Request");
+                var approveBtn = new ToolStripMenuItem("✅ Approve All Items in Request");
                 approveBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
                     {
-                        int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
-                        await _borrowService.ApproveBorrowAsync(recordId);
-                        ToastNotification.Show(this, "Transaction Approved & Active!", ToastType.Success);
+                        foreach (var id in ids) await _borrowService.ApproveBorrowAsync(id);
+                        ToastNotification.Show(this, "All Items Approved & Active!", ToastType.Success);
                         await LoadFromDatabase("Borrowed");
                         await UpdateDashboardCounts();
                     }
                 };
 
-                var confirmReturnBtn = new ToolStripMenuItem("✅ Confirm Returned Item");
-                confirmReturnBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                // NEW: Partial Approval Menu Item
+                var partialApproveBtn = new ToolStripMenuItem("📝 Select Specific Items to Approve...");
+                partialApproveBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
                     {
-                        int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
-                        await _borrowService.ReturnItemAsync(recordId);
-                        ToastNotification.Show(this, "Return Confirmed & Item Available!", ToastType.Success);
-                        await LoadFromDatabase("Borrowed");
-                        await UpdateDashboardCounts();
-                    }
-                };
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        var pendingRecords = allRecords.Where(r => ids.Contains(r.Id) && r.Status == BorrowStatus.Pending).ToList();
 
-                // NEW: Confirm Return & Auto-Penalize
-                var confirmDamagedReturnBtn = new ToolStripMenuItem("⚠️ Confirm Return (Damaged - Auto Penalize)");
-                confirmDamagedReturnBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
-                    {
-                        if (MessageBox.Show("Are you sure this item was damaged?\n\nThis will confirm the return, mark the physical item as Damaged, and automatically issue 1 Strike to the borrower.", "Confirm Damaged Return", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        if (pendingRecords.Any())
                         {
-                            int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
-
-                            var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
-                            var record = allRecords.FirstOrDefault(r => r.Id == recordId);
-
-                            if (record != null)
+                            var selectedToApprove = ShowMultiRecordSelectionPopup("Approve Items", "Select the specific items to approve:", pendingRecords, "Approve Selected", DrawColor.MediumSeaGreen);
+                            if (selectedToApprove.Any())
                             {
-                                await _borrowService.ReturnItemAsDamagedAsync(recordId);
-                                await _userService.AddStrikeAsync(record.BorrowerId);
-
-                                ToastNotification.Show(this, "Item marked Damaged & Strike issued!", ToastType.Warning);
+                                foreach (var id in selectedToApprove) await _borrowService.ApproveBorrowAsync(id);
+                                ToastNotification.Show(this, $"Successfully approved {selectedToApprove.Count} item(s)!", ToastType.Success);
                                 await LoadFromDatabase("Borrowed");
                                 await UpdateDashboardCounts();
                             }
@@ -353,40 +366,121 @@ namespace Ventrix.App
                     }
                 };
 
-                var returnBtn = new ToolStripMenuItem("🔙 Mark as Returned (Force Return)");
-                returnBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                var confirmReturnBtn = new ToolStripMenuItem("✅ Confirm Return (All Items)");
+                confirmReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
                     {
-                        if (MessageBox.Show("Are you sure you want to forcibly mark this item as returned and place it back in available inventory?", "Confirm Return", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        foreach (var id in ids) await _borrowService.ReturnItemAsync(id);
+                        ToastNotification.Show(this, "Return(s) Confirmed!", ToastType.Success);
+                        await LoadFromDatabase("Borrowed");
+                        await UpdateDashboardCounts();
+                    }
+                };
+
+                // NEW: Partial Return Menu Item
+                var partialReturnBtn = new ToolStripMenuItem("📝 Select Specific Items to Return...");
+                partialReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        var pendingReturnRecords = allRecords.Where(r => ids.Contains(r.Id) && r.Status == BorrowStatus.PendingReturn).ToList();
+
+                        if (pendingReturnRecords.Any())
                         {
-                            int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
-                            await _borrowService.ReturnItemAsync(recordId);
-                            ToastNotification.Show(this, "Item successfully returned to inventory!", ToastType.Success);
+                            var selectedToReturn = ShowMultiRecordSelectionPopup("Return Items", "Select the specific items to confirm return:", pendingReturnRecords, "Confirm Return", DrawColor.MediumSeaGreen);
+                            if (selectedToReturn.Any())
+                            {
+                                foreach (var id in selectedToReturn) await _borrowService.ReturnItemAsync(id);
+                                ToastNotification.Show(this, $"Successfully returned {selectedToReturn.Count} item(s)!", ToastType.Success);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
+
+                // UPDATED: Partial Damaged Return Menu Item
+                var confirmDamagedReturnBtn = new ToolStripMenuItem("⚠️ Select Specific Items to Mark Damaged...");
+                confirmDamagedReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+
+                        // Get items that are currently out with the borrower
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) &&
+                            (r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Active || r.Status == BorrowStatus.Overdue)).ToList();
+
+                        if (validRecords.Any())
+                        {
+                            // Show the checkbox popup, but styled red for danger
+                            var damagedIds = ShowMultiRecordSelectionPopup(
+                                "Report Damaged Items",
+                                "Select ONLY the specific items that are damaged:\n(Unchecked items will be left alone to be returned normally)",
+                                validRecords,
+                                "Mark Damaged & Penalize",
+                                DrawColor.IndianRed);
+
+                            if (damagedIds.Any())
+                            {
+                                string borrowerId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+
+                                // Mark only the checked items as damaged
+                                foreach (var id in damagedIds)
+                                {
+                                    await _borrowService.ReturnItemAsDamagedAsync(id);
+                                }
+
+                                // Apply 1 strike to the borrower for this incident
+                                await _userService.AddStrikeAsync(borrowerId);
+
+                                ToastNotification.Show(this, $"{damagedIds.Count} item(s) marked Damaged & Strike issued!", ToastType.Warning);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
+
+                var returnBtn = new ToolStripMenuItem("🔙 Force Return Item(s)");
+                returnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        if (MessageBox.Show($"Force return {ids.Count} item(s) back into available inventory?", "Confirm Return", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            foreach (var id in ids) await _borrowService.ReturnItemAsync(id);
+                            ToastNotification.Show(this, "Item(s) successfully returned to inventory!", ToastType.Success);
                             await LoadFromDatabase("Borrowed");
                             await UpdateDashboardCounts();
                         }
                     }
                 };
 
-                var overdueBtn = new ToolStripMenuItem("⏰ Mark as Overdue (Late)");
+                var overdueBtn = new ToolStripMenuItem("⏰ Mark Item(s) as Overdue");
                 overdueBtn.Click += async (s, e) => {
-                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("RecordID"))
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
                     {
-                        if (MessageBox.Show("Mark this item as Overdue?", "Flag as Late", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        if (MessageBox.Show($"Mark {ids.Count} item(s) as Overdue?", "Flag as Late", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                         {
-                            int recordId = Convert.ToInt32(dgvInventory.SelectedRows[0].Cells["RecordID"].Value);
-                            await _borrowService.MarkAsOverdueAsync(recordId);
-                            ToastNotification.Show(this, "Item flagged as Overdue!", ToastType.Warning);
+                            foreach (var id in ids) await _borrowService.MarkAsOverdueAsync(id);
+                            ToastNotification.Show(this, "Item(s) flagged as Overdue!", ToastType.Warning);
                             await LoadFromDatabase("Borrowed");
                         }
                     }
                 };
 
                 actionMenu.Items.Add(addStrikeBtn);
-                actionMenu.Items.Add(clearStrikeBtn);
+                actionMenu.Items.Add(lockAccountBtn);
+                actionMenu.Items.Add(unlockAccountBtn);
                 actionMenu.Items.Add(new ToolStripSeparator());
                 actionMenu.Items.Add(approveBtn);
+                actionMenu.Items.Add(partialApproveBtn);
                 actionMenu.Items.Add(confirmReturnBtn);
+                actionMenu.Items.Add(partialReturnBtn);
                 actionMenu.Items.Add(confirmDamagedReturnBtn);
                 actionMenu.Items.Add(overdueBtn);
                 actionMenu.Items.Add(returnBtn);
@@ -394,14 +488,17 @@ namespace Ventrix.App
                 dgvInventory.ContextMenuStrip = actionMenu;
 
                 actionMenu.Opening += (s, e) => {
-                    bool isBorrowersTab = dgvInventory.Columns.Contains("BorrowerID");
-                    bool isBorrowedTab = dgvInventory.Columns.Contains("RecordID") && dgvInventory.Columns.Contains("Status");
+                    bool isBorrowersTab = dgvInventory.Columns.Contains("BorrowerID") && !dgvInventory.Columns.Contains("RecordIDs");
+                    bool isBorrowedTab = dgvInventory.Columns.Contains("RecordIDs") && dgvInventory.Columns.Contains("Status");
 
                     addStrikeBtn.Visible = isBorrowersTab;
-                    clearStrikeBtn.Visible = isBorrowersTab;
+                    lockAccountBtn.Visible = isBorrowersTab;
+                    unlockAccountBtn.Visible = isBorrowersTab;
 
                     approveBtn.Visible = false;
+                    partialApproveBtn.Visible = false;
                     confirmReturnBtn.Visible = false;
+                    partialReturnBtn.Visible = false;
                     confirmDamagedReturnBtn.Visible = false;
                     returnBtn.Visible = false;
                     overdueBtn.Visible = false;
@@ -410,10 +507,15 @@ namespace Ventrix.App
                     {
                         string status = dgvInventory.SelectedRows[0].Cells["Status"].Value?.ToString() ?? "";
 
-                        if (status == "Pending") approveBtn.Visible = true;
+                        if (status == "Pending")
+                        {
+                            approveBtn.Visible = true;
+                            partialApproveBtn.Visible = true;
+                        }
                         if (status == "PendingReturn")
                         {
                             confirmReturnBtn.Visible = true;
+                            partialReturnBtn.Visible = true;
                             confirmDamagedReturnBtn.Visible = true;
                         }
 
@@ -461,6 +563,20 @@ namespace Ventrix.App
 
             this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); };
         }
+
+        #region Helper Popups
+        private List<int> ShowMultiRecordSelectionPopup(string title, string instruction, List<BorrowRecord> records, string btnText, DrawColor btnColor)
+        {
+            using (var popup = new MultiRecordSelectionPopup(title, instruction, records, btnText, btnColor))
+            {
+                if (ShowPopupWithFade(popup) == DialogResult.OK)
+                {
+                    return popup.SelectedIds;
+                }
+            }
+            return new List<int>(); // Return empty list if cancelled
+        }
+        #endregion
 
         #region FLUID LAYOUT & ANIMATION (Strict Math, No Overlaps)
         private void RefreshLayout()
@@ -957,27 +1073,44 @@ namespace Ventrix.App
             }
             else if (filter == "Borrowed")
             {
-                // 1. Changed "Borrower" to "Borrower ID" in the column headers
-                SetupColumns("Record ID", "Borrower ID", "Item", "Requested On", "Status");
-                dgvInventory.Columns["RecordID"].Visible = false;
+                SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested On", "Status");
+                dgvInventory.Columns["RecordIDs"].Visible = false;
 
-                var pendingAndActive = (await _borrowService.GetAllBorrowRecordsAsync())
+                var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                var pendingAndActive = allRecords
                     .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
-                    .OrderBy(b => b.Status)
-                    .ThenByDescending(b => b.BorrowDate)
                     .ToList();
 
-                foreach (var record in pendingAndActive)
+                var groupedRecords = pendingAndActive
+                    .GroupBy(b => new { b.BorrowerId, b.Status })
+                    .Select(g => new {
+                        BorrowerId = g.Key.BorrowerId,
+                        BorrowerName = g.First().Borrower != null ? g.First().Borrower.FullName : "Unknown",
+                        Status = g.Key.Status,
+                        LastUpdate = g.Max(x => x.BorrowDate),
+
+                        Items = string.Join(", ", g.GroupBy(x => GetBaseItemName(x.ItemName ?? "Item"))
+                                                   .Select(ig => ig.Count() > 1 ? $"{ig.Count()}x {ig.Key}" : ig.Key)),
+
+                        RecordIDs = string.Join(",", g.Select(x => x.Id))
+                    })
+                    .OrderBy(g => g.Status)
+                    .ThenByDescending(g => g.LastUpdate)
+                    .ToList();
+
+                foreach (var group in groupedRecords)
                 {
-                    // 2. Insert record.BorrowerId directly instead of parsing the FullName
                     dgvInventory.Rows.Add(
-                        record.Id,
-                        record.BorrowerId,
-                        record.ItemName,
-                        record.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"),
-                        record.Status.ToString()
+                        group.RecordIDs,
+                        group.BorrowerId,
+                        group.BorrowerName,
+                        group.Items,
+                        group.LastUpdate.ToString("MMM dd, yyyy - hh:mm tt"),
+                        group.Status.ToString()
                     );
                 }
+
+                if (dgvInventory.Columns.Contains("Items")) dgvInventory.Columns["Items"].FillWeight = 150;
             }
             else if (filter == "Available")
             {
@@ -1171,7 +1304,6 @@ namespace Ventrix.App
                 dgvHistory.Columns.Add("Item", "Item Name");
                 dgvHistory.Columns.Add("Borrower", "Borrower ID");
 
-                // ADDED THESE TWO LINES
                 dgvHistory.Columns.Add("Grade", "Grade/Role");
                 dgvHistory.Columns.Add("Purpose", "Purpose");
 
@@ -1203,7 +1335,6 @@ namespace Ventrix.App
 
                 string displayBorrower = (historySortColumn == "Borrower" && log.BorrowerId == lastBorrower) ? "" : log.BorrowerId;
 
-                // ADDED: log.GradeLevel.ToString() and log.Purpose
                 dgvHistory.Rows.Add(log.ItemName, displayBorrower, log.GradeLevel.ToString(), log.Purpose, bStamp, rStamp, log.Status.ToString());
 
                 lastBorrower = log.BorrowerId;
@@ -1251,7 +1382,7 @@ namespace Ventrix.App
             cardTotal?.UpdateMetrics("TOTAL ITEMS", items.Count.ToString("N0"), DrawColor.FromArgb(13, 71, 161));
             cardAvailable?.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == ItemStatus.Available).ToString("N0"), DrawColor.Teal);
             cardBorrowed?.UpdateMetrics("BORROWED", borrowedCount.ToString("N0"), DrawColor.FromArgb(192, 0, 0));
-            cardRecords?.UpdateMetrics("RECORDS", records.Count.ToString("N0"), DrawColor.Orange);
+            cardRecords?.UpdateMetrics("BORROWERS", borrowerCount.ToString("N0"), DrawColor.Orange);
 
         }
 
@@ -1419,13 +1550,21 @@ namespace Ventrix.App
             {
                 if (MessageBox.Show("Are you sure you want to sign out?", "Ventrix System", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    isSigningOut = true;
-                    var loginScreen = new BorrowerPortal(_inventoryService, _borrowService, _userService);
-                    loginScreen.ToggleMode("Admin");
-                    loginScreen.Show();
+                    isSigningOut = true; // This prevents Application.Exit() from killing the whole app
+
+                    // Create a fresh instance of the Borrower Portal
+                    var borrowerPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+
+                    // Show the portal (its built-in Load event will automatically set it back to Student Mode)
+                    borrowerPortal.Show();
+
+                    // Close the Admin Dashboard
                     this.Close();
                 }
-                else cmbAccountActions.SelectedIndex = -1;
+                else
+                {
+                    cmbAccountActions.SelectedIndex = -1;
+                }
             }
         }
         #endregion
@@ -1457,17 +1596,14 @@ namespace Ventrix.App
         {
             if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no inventory data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            // 1. Check which page the admin is currently on
             string currentFilter = lblDashboardHeader.Text.Replace("INVENTORY:", "").Trim();
             string filePrefix = "Ventrix_Data";
 
-            // 2. Set a unique file name prefix based on the page
             if (currentFilter == "ALL") filePrefix = "Ventrix_All_Items";
             else if (currentFilter == "AVAILABLE") filePrefix = "Ventrix_Available_Items";
             else if (currentFilter == "BORROWED") filePrefix = "Ventrix_Borrowed_Items";
             else if (currentFilter == "RECORDS") filePrefix = "Ventrix_Records_List";
 
-            // 3. Inject the dynamic prefix and the sortable date into the filename
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = $"{filePrefix}_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.xlsx" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -1476,7 +1612,6 @@ namespace Ventrix.App
                     {
                         using (XLWorkbook workbook = new XLWorkbook())
                         {
-                            // Make the Excel sheet name match the page too
                             var worksheet = workbook.Worksheets.Add(currentFilter);
                             int colIndex = 1;
                             for (int i = 0; i < dgvInventory.Columns.Count; i++)
@@ -1519,7 +1654,6 @@ namespace Ventrix.App
 
             if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            // UPDATED: Filename timestamp appended
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Excel Workbook|*.xlsx", FileName = $"Ventrix_Audit_History_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.xlsx" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -1571,18 +1705,15 @@ namespace Ventrix.App
         {
             if (dgvInventory == null || dgvInventory.Rows.Count == 0) { MessageBox.Show("There is no inventory data to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            // 1. Check which page the admin is currently on
             string currentFilter = lblDashboardHeader.Text.Replace("INVENTORY:", "").Trim();
             string filePrefix = "Ventrix_Data";
             string reportTitle = "VENTRIX SYSTEM REPORT";
 
-            // 2. Set unique prefixes and titles based on the page
             if (currentFilter == "ALL") { filePrefix = "Ventrix_All_Items"; reportTitle = "VENTRIX SYSTEM - ALL ITEMS REPORT\n\n"; }
             else if (currentFilter == "AVAILABLE") { filePrefix = "Ventrix_Available_Items"; reportTitle = "VENTRIX SYSTEM - AVAILABLE ITEMS\n\n"; }
             else if (currentFilter == "BORROWED") { filePrefix = "Ventrix_Borrowed_Items"; reportTitle = "VENTRIX SYSTEM - ACTIVELY BORROWED ITEMS\n\n"; }
             else if (currentFilter == "RECORDS") { filePrefix = "Ventrix_RecordsList"; reportTitle = "VENTRIX SYSTEM - REGISTERED RECORDS\n\n"; }
 
-            // 3. Inject the dynamic prefix and the sortable date into the filename
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = $"{filePrefix}_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.pdf" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -1595,7 +1726,6 @@ namespace Ventrix.App
 
                         iTextSharp.text.Font titleFont = FontFactory.GetFont("Arial", 16, iTextSharp.text.Font.BOLD);
 
-                        // Dynamically use the correct report title inside the PDF document
                         Paragraph title = new Paragraph(reportTitle, titleFont);
                         title.Alignment = Element.ALIGN_CENTER;
                         pdfDoc.Add(title);
@@ -1640,7 +1770,6 @@ namespace Ventrix.App
 
             if (!allData.Any()) { MessageBox.Show("No data matching these filters was found to export.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
-            // UPDATED: Filename timestamp appended
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "PDF Document|*.pdf", FileName = $"Ventrix_Audit_History_{DateTime.Now:MMM-dd-yyyy_hh-mmtt}.pdf" })
             {
                 if (sfd.ShowDialog() == DialogResult.OK)

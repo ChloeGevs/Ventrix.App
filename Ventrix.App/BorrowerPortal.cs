@@ -20,6 +20,15 @@ namespace Ventrix.App
         private bool isReturnMode = false;
         private List<CartItem> _cart = new List<CartItem>();
 
+        // Modern Color Palette
+        private readonly Color PrimaryBlue = Color.FromArgb(37, 99, 235);    // Tailwind Blue 600
+        private readonly Color PrimaryHover = Color.FromArgb(29, 78, 216);   // Tailwind Blue 700
+        private readonly Color SurfaceGray = Color.FromArgb(243, 244, 246);  // Tailwind Gray 100
+        private readonly Color TextDark = Color.FromArgb(31, 41, 55);        // Tailwind Gray 800
+        private readonly Color TextMuted = Color.FromArgb(107, 114, 128);    // Tailwind Gray 500
+        private readonly Color SuccessGreen = Color.FromArgb(16, 185, 129);  // Tailwind Emerald 500
+        private readonly Color DisabledGray = Color.FromArgb(209, 213, 219); // Tailwind Gray 300
+
         public BorrowerPortal(InventoryService invService, BorrowService borrowService, UserService userService)
         {
             _inventoryService = invService;
@@ -81,13 +90,13 @@ namespace Ventrix.App
             txtPassword.Clear();
             txtSubject.Clear();
 
-            btnAdminToggle.Text = "&Admin Mode";
-            btnStudentToggle.Text = "&Student Mode";
+            btnAdminToggle.Text = "Admin Mode";
+            btnStudentToggle.Text = "Student Mode";
 
             bool isAdmin = mode == "Admin";
 
-            lblLoginHeader.Text = isAdmin ? "ADMIN LOGIN" : "BORROWING PORTAL";
-            txtStudentId.PlaceholderText = isAdmin ? "Username / Admin ID" : "Student/Faculty ID Number";
+            lblLoginHeader.Text = isAdmin ? "Admin Access" : "Borrowing Portal";
+            txtStudentId.PlaceholderText = isAdmin ? "Username / Admin ID" : "Student / Faculty ID Number";
 
             txtPassword.Visible = isAdmin;
             btnLogin.Visible = isAdmin;
@@ -107,11 +116,12 @@ namespace Ventrix.App
             btnClearCart.Visible = !isAdmin;
             lstCart.Visible = !isAdmin;
 
-            btnAdminToggle.FillColor = isAdmin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(240, 240, 240);
-            btnAdminToggle.ForeColor = isAdmin ? Color.White : Color.Gray;
+            // Modern Toggle Styling
+            btnAdminToggle.FillColor = isAdmin ? PrimaryBlue : SurfaceGray;
+            btnAdminToggle.ForeColor = isAdmin ? Color.White : TextMuted;
 
-            btnStudentToggle.FillColor = !isAdmin ? Color.FromArgb(13, 71, 161) : Color.FromArgb(240, 240, 240);
-            btnStudentToggle.ForeColor = !isAdmin ? Color.White : Color.Gray;
+            btnStudentToggle.FillColor = !isAdmin ? PrimaryBlue : SurfaceGray;
+            btnStudentToggle.ForeColor = !isAdmin ? Color.White : TextMuted;
 
             numQuantity.Maximum = isAdmin ? 10 : 2;
             txtStudentId.Focus();
@@ -132,13 +142,15 @@ namespace Ventrix.App
             btnClearCart.Visible = true;
             lstCart.Visible = true;
 
-            btnBorrow.Text = "CHECKOUT CART";
-            btnBorrow.FillColor = Color.FromArgb(13, 71, 161);
+            btnBorrow.Text = "Checkout Cart";
+            btnBorrow.FillColor = PrimaryBlue;
+            btnBorrow.ForeColor = Color.White;
 
-            btnReturn.Text = "RETURN ITEM";
-            btnReturn.FillColor = Color.IndianRed;
+            btnReturn.Text = "Return Item";
+            btnReturn.FillColor = SurfaceGray;
+            btnReturn.ForeColor = TextDark;
 
-            lblLoginHeader.Text = "BORROWING PORTAL";
+            lblLoginHeader.Text = "Borrowing Portal";
             lblEquipmentList.Text = "Select Equipment:";
 
             txtStudentId.Enabled = true;
@@ -172,16 +184,18 @@ namespace Ventrix.App
                 btnClearCart.Visible = false;
                 lstCart.Visible = false;
 
-                lblLoginHeader.Text = "RETURN PORTAL";
+                lblLoginHeader.Text = "Return Portal";
                 lblEquipmentList.Text = "Select Item to Return:";
 
                 txtStudentId.Enabled = false;
 
-                btnBorrow.Text = "CANCEL / GO BACK";
-                btnBorrow.FillColor = Color.Gray;
+                btnBorrow.Text = "Cancel / Go Back";
+                btnBorrow.FillColor = SurfaceGray;
+                btnBorrow.ForeColor = TextDark;
 
-                btnReturn.Text = "REQUEST RETURN";
-                btnReturn.FillColor = Color.MediumSeaGreen;
+                btnReturn.Text = "Request Return";
+                btnReturn.FillColor = SuccessGreen;
+                btnReturn.ForeColor = Color.White;
 
                 cmbListEquipments.Items.Clear();
                 foreach (var record in activeRecords)
@@ -198,7 +212,6 @@ namespace Ventrix.App
         #endregion
 
         #region Actions (Login, Cart, Borrow, Return)
-
         private async void BtnAddToCart_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtStudentId.Text) || cmbListEquipments.SelectedIndex == -1 || cmbGradeLevel.SelectedIndex == -1)
@@ -225,7 +238,6 @@ namespace Ventrix.App
             int requestedQty = (int)numQuantity.Value;
             string baseItemName = cmbListEquipments.Text;
 
-            // NEW: Enforce Limits cleanly showing Held vs Pending
             var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == studentId).ToList();
             int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
             int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
@@ -405,6 +417,12 @@ namespace Ventrix.App
                     return;
                 }
 
+                if (!isReturnMode)
+                {
+                    await EnterReturnMode(studentId);
+                    return;
+                }
+
                 List<BorrowRecord> itemsToReturn = ShowMultiReturnSelectionPopup(activeRecords);
 
                 if (itemsToReturn != null && itemsToReturn.Count > 0)
@@ -417,6 +435,7 @@ namespace Ventrix.App
                     MessageBox.Show($"Successfully requested return for {itemsToReturn.Count} item(s)!\n\nPlease present the physical item(s) to the admin/technician for final confirmation.", "Return Pending Confirmation", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     await ValidateUserRoleAndLimits();
+                    await EnterBorrowMode();
                 }
             }
             catch (Exception ex)
@@ -449,7 +468,7 @@ namespace Ventrix.App
                     numQuantity.Enabled = false;
                     btnAddToCart.Enabled = false;
                     btnBorrow.Enabled = false;
-                    btnBorrow.FillColor = Color.Gray;
+                    btnBorrow.FillColor = DisabledGray;
                     return;
                 }
 
@@ -459,9 +478,8 @@ namespace Ventrix.App
                 numQuantity.Enabled = true;
                 btnAddToCart.Enabled = true;
                 btnBorrow.Enabled = true;
-                btnBorrow.FillColor = Color.FromArgb(13, 71, 161);
+                btnBorrow.FillColor = PrimaryBlue;
 
-                // NEW: Calculate remaining allowable limits
                 var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == inputId).ToList();
                 int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
                 int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
@@ -528,15 +546,16 @@ namespace Ventrix.App
                 popup.MinimizeBox = false;
                 popup.BackColor = Color.White;
 
-                Label lbl = new Label { Text = $"Please check exactly {requiredQuantity} specific {baseName}(s):", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+                Label lbl = new Label { Text = $"Please check exactly {requiredQuantity} specific {baseName}(s):", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI Semibold", 10) };
 
-                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 320, Height = 110, Font = new Font("Segoe UI", 10) };
+                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 320, Height = 110, Font = new Font("Segoe UI", 10), BorderStyle = BorderStyle.FixedSingle };
                 foreach (var unit in units)
                 {
                     clb.Items.Add(new UnitComboItem { Text = $"{unit.Name} (Condition: {unit.Condition})", Unit = unit });
                 }
 
-                Button btnOk = new Button { Text = "Confirm", Location = new Point(130, 165), Width = 100, Height = 35, BackColor = Color.FromArgb(13, 71, 161), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                Button btnOk = new Button { Text = "Confirm", Location = new Point(130, 165), Width = 100, Height = 35, BackColor = PrimaryBlue, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                btnOk.FlatAppearance.BorderSize = 0;
                 btnOk.Click += (s, e) => {
                     if (clb.CheckedItems.Count != requiredQuantity)
                     {
@@ -570,16 +589,17 @@ namespace Ventrix.App
                 popup.MinimizeBox = false;
                 popup.BackColor = Color.White;
 
-                Label lbl = new Label { Text = "Check ALL the items you are returning right now:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+                Label lbl = new Label { Text = "Check ALL the items you are returning right now:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI Semibold", 10) };
 
-                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 360, Height = 170, Font = new Font("Segoe UI", 10), CheckOnClick = true };
+                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 360, Height = 170, Font = new Font("Segoe UI", 10), CheckOnClick = true, BorderStyle = BorderStyle.FixedSingle };
                 foreach (var record in records)
                 {
                     string statusTag = record.Status == BorrowStatus.Overdue ? "[OVERDUE] " : "";
                     clb.Items.Add(new RecordComboItem { Text = $"{statusTag}{record.ItemName} (Borrowed: {record.BorrowDate:MMM dd, yyyy})", RecordId = record.Id });
                 }
 
-                Button btnOk = new Button { Text = "Request Return", Location = new Point(150, 230), Width = 120, Height = 35, BackColor = Color.MediumSeaGreen, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                Button btnOk = new Button { Text = "Request Return", Location = new Point(150, 230), Width = 120, Height = 35, BackColor = SuccessGreen, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                btnOk.FlatAppearance.BorderSize = 0;
                 btnOk.Click += (s, e) => {
                     if (clb.CheckedItems.Count == 0)
                     {
