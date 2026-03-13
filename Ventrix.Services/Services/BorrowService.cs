@@ -27,6 +27,20 @@ namespace Ventrix.Application.Services
 
         public async Task ProcessBorrowAsync(BorrowRecord record, int specificItemId)
         {
+            var user = await _context.Users.FindAsync(record.BorrowerId);
+            if (user == null) throw new Exception("User not found.");
+
+            if (user.Role == UserRole.Student)
+            {
+                if (user.IsLockedOut) throw new Exception("Student account is locked due to strikes.");
+
+                var activeCount = await _context.BorrowRecords.CountAsync(b =>
+                    b.BorrowerId == record.BorrowerId &&
+                    (b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending || b.Status == BorrowStatus.Overdue));
+
+                if (activeCount >= 3) throw new Exception("Student has reached the maximum limit of 3 items.");
+            }
+
             record.InventoryItemId = specificItemId;
             record.BorrowDate = DateTime.Now;
             record.Status = BorrowStatus.Pending;
@@ -41,14 +55,16 @@ namespace Ventrix.Application.Services
 
             if (record != null && record.Status == BorrowStatus.Pending)
             {
+                var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
+
+                if (item == null || item.Status != ItemStatus.Available)
+                {
+                    throw new Exception("The specific item unit is no longer available for approval.");
+                }
+
                 record.Status = BorrowStatus.Active;
                 record.BorrowDate = DateTime.Now;
-
-                var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
-                if (item != null)
-                {
-                    item.Status = ItemStatus.Borrowed;
-                }
+                item.Status = ItemStatus.Borrowed;
 
                 await _context.SaveChangesAsync();
             }

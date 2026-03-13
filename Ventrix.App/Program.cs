@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Ventrix.Application.Services;
@@ -15,6 +16,7 @@ namespace Ventrix.App
         [STAThread]
         static void Main()
         {
+            // 1. Setup Global Error Handling
             System.Windows.Forms.Application.ThreadException += GlobalThreadException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomainUnhandledException;
 
@@ -26,14 +28,17 @@ namespace Ventrix.App
             ConfigureServices(services);
             var serviceProvider = services.BuildServiceProvider();
 
-            // 2. Initialize DB
+            // 2. Initialize DB with Migrations
             try
             {
                 InitializeDatabase(serviceProvider).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Database Initialization Failed: {ex.Message}", "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Log fatal startup error
+                ErrorLogger.Log(ex, "System Startup - Database Initialization");
+                MessageBox.Show($"Database Initialization Failed: {ex.Message}\n\nPlease check logs.txt for details.",
+                                "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -41,15 +46,20 @@ namespace Ventrix.App
             System.Windows.Forms.Application.Run(startForm);
         }
 
-        private static void GlobalThreadException(object sender, ThreadExceptionEventArgs e)
+        private static void GlobalThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            // Log error using your ErrorLogger service logic
-            MessageBox.Show("An unexpected error occurred. Please check the logs.", "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            // FIX: Log UI thread crashes using the existing ErrorLogger
+            ErrorLogger.Log(e.Exception, "Global UI Thread Exception");
+            MessageBox.Show("An unexpected UI error occurred. Please check the logs.txt file.", "System Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         private static void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            // Handle non-UI thread crashes
+            // FIX: Log non-UI thread crashes
+            if (e.ExceptionObject is Exception ex)
+            {
+                ErrorLogger.Log(ex, "Fatal Domain Unhandled Exception");
+            }
         }
 
         private static IConfiguration ConfigureServices(IServiceCollection services)
@@ -62,9 +72,12 @@ namespace Ventrix.App
             string connectionString = config.GetConnectionString("DefaultConnection") ?? "Data Source=ventrix.db";
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
-            services.AddScoped<UserService>();
-            services.AddScoped<InventoryService>();
-            services.AddScoped<BorrowService>();
+            // FIX: Use Singletons for services in WinForms to maintain state across the app life
+            services.AddSingleton<UserService>();
+            services.AddSingleton<InventoryService>();
+            services.AddSingleton<BorrowService>();
+
+            // Forms should remain Transient so they refresh every time they are opened
             services.AddTransient<AdminDashboard>();
             services.AddTransient<BorrowerPortal>();
 
@@ -75,10 +88,16 @@ namespace Ventrix.App
         {
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await db.Database.EnsureCreatedAsync();
+
+            // FIX: Use MigrateAsync instead of EnsureCreated to support migrations
+            await db.Database.MigrateAsync();
 
             var inv = scope.ServiceProvider.GetRequiredService<InventoryService>();
-            if (!(await inv.GetAllItemsAsync()).Any()) await inv.RunInitialSeed();
+            var allItems = await inv.GetAllItemsAsync();
+            if (allItems == null || !allItems.Any())
+            {
+                await inv.RunInitialSeed();
+            }
 
             var user = scope.ServiceProvider.GetRequiredService<UserService>();
             await user.InitializeDefaultAdminAsync();

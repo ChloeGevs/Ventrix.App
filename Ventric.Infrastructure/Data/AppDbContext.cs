@@ -11,19 +11,34 @@ namespace Ventrix.Infrastructure.Data
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<BorrowRecord> BorrowRecords { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) // Changed from ModelCreatingBuilder to ModelBuilder
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Ensure UserId is treated as the Primary Key
+            // 1. Primary Key Configuration
             modelBuilder.Entity<User>().HasKey(u => u.UserId);
 
-            // Set up relationships to prevent accidental deletion of items with history
-            modelBuilder.Entity<BorrowRecord>()
-                .HasOne(b => b.InventoryItem) // Correctly mapping the navigation property
-                .WithMany()
-                .HasForeignKey(b => b.InventoryItemId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // 2. Inventory Item Configuration
+            // Ensure ID is the primary key for items
+            modelBuilder.Entity<InventoryItem>().HasKey(i => i.Id);
+
+            // 3. BorrowRecord Relationships
+            modelBuilder.Entity<BorrowRecord>(entity =>
+            {
+                entity.HasKey(b => b.Id);
+
+                // Mapping the Borrower (User)
+                entity.HasOne(b => b.Borrower)
+                    .WithMany()
+                    .HasForeignKey(b => b.BorrowerId)
+                    .OnDelete(DeleteBehavior.Restrict); // Prevent deleting users with active history
+
+                // Mapping the Inventory Item
+                entity.HasOne(b => b.InventoryItem)
+                    .WithMany()
+                    .HasForeignKey(b => b.InventoryItemId)
+                    .OnDelete(DeleteBehavior.Restrict); // Critical for soft-delete logic
+            });
         }
     }
 }

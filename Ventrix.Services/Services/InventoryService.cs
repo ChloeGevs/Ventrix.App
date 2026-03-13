@@ -115,15 +115,47 @@ namespace Ventrix.Application.Services
 
         public async Task RunInitialSeed()
         {
+            // Only seed if the table is completely empty
             if (await _context.InventoryItems.AnyAsync()) return;
 
-            var seedItems = new List<InventoryItem>
-    {
-        new InventoryItem { Name = "Projector A", Category = ItemCategory.Electronics, Status = ItemStatus.Available, Condition = Condition.Good, DateAdded = DateTime.Now },
-        new InventoryItem { Name = "HDMI Cable 5m", Category = ItemCategory.Accessories, Status = ItemStatus.Available, Condition = Condition.Good, DateAdded = DateTime.Now }
-    };
+            var seedItems = new List<InventoryItem>();
 
-            _context.InventoryItems.AddRange(seedItems);
+            // Helper to add multiple units of the same item name
+            void PrepareItems(string name, int quantity, ItemCategory category)
+            {
+                for (int i = 1; i <= quantity; i++)
+                {
+                    seedItems.Add(new InventoryItem
+                    {
+                        // Formats as "Laptop #01", "Laptop #02", etc.
+                        Name = $"{name} #{i:D2}",
+                        Category = category,
+                        Status = ItemStatus.Available,
+                        Condition = Condition.Good,
+                        DateAdded = DateTime.Now
+                    });
+                }
+            }
+
+            // Your specific previous items
+            PrepareItems("Laptop", 40, ItemCategory.Electronics);
+            PrepareItems("Tablets", 50, ItemCategory.Electronics);
+            PrepareItems("Projector", 2, ItemCategory.Electronics);
+            PrepareItems("Headphones", 30, ItemCategory.Peripherals);
+            PrepareItems("Hdmi", 3, ItemCategory.Peripherals);
+            PrepareItems("Speaker", 2, ItemCategory.Electronics);
+            PrepareItems("Mouse", 40, ItemCategory.Peripherals);
+            PrepareItems("Keyboard", 20, ItemCategory.Peripherals);
+            PrepareItems("Chess board", 8, ItemCategory.Others);
+            PrepareItems("Sudoku board", 4, ItemCategory.Others);
+            PrepareItems("Word factory", 2, ItemCategory.Others);
+            PrepareItems("Games of general board", 1, ItemCategory.Others);
+            PrepareItems("Meter stick", 30, ItemCategory.Others);
+            PrepareItems("Flash drive", 5, ItemCategory.Peripherals);
+            PrepareItems("Laptop bags", 40, ItemCategory.Others);
+            PrepareItems("Chairs/mono blocks", 40, ItemCategory.Others);
+
+            await _context.InventoryItems.AddRangeAsync(seedItems);
             await _context.SaveChangesAsync();
         }
     }

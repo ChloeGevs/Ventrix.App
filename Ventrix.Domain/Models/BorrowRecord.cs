@@ -10,23 +10,30 @@ namespace Ventrix.Domain.Models
         [Key]
         public int Id { get; set; }
 
+        [Required]
         public string BorrowerId { get; set; }
 
         [ForeignKey("BorrowerId")]
         public virtual User Borrower { get; set; }
 
+        [Required]
         public int InventoryItemId { get; set; }
 
         [ForeignKey("InventoryItemId")]
         public virtual InventoryItem InventoryItem { get; set; }
 
         public int Quantity { get; set; }
+
         public string Purpose { get; set; }
+
         public GradeLevel GradeLevel { get; set; }
 
-        public string ItemName { get; set; } 
+        public string ItemName { get; set; }
+
         public DateTime BorrowDate { get; set; } = DateTime.Now;
+
         public DateTime? ReturnDate { get; set; }
+
         public BorrowStatus Status { get; set; } = BorrowStatus.Pending;
 
         public bool IsHiddenFromDashboard { get; set; } = false;

@@ -224,7 +224,12 @@ namespace Ventrix.App
                 MessageBox.Show("Your account is locked due to strikes.", "Locked", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
+            if (userAccount.Role.ToString() == "Student" && cmbGradeLevel.Text.Equals("Faculty", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Students cannot select the Faculty grade level. Please choose your correct year/grade.", "Invalid Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbGradeLevel.SelectedIndex = -1;
+                return;
+            }
             int requestedQty = (int)numQuantity.Value;
             string baseItemName = cmbListEquipments.Text;
 
@@ -367,32 +372,38 @@ namespace Ventrix.App
                         continue; // Skips to the next item, leaves this one in the cart
                     }
 
-                    List<InventoryItem> selectedUnits = ShowMultiUnitSelectionPopup(specificUnits, cartItem.BaseItemName, cartItem.Quantity);
-
-                    if (selectedUnits != null && selectedUnits.Count == cartItem.Quantity)
+                    using (var popup = new Popups.ShowMultiUnitSelectionPopup(specificUnits, cartItem.BaseItemName, cartItem.Quantity))
                     {
-                        foreach (var unit in selectedUnits)
+                        if (popup.ShowDialog(this) == DialogResult.OK)
                         {
-                            var record = new BorrowRecord
+                            var selectedUnits = popup.SelectedUnits;
+
+                            if (selectedUnits != null && selectedUnits.Count == cartItem.Quantity)
                             {
-                                BorrowerId = studentId,
-                                ItemName = unit.Name,
-                                Quantity = 1,
-                                Purpose = purpose,
-                                GradeLevel = Enum.Parse<GradeLevel>(safeGrade),
-                                Status = BorrowStatus.Pending,
-                                InventoryItemId = unit.Id
-                            };
+                                foreach (var unit in selectedUnits)
+                                {
+                                    var record = new BorrowRecord
+                                    {
+                                        BorrowerId = studentId,
+                                        ItemName = unit.Name,
+                                        Quantity = 1,
+                                        Purpose = purpose,
+                                        GradeLevel = Enum.Parse<GradeLevel>(safeGrade),
+                                        Status = BorrowStatus.Pending,
+                                        InventoryItemId = unit.Id
+                                    };
 
-                            await _borrowService.ProcessBorrowAsync(record, unit.Id);
-                            successfulCheckouts++;
+                                    await _borrowService.ProcessBorrowAsync(record, unit.Id);
+                                    successfulCheckouts++;
+                                }
+
+                                itemsToRemoveFromCart.Add(cartItem);
+                            }
                         }
-
-                        itemsToRemoveFromCart.Add(cartItem);
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Selection cancelled for {cartItem.BaseItemName}. These will not be borrowed.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        else
+                        {
+                            MessageBox.Show($"Selection cancelled for {cartItem.BaseItemName}. These will not be borrowed.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
                     }
                 }
 
@@ -422,7 +433,7 @@ namespace Ventrix.App
             catch (Exception ex)
             {
                 ErrorLogger.Log(ex, "BorrowerPortal - Checkout Failed");
-                MessageBox.Show("Borrowed error: The database could not be reached or an unexpected error occurred.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "System Restriction", MessageBoxButtons.OK, MessageBoxIcon.Stop);
             }
             finally
             {
@@ -458,19 +469,25 @@ namespace Ventrix.App
                     return;
                 }
 
-                List<BorrowRecord> itemsToReturn = ShowMultiReturnSelectionPopup(activeRecords);
-
-                if (itemsToReturn != null && itemsToReturn.Count > 0)
+                using (var popup = new Popups.ShowMultiReturnSelectionPopup(activeRecords))
                 {
-                    foreach (var record in itemsToReturn)
+                    if (popup.ShowDialog(this) == DialogResult.OK)
                     {
-                        await _borrowService.RequestReturnAsync(record.Id);
+                        var itemsToReturn = popup.SelectedRecords;
+
+                        if (itemsToReturn != null && itemsToReturn.Count > 0)
+                        {
+                            foreach (var record in itemsToReturn)
+                            {
+                                await _borrowService.RequestReturnAsync(record.Id);
+                            }
+
+                            MessageBox.Show($"Successfully requested return for {itemsToReturn.Count} item(s)!\n\nPlease present the physical item(s) to the admin/technician for final confirmation.", "Return Pending Confirmation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            await ValidateUserRoleAndLimits();
+                            await EnterBorrowMode();
+                        }
                     }
-
-                    MessageBox.Show($"Successfully requested return for {itemsToReturn.Count} item(s)!\n\nPlease present the physical item(s) to the admin/technician for final confirmation.", "Return Pending Confirmation", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    await ValidateUserRoleAndLimits();
-                    await EnterBorrowMode();
                 }
             }
             catch (Exception ex)
@@ -493,6 +510,7 @@ namespace Ventrix.App
 
             if (userAccount != null)
             {
+                // 1. Lockout Check
                 if (userAccount.Strikes >= 3 && userAccount.Role.ToString() != "Admin" && userAccount.Role.ToString() != "Faculty")
                 {
                     MessageBox.Show($"ACCOUNT LOCKED: You have accumulated {userAccount.Strikes} strikes for late or damaged returns.\n\nYou are prohibited from using the borrowing system until a faculty member clears your account.", "Security Lockout", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -507,6 +525,7 @@ namespace Ventrix.App
                     return;
                 }
 
+                // 2. Enable UI
                 cmbListEquipments.Enabled = true;
                 txtSubject.Enabled = true;
                 cmbGradeLevel.Enabled = true;
@@ -515,32 +534,46 @@ namespace Ventrix.App
                 btnBorrow.Enabled = true;
                 btnBorrow.FillColor = PrimaryBlue;
 
+                // 3. Calculate Limits
                 var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == inputId).ToList();
                 int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
                 int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
                 int cartTotal = _cart.Sum(c => c.Quantity);
 
+                // 4. Role-Specific Logic
                 if (userAccount.Role.ToString() == "Student")
                 {
-                    int remainingAllowed = 3 - currentlyHolding - currentlyPending - cartTotal;
-                    if (remainingAllowed <= 0)
+                    // Remove "Faculty" from options so students cannot select it
+                    if (cmbGradeLevel.Items.Contains("Faculty"))
                     {
-                        numQuantity.Maximum = 0;
-                    }
-                    else
-                    {
-                        numQuantity.Maximum = remainingAllowed;
+                        cmbGradeLevel.Items.Remove("Faculty");
                     }
 
-                    if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty") cmbGradeLevel.SelectedIndex = -1;
+                    // Clear the selection if it was previously set to Faculty
+                    if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty")
+                    {
+                        cmbGradeLevel.SelectedIndex = -1;
+                    }
+
+                    // Set student limit to 3 items max
+                    int remainingAllowed = 3 - currentlyHolding - currentlyPending - cartTotal;
+                    numQuantity.Maximum = Math.Max(0, remainingAllowed);
+
                     cmbGradeLevel.Enabled = true;
                 }
-                else
+                else // Faculty or Admin
                 {
-                    numQuantity.Maximum = 50;
-                    if (!cmbGradeLevel.Items.Contains("Faculty")) cmbGradeLevel.Items.Add("Faculty");
+                    // Re-add "Faculty" if it was removed, then lock it as the selection
+                    if (!cmbGradeLevel.Items.Contains("Faculty"))
+                    {
+                        cmbGradeLevel.Items.Add("Faculty");
+                    }
+
                     cmbGradeLevel.SelectedItem = "Faculty";
                     cmbGradeLevel.Enabled = false;
+
+                    // Faculty can borrow up to 50 items
+                    numQuantity.Maximum = 50;
                 }
             }
         }

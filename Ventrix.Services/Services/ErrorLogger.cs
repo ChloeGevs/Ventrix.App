@@ -5,21 +5,23 @@ namespace Ventrix.Application.Services
 {
     public static class ErrorLogger
     {
-        public static void Log(Exception ex, string context = "General Error")
+        private static readonly string LogFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.txt");
+
+        public static void Log(Exception ex, string context)
         {
             try
             {
-                string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "error_log.txt");
-                string logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] - {context}\n" +
-                                    $"Message: {ex.Message}\n" +
-                                    $"StackTrace: {ex.StackTrace}\n" +
-                                    $"--------------------------------------------------\n";
+                string logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] CONTEXT: {context}{Environment.NewLine}" +
+                                  $"EXCEPTION: {ex.Message}{Environment.NewLine}" +
+                                  $"STACK TRACE: {ex.StackTrace}{Environment.NewLine}" +
+                                  new string('-', 50) + Environment.NewLine;
 
-                File.AppendAllText(filePath, logMessage);
+                File.AppendAllText(LogFilePath, logEntry);
             }
             catch
             {
-
+                // Fallback to console if file writing fails
+                Console.WriteLine($"Critical Logging Failure: {ex.Message}");
             }
         }
     }

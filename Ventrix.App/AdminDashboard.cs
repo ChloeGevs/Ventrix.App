@@ -541,10 +541,16 @@ namespace Ventrix.App
                     confirmReturnBtn.Visible = false;
                     partialReturnBtn.Visible = false;
                     confirmDamagedReturnBtn.Visible = false;
-                    partialForceReturnBtn.Visible = true;
+                    partialForceReturnBtn.Visible = false;
                     partialReturnBtn.Visible = false;
                     partialOverdueBtn.Visible = false;
 
+                    if (isBorrowersTab)
+                    {
+                        addStrikeBtn.Visible = true;
+                        lockAccountBtn.Visible = true;
+                        unlockAccountBtn.Visible = true;
+                    }
                     if (isBorrowedTab && dgvInventory.SelectedRows.Count > 0)
                     {
                         string status = dgvInventory.SelectedRows[0].Cells["Status"].Value?.ToString() ?? "";
