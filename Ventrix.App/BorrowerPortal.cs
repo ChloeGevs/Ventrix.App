@@ -53,6 +53,18 @@ namespace Ventrix.App
             btnAddToCart.Click += BtnAddToCart_Click;
             btnClearCart.Click += (s, e) => { _cart.Clear(); UpdateCartUI(); _ = ValidateUserRoleAndLimits(); };
 
+            // NEW: Double-click to remove a specific item
+            lstCart.DoubleClick += (s, e) => RemoveSelectedCartItem();
+
+            // NEW: Press 'Delete' or 'Backspace' key to remove a specific item
+            lstCart.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Delete || e.KeyCode == Keys.Back)
+                {
+                    RemoveSelectedCartItem();
+                }
+            };
+
             txtPassword.IconRightClick += TxtPassword_IconRightClick;
             txtPassword.MouseMove += txtPassword_MouseMove;
             cmbGradeLevel.SelectedIndexChanged += CmbGradeLevel_SelectedIndexChanged;
@@ -142,16 +154,6 @@ namespace Ventrix.App
             btnClearCart.Visible = true;
             lstCart.Visible = true;
 
-            btnBorrow.Text = "Checkout Cart";
-            btnBorrow.FillColor = PrimaryBlue;
-            btnBorrow.ForeColor = Color.White;
-
-            btnReturn.Text = "Return Item";
-            btnReturn.FillColor = SurfaceGray;
-            btnReturn.ForeColor = TextDark;
-
-            lblLoginHeader.Text = "Borrowing Portal";
-            lblEquipmentList.Text = "Select Equipment:";
 
             txtStudentId.Enabled = true;
 
@@ -184,18 +186,6 @@ namespace Ventrix.App
                 btnClearCart.Visible = false;
                 lstCart.Visible = false;
 
-                lblLoginHeader.Text = "Return Portal";
-                lblEquipmentList.Text = "Select Item to Return:";
-
-                txtStudentId.Enabled = false;
-
-                btnBorrow.Text = "Cancel / Go Back";
-                btnBorrow.FillColor = SurfaceGray;
-                btnBorrow.ForeColor = TextDark;
-
-                btnReturn.Text = "Request Return";
-                btnReturn.FillColor = SuccessGreen;
-                btnReturn.ForeColor = Color.White;
 
                 cmbListEquipments.Items.Clear();
                 foreach (var record in activeRecords)
@@ -272,6 +262,27 @@ namespace Ventrix.App
             }
         }
 
+        // NEW METHOD: Removes the specifically selected item from the cart
+        private void RemoveSelectedCartItem()
+        {
+            if (lstCart.SelectedIndex != -1)
+            {
+                var itemToRemove = _cart[lstCart.SelectedIndex];
+                var confirm = MessageBox.Show(
+                    $"Are you sure you want to remove {itemToRemove.BaseItemName} from your cart?",
+                    "Remove Item",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirm == DialogResult.Yes)
+                {
+                    _cart.RemoveAt(lstCart.SelectedIndex);
+                    UpdateCartUI();
+                    _ = ValidateUserRoleAndLimits();
+                }
+            }
+        }
+
         private async void BtnLogin_Click(object sender, EventArgs e)
         {
             string inputId = txtStudentId.Text.Trim();
@@ -342,6 +353,9 @@ namespace Ventrix.App
                 string safeGrade = cmbGradeLevel.Text.Replace(" ", "");
                 string purpose = txtSubject.Text;
 
+                int successfulCheckouts = 0;
+                List<CartItem> itemsToRemoveFromCart = new List<CartItem>();
+
                 foreach (var cartItem in _cart)
                 {
                     var allAvailableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
@@ -350,7 +364,7 @@ namespace Ventrix.App
                     if (specificUnits.Count < cartItem.Quantity)
                     {
                         MessageBox.Show($"Not enough available stock for {cartItem.BaseItemName}. Skipping...", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        continue;
+                        continue; // Skips to the next item, leaves this one in the cart
                     }
 
                     List<InventoryItem> selectedUnits = ShowMultiUnitSelectionPopup(specificUnits, cartItem.BaseItemName, cartItem.Quantity);
@@ -371,28 +385,49 @@ namespace Ventrix.App
                             };
 
                             await _borrowService.ProcessBorrowAsync(record, unit.Id);
+                            successfulCheckouts++;
                         }
+
+                        itemsToRemoveFromCart.Add(cartItem);
                     }
                     else
                     {
-                        MessageBox.Show($"Selection cancelled for {cartItem.BaseItemName}. These will not be checked out.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"Selection cancelled for {cartItem.BaseItemName}. These will not be borrowed.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
 
-                MessageBox.Show("Checkout successful! Please wait for admin approval.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (successfulCheckouts > 0)
+                {
+                    MessageBox.Show("Borrow request successful! Please wait for the admin to approve your items.", "Borrow Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                _cart.Clear();
+                    foreach (var processedItem in itemsToRemoveFromCart)
+                    {
+                        _cart.Remove(processedItem);
+                    }
+
+                    if (_cart.Count == 0)
+                    {
+                        txtSubject.Clear();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("No items were borrowed. Your selection has not been changed.", "Borrowing Incomplete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
                 UpdateCartUI();
-                txtSubject.Clear();
                 await LoadEquipmentListAsync();
                 await ValidateUserRoleAndLimits();
             }
             catch (Exception ex)
             {
                 ErrorLogger.Log(ex, "BorrowerPortal - Checkout Failed");
-                MessageBox.Show("Checkout error: The database could not be reached or an unexpected error occurred.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Borrowed error: The database could not be reached or an unexpected error occurred.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            finally { SetLoadingState(false); }
+            finally
+            {
+                SetLoadingState(false);
+            }
         }
 
         private async void BtnReturn_Click(object sender, EventArgs e)

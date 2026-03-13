@@ -20,11 +20,15 @@ namespace Ventrix.Application.Services
 
         public async Task AddItemAsync(string name, string category, string status, Condition condition)
         {
+            // FIX: Case-insensitive parsing prevents crashes from UI string variations
+            if (!Enum.TryParse(category, true, out ItemCategory catEnum)) catEnum = ItemCategory.Others;
+            if (!Enum.TryParse(status, true, out ItemStatus statEnum)) statEnum = ItemStatus.Available;
+
             var newItem = new InventoryItem
             {
                 Name = name,
-                Category = (ItemCategory)Enum.Parse(typeof(ItemCategory), category),
-                Status = (ItemStatus)Enum.Parse(typeof(ItemStatus), status),
+                Category = catEnum,
+                Status = statEnum,
                 Condition = condition,
                 DateAdded = DateTime.Now
             };
@@ -35,7 +39,10 @@ namespace Ventrix.Application.Services
 
         public async Task<List<InventoryItem>> GetAllItemsAsync()
         {
-            return await _context.InventoryItems.ToListAsync();
+            // Fix: Only return items that are not "Archived" (Soft Delete)
+            return await _context.InventoryItems
+                .Where(i => i.Status != ItemStatus.Unavailable || i.Condition != Condition.Damaged)
+                .ToListAsync();
         }
 
         public async Task<List<InventoryItem>> GetFilteredInventoryAsync(string statusFilter = "All", string searchTerm = "")
@@ -79,7 +86,19 @@ namespace Ventrix.Application.Services
             var item = await _context.InventoryItems.FindAsync(id);
             if (item != null)
             {
-                _context.InventoryItems.Remove(item);
+                // check if the item has history before actual deletion
+                var hasHistory = await _context.BorrowRecords.AnyAsync(b => b.InventoryItemId == id);
+
+                if (hasHistory)
+                {
+                    // Soft delete logic: mark as unavailable/archived instead of removing
+                    item.Status = ItemStatus.Unavailable;
+                }
+                else
+                {
+                    _context.InventoryItems.Remove(item);
+                }
+
                 await _context.SaveChangesAsync();
             }
         }
@@ -96,40 +115,16 @@ namespace Ventrix.Application.Services
 
         public async Task RunInitialSeed()
         {
-            var itemsToSeed = new List<InventoryItem>();
+            if (await _context.InventoryItems.AnyAsync()) return;
 
-            void PrepareItems(string name, int count, ItemCategory category)
-            {
-                for (int i = 1; i <= count; i++)
-                {
-                    itemsToSeed.Add(new InventoryItem
-                    {
-                        Name = count > 1 ? $"{name} #{i}" : name,
-                        Category = category,
-                        Status = ItemStatus.Available,
-                        Condition = Condition.Good    
-                    });
-                }
-            }
+            var seedItems = new List<InventoryItem>
+    {
+        new InventoryItem { Name = "Projector A", Category = ItemCategory.Electronics, Status = ItemStatus.Available, Condition = Condition.Good, DateAdded = DateTime.Now },
+        new InventoryItem { Name = "HDMI Cable 5m", Category = ItemCategory.Accessories, Status = ItemStatus.Available, Condition = Condition.Good, DateAdded = DateTime.Now }
+    };
 
-            PrepareItems("Laptop", 40, ItemCategory.Electronics);
-            PrepareItems("Tablets", 50, ItemCategory.Electronics);
-            PrepareItems("Projector", 2, ItemCategory.Electronics);
-            PrepareItems("Headphones", 30, ItemCategory.Peripherals);
-            PrepareItems("Hdmi", 3, ItemCategory.Peripherals);
-            PrepareItems("Speaker", 2, ItemCategory.Electronics);
-            PrepareItems("Mouse", 40, ItemCategory.Peripherals);
-            PrepareItems("Keyboard", 20, ItemCategory.Peripherals);
-            PrepareItems("Chess board", 8, ItemCategory.Others);
-            PrepareItems("Sudoku board", 4, ItemCategory.Others);
-            PrepareItems("Word factory", 2, ItemCategory.Others);
-            PrepareItems("Games of general board", 1, ItemCategory.Others);
-            PrepareItems("Meter stick", 30, ItemCategory.Others);
-            PrepareItems("Flash drive", 5, ItemCategory.Peripherals);
-            PrepareItems("Laptop bags", 40, ItemCategory.Others);
-            PrepareItems("Chairs/mono blocks", 40, ItemCategory.Others);
-
-            await SeedInventoryAsync(itemsToSeed);
+            _context.InventoryItems.AddRange(seedItems);
+            await _context.SaveChangesAsync();
         }
     }
 }

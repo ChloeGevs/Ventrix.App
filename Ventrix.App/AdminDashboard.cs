@@ -67,6 +67,15 @@ namespace Ventrix.App
             StyleDataGrids();
 
             Shown += async (s, e) => {
+
+                int newOverdueItems = await _borrowService.ProcessAutomaticOverdueStrikesAsync(_userService);
+
+                if (newOverdueItems > 0)
+                {
+                    // Notify the admin if the system caught people who didn't return items
+                    ToastNotification.Show(this, $"System Auto-Check: {newOverdueItems} item(s) automatically marked Overdue & strikes applied.", ToastType.Warning);
+                }
+
                 RefreshLayout();
                 await SwitchView("Home");
                 btnHome?.Focus();
@@ -444,34 +453,65 @@ namespace Ventrix.App
                     }
                 };
 
-                var returnBtn = new ToolStripMenuItem("🔙 Force Return Item(s)");
-                returnBtn.Click += async (s, e) => {
+                var partialForceReturnBtn = new ToolStripMenuItem("🔙 Select Specific Items to Force Return...");
+                partialForceReturnBtn.Click += async (s, e) => {
                     var ids = GetSelectedRecordIds();
                     if (ids.Any())
                     {
-                        if (MessageBox.Show($"Force return {ids.Count} item(s) back into available inventory?", "Confirm Return", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        // Force return is valid for Active, Overdue, or PendingReturn
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) &&
+                            (r.Status == BorrowStatus.Active || r.Status == BorrowStatus.Overdue || r.Status == BorrowStatus.PendingReturn)).ToList();
+
+                        if (validRecords.Any())
                         {
-                            foreach (var id in ids) await _borrowService.ReturnItemAsync(id);
-                            ToastNotification.Show(this, "Item(s) successfully returned to inventory!", ToastType.Success);
-                            await LoadFromDatabase("Borrowed");
-                            await UpdateDashboardCounts();
+                            var selectedToReturn = ShowMultiRecordSelectionPopup(
+                                "Force Return Items",
+                                "Select the specific items to manually force return to inventory:",
+                                validRecords,
+                                "Force Return",
+                                DrawColor.IndianRed);
+
+                            if (selectedToReturn.Any())
+                            {
+                                await _borrowService.ForceReturnItemsAsync(selectedToReturn);
+                                ToastNotification.Show(this, $"Successfully force returned {selectedToReturn.Count} item(s)!", ToastType.Success);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
                         }
                     }
                 };
 
-                var overdueBtn = new ToolStripMenuItem("⏰ Mark Item(s) as Overdue");
-                overdueBtn.Click += async (s, e) => {
+                // NEW: Partial Overdue Menu Item
+                var partialOverdueBtn = new ToolStripMenuItem("⏰ Select Specific Items to Mark Overdue...");
+                partialOverdueBtn.Click += async (s, e) => {
                     var ids = GetSelectedRecordIds();
                     if (ids.Any())
                     {
-                        if (MessageBox.Show($"Mark {ids.Count} item(s) as Overdue?", "Flag as Late", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        // Overdue can only be applied to currently Active items
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) && r.Status == BorrowStatus.Active).ToList();
+
+                        if (validRecords.Any())
                         {
-                            foreach (var id in ids) await _borrowService.MarkAsOverdueAsync(id);
-                            ToastNotification.Show(this, "Item(s) flagged as Overdue!", ToastType.Warning);
-                            await LoadFromDatabase("Borrowed");
+                            var selectedToOverdue = ShowMultiRecordSelectionPopup(
+                                "Mark Overdue",
+                                "Select the specific items to mark as overdue:\n(A strike will automatically be issued)",
+                                validRecords,
+                                "Mark Overdue",
+                                DrawColor.DarkOrange);
+
+                            if (selectedToOverdue.Any())
+                            {
+                                await _borrowService.ManuallyMarkOverdueAsync(selectedToOverdue, _userService);
+                                ToastNotification.Show(this, $"{selectedToOverdue.Count} item(s) marked Overdue & Strike issued!", ToastType.Warning);
+                                await LoadFromDatabase("Borrowed");
+                            }
                         }
                     }
                 };
+
 
                 actionMenu.Items.Add(addStrikeBtn);
                 actionMenu.Items.Add(lockAccountBtn);
@@ -482,8 +522,9 @@ namespace Ventrix.App
                 actionMenu.Items.Add(confirmReturnBtn);
                 actionMenu.Items.Add(partialReturnBtn);
                 actionMenu.Items.Add(confirmDamagedReturnBtn);
-                actionMenu.Items.Add(overdueBtn);
-                actionMenu.Items.Add(returnBtn);
+                actionMenu.Items.Add(partialForceReturnBtn);
+                actionMenu.Items.Add(partialOverdueBtn);
+                actionMenu.Items.Add(partialReturnBtn);
 
                 dgvInventory.ContextMenuStrip = actionMenu;
 
@@ -500,8 +541,9 @@ namespace Ventrix.App
                     confirmReturnBtn.Visible = false;
                     partialReturnBtn.Visible = false;
                     confirmDamagedReturnBtn.Visible = false;
-                    returnBtn.Visible = false;
-                    overdueBtn.Visible = false;
+                    partialForceReturnBtn.Visible = true;
+                    partialReturnBtn.Visible = false;
+                    partialOverdueBtn.Visible = false;
 
                     if (isBorrowedTab && dgvInventory.SelectedRows.Count > 0)
                     {
@@ -521,13 +563,13 @@ namespace Ventrix.App
 
                         if (status == "Active")
                         {
-                            returnBtn.Visible = true;
-                            overdueBtn.Visible = true;
+                            partialForceReturnBtn.Visible = true;
+                            partialOverdueBtn.Visible = true;
                             confirmDamagedReturnBtn.Visible = true;
                         }
                         if (status == "Overdue")
                         {
-                            returnBtn.Visible = true;
+                            partialForceReturnBtn.Visible = true;
                             confirmDamagedReturnBtn.Visible = true;
                         }
                     }
@@ -1073,12 +1115,13 @@ namespace Ventrix.App
             }
             else if (filter == "Borrowed")
             {
-                SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested On", "Status");
+                SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested/Approved On", "Due Date", "Status");
                 dgvInventory.Columns["RecordIDs"].Visible = false;
 
                 var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
                 var pendingAndActive = allRecords
-                    .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
+                    .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending ||
+                                b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
                     .ToList();
 
                 var groupedRecords = pendingAndActive
@@ -1088,10 +1131,7 @@ namespace Ventrix.App
                         BorrowerName = g.First().Borrower != null ? g.First().Borrower.FullName : "Unknown",
                         Status = g.Key.Status,
                         LastUpdate = g.Max(x => x.BorrowDate),
-
-                        Items = string.Join(", ", g.GroupBy(x => GetBaseItemName(x.ItemName ?? "Item"))
-                                                   .Select(ig => ig.Count() > 1 ? $"{ig.Count()}x {ig.Key}" : ig.Key)),
-
+                        Items = string.Join(", ", g.Select(x => x.ItemName ?? "Unknown Item")),
                         RecordIDs = string.Join(",", g.Select(x => x.Id))
                     })
                     .OrderBy(g => g.Status)
@@ -1100,17 +1140,33 @@ namespace Ventrix.App
 
                 foreach (var group in groupedRecords)
                 {
+                    string dueDateStr;
+
+                    // Due date only appears if the item is no longer Pending (meaning it was approved)
+                    if (group.Status == BorrowStatus.Pending)
+                    {
+                        dueDateStr = "---"; 
+                    }
+                    else
+                    {
+                        // Calculates due date as exactly 24 hours after the admin approved it
+                        dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy");
+                    }
+
                     dgvInventory.Rows.Add(
                         group.RecordIDs,
                         group.BorrowerId,
                         group.BorrowerName,
                         group.Items,
-                        group.LastUpdate.ToString("MMM dd, yyyy - hh:mm tt"),
+                        group.LastUpdate.ToString("MMM dd, yyyy"),
+                        dueDateStr, 
                         group.Status.ToString()
                     );
                 }
 
+                // Adjust column widths for better readability
                 if (dgvInventory.Columns.Contains("Items")) dgvInventory.Columns["Items"].FillWeight = 150;
+                if (dgvInventory.Columns.Contains("DueDate")) dgvInventory.Columns["DueDate"].FillWeight = 110;
             }
             else if (filter == "Available")
             {
@@ -1133,6 +1189,8 @@ namespace Ventrix.App
 
         private async Task LoadHomeContent()
         {
+            await _borrowService.ProcessAutomaticOverdueStrikesAsync(_userService);
+
             if (flowRecentActivity == null) return;
             var damagedItems = await GetDamagedItemsAsync();
 
@@ -1172,7 +1230,7 @@ namespace Ventrix.App
                 }
             }
 
-            foreach (var group in displayGroups.Take(10))
+            foreach (var group in displayGroups.Take(5))
             {
                 var firstRecord = group.First();
 
@@ -1511,15 +1569,29 @@ namespace Ventrix.App
             }
         }
 
+        // UPDATED METHOD in AdminDashboard.cs
         private async Task ClearRecentActivity()
         {
-            if (MessageBox.Show("Delete all activity logs?", "Critical Action", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            if (MessageBox.Show("Clear the current activity view?", "Update Dashboard", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                await _borrowService.ClearAllActivityAsync();
-                flowRecentActivity?.Controls.Clear();
+                // 1. Get the same top 5 records currently being shown in LoadHomeContent
+                var currentLogs = (await _borrowService.GetAllBorrowRecordsAsync())
+                      .Where(b => b.IsHiddenFromDashboard == false)
+                      .OrderByDescending(b => b.Status == BorrowStatus.Returned ? (b.ReturnDate ?? b.BorrowDate) : b.BorrowDate)
+                      .Take(5)
+                      .ToList();
+
+                // 2. Hide only these specific records
+                foreach (var record in currentLogs)
+                {
+                    await _borrowService.HideRecordFromDashboardAsync(record.Id);
+                }
+
+                // 3. Refresh the dashboard
                 await LoadHomeContent();
                 await UpdateDashboardCounts();
-                ToastNotification.Show(this, "Activity records cleared successfully.", ToastType.Info);
+
+                ToastNotification.Show(this, "Dashboard updated with next recent activities.", ToastType.Info);
             }
         }
 
@@ -1959,7 +2031,18 @@ namespace Ventrix.App
                     if (value == "ACTIVE") e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
                     else if (value == "LOCKED") e.CellStyle.ForeColor = DrawColor.IndianRed;
                 }
-
+                if (colName == "DueDate" && value != "Awaiting Approval")
+                {
+                    DateTime dueDate;
+                    if (DateTime.TryParseExact(value, "MMM dd, yyyy - hh:mm tt", null, System.Globalization.DateTimeStyles.None, out dueDate))
+                    {
+                        if (DateTime.Now > dueDate)
+                        {
+                            e.CellStyle.ForeColor = DrawColor.Red;
+                            e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
+                        }
+                    }
+                }
                 if (colName == "Strikes" && value == "2")
                 {
                     e.CellStyle.ForeColor = DrawColor.DarkOrange;

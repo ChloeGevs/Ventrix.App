@@ -3,6 +3,7 @@
     public enum ItemStatus
     {
         Available,
+        Unavailable,
         Borrowed,
         Maintenance,
         Lost

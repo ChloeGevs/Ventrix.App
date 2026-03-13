@@ -132,7 +132,7 @@ namespace Ventrix.App
             lblEquipmentList.ForeColor = Color.FromArgb(107, 114, 128);
             lblEquipmentList.Location = new Point(60, 262);
             lblEquipmentList.Name = "lblEquipmentList";
-            lblEquipmentList.Size = new Size(144, 25);
+            lblEquipmentList.Size = new Size(131, 23);
             lblEquipmentList.TabIndex = 16;
             lblEquipmentList.Text = "Select Equipment";
             // 
@@ -144,7 +144,7 @@ namespace Ventrix.App
             lblCreateAccount.ForeColor = Color.FromArgb(156, 163, 175);
             lblCreateAccount.Location = new Point(171, 689);
             lblCreateAccount.Name = "lblCreateAccount";
-            lblCreateAccount.Size = new Size(288, 25);
+            lblCreateAccount.Size = new Size(285, 25);
             lblCreateAccount.TabIndex = 12;
             lblCreateAccount.Text = "Need an account? See administrator.";
             // 
@@ -191,8 +191,8 @@ namespace Ventrix.App
             // 
             // txtStudentId
             // 
-            txtStudentId.BorderRadius = 8;
             txtStudentId.BorderColor = Color.FromArgb(229, 231, 235);
+            txtStudentId.BorderRadius = 8;
             txtStudentId.CustomizableEdges = customizableEdges5;
             txtStudentId.DefaultText = "";
             txtStudentId.FillColor = Color.FromArgb(249, 250, 251);
@@ -200,7 +200,6 @@ namespace Ventrix.App
             txtStudentId.ForeColor = Color.FromArgb(31, 41, 55);
             txtStudentId.IconLeft = Properties.Resources.user;
             txtStudentId.IconLeftOffset = new Point(5, 0);
-            txtStudentId.TextOffset = new Point(5, 0);
             txtStudentId.Location = new Point(60, 195);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
@@ -208,18 +207,18 @@ namespace Ventrix.App
             txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges6;
             txtStudentId.Size = new Size(480, 46);
-            txtStudentId.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Default;
             txtStudentId.TabIndex = 2;
+            txtStudentId.TextOffset = new Point(5, 0);
             // 
             // cmbListEquipments
             // 
             cmbListEquipments.BackColor = Color.Transparent;
-            cmbListEquipments.BorderRadius = 8;
             cmbListEquipments.BorderColor = Color.FromArgb(229, 231, 235);
-            cmbListEquipments.FillColor = Color.FromArgb(249, 250, 251);
+            cmbListEquipments.BorderRadius = 8;
             cmbListEquipments.CustomizableEdges = customizableEdges7;
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbListEquipments.FillColor = Color.FromArgb(249, 250, 251);
             cmbListEquipments.FocusedColor = Color.Empty;
             cmbListEquipments.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cmbListEquipments.ForeColor = Color.FromArgb(31, 41, 55);
@@ -237,17 +236,17 @@ namespace Ventrix.App
             lblQuantity.ForeColor = Color.FromArgb(107, 114, 128);
             lblQuantity.Location = new Point(60, 340);
             lblQuantity.Name = "lblQuantity";
-            lblQuantity.Size = new Size(35, 25);
+            lblQuantity.Size = new Size(29, 23);
             lblQuantity.TabIndex = 14;
             lblQuantity.Text = "Qty";
             // 
             // numQuantity
             // 
             numQuantity.BackColor = Color.Transparent;
-            numQuantity.BorderRadius = 8;
             numQuantity.BorderColor = Color.FromArgb(229, 231, 235);
-            numQuantity.FillColor = Color.FromArgb(249, 250, 251);
+            numQuantity.BorderRadius = 8;
             numQuantity.CustomizableEdges = customizableEdges9;
+            numQuantity.FillColor = Color.FromArgb(249, 250, 251);
             numQuantity.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
             numQuantity.Location = new Point(60, 368);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
@@ -266,20 +265,19 @@ namespace Ventrix.App
             lblSubject.ForeColor = Color.FromArgb(107, 114, 128);
             lblSubject.Location = new Point(223, 340);
             lblSubject.Name = "lblSubject";
-            lblSubject.Size = new Size(161, 25);
+            lblSubject.Size = new Size(133, 23);
             lblSubject.TabIndex = 15;
             lblSubject.Text = "Subject / Purpose";
             // 
             // txtSubject
             // 
-            txtSubject.BorderRadius = 8;
             txtSubject.BorderColor = Color.FromArgb(229, 231, 235);
-            txtSubject.FillColor = Color.FromArgb(249, 250, 251);
+            txtSubject.BorderRadius = 8;
             txtSubject.CustomizableEdges = customizableEdges11;
             txtSubject.DefaultText = "";
+            txtSubject.FillColor = Color.FromArgb(249, 250, 251);
             txtSubject.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtSubject.ForeColor = Color.FromArgb(31, 41, 55);
-            txtSubject.TextOffset = new Point(5, 0);
             txtSubject.Location = new Point(223, 368);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
@@ -287,8 +285,8 @@ namespace Ventrix.App
             txtSubject.SelectedText = "";
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges12;
             txtSubject.Size = new Size(317, 46);
-            txtSubject.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Default;
             txtSubject.TabIndex = 5;
+            txtSubject.TextOffset = new Point(5, 0);
             // 
             // btnReturn
             // 
@@ -320,7 +318,7 @@ namespace Ventrix.App
             btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges16;
             btnBorrow.Size = new Size(230, 52);
             btnBorrow.TabIndex = 8;
-            btnBorrow.Text = "Checkout Cart";
+            btnBorrow.Text = "Borrow ";
             // 
             // btnLogin
             // 
@@ -341,12 +339,12 @@ namespace Ventrix.App
             // cmbGradeLevel
             // 
             cmbGradeLevel.BackColor = Color.Transparent;
-            cmbGradeLevel.BorderRadius = 8;
             cmbGradeLevel.BorderColor = Color.FromArgb(229, 231, 235);
-            cmbGradeLevel.FillColor = Color.FromArgb(249, 250, 251);
+            cmbGradeLevel.BorderRadius = 8;
             cmbGradeLevel.CustomizableEdges = customizableEdges19;
             cmbGradeLevel.DrawMode = DrawMode.OwnerDrawFixed;
             cmbGradeLevel.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbGradeLevel.FillColor = Color.FromArgb(249, 250, 251);
             cmbGradeLevel.FocusedColor = Color.Empty;
             cmbGradeLevel.Font = new Font("Segoe UI", 10.5F);
             cmbGradeLevel.ForeColor = Color.FromArgb(31, 41, 55);
@@ -373,16 +371,16 @@ namespace Ventrix.App
             btnAddToCart.ShadowDecoration.CustomizableEdges = customizableEdges22;
             btnAddToCart.Size = new Size(144, 42);
             btnAddToCart.TabIndex = 17;
-            btnAddToCart.Text = "Add to Cart";
+            btnAddToCart.Text = "Select Item ";
             // 
             // btnClearCart
             // 
+            btnClearCart.BorderColor = Color.FromArgb(254, 226, 226);
             btnClearCart.BorderRadius = 8;
+            btnClearCart.BorderThickness = 1;
             btnClearCart.Cursor = Cursors.Hand;
             btnClearCart.CustomizableEdges = customizableEdges23;
             btnClearCart.FillColor = Color.White;
-            btnClearCart.BorderColor = Color.FromArgb(254, 226, 226);
-            btnClearCart.BorderThickness = 1;
             btnClearCart.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             btnClearCart.ForeColor = Color.FromArgb(239, 68, 68);
             btnClearCart.HoverState.FillColor = Color.FromArgb(254, 242, 242);
@@ -391,7 +389,7 @@ namespace Ventrix.App
             btnClearCart.ShadowDecoration.CustomizableEdges = customizableEdges24;
             btnClearCart.Size = new Size(144, 42);
             btnClearCart.TabIndex = 18;
-            btnClearCart.Text = "Clear Cart";
+            btnClearCart.Text = "Clear Selection";
             // 
             // lstCart
             // 
@@ -400,16 +398,15 @@ namespace Ventrix.App
             lstCart.Font = new Font("Segoe UI", 10.5F);
             lstCart.ForeColor = Color.FromArgb(31, 41, 55);
             lstCart.FormattingEnabled = true;
-            lstCart.ItemHeight = 19;
             lstCart.Location = new Point(231, 480);
             lstCart.Name = "lstCart";
-            lstCart.Size = new Size(309, 95);
+            lstCart.Size = new Size(309, 92);
             lstCart.TabIndex = 19;
             // 
             // txtPassword
             // 
-            txtPassword.BorderRadius = 8;
             txtPassword.BorderColor = Color.FromArgb(229, 231, 235);
+            txtPassword.BorderRadius = 8;
             txtPassword.Cursor = Cursors.IBeam;
             txtPassword.CustomizableEdges = customizableEdges25;
             txtPassword.DefaultText = "";
@@ -419,7 +416,6 @@ namespace Ventrix.App
             txtPassword.IconLeft = Properties.Resources.locked;
             txtPassword.IconLeftOffset = new Point(5, 0);
             txtPassword.IconRight = Properties.Resources.eye;
-            txtPassword.TextOffset = new Point(5, 0);
             txtPassword.Location = new Point(60, 291);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
@@ -428,8 +424,8 @@ namespace Ventrix.App
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges26;
             txtPassword.Size = new Size(480, 46);
-            txtPassword.Style = Guna.UI2.WinForms.Enums.TextBoxStyle.Default;
             txtPassword.TabIndex = 9;
+            txtPassword.TextOffset = new Point(5, 0);
             txtPassword.UseSystemPasswordChar = true;
             txtPassword.Visible = false;
             // 

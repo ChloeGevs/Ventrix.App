@@ -95,7 +95,7 @@ namespace Ventrix.Application.Services
             }
         }
 
-        // NEW METHOD: Used when an item is confirmed to be damaged upon return
+        // Used when an item is confirmed to be damaged upon return
         public async Task ReturnItemAsDamagedAsync(int recordId)
         {
             var record = await _context.BorrowRecords.FindAsync(recordId);
@@ -120,18 +120,82 @@ namespace Ventrix.Application.Services
             }
         }
 
-        public async Task MarkAsOverdueAsync(int recordId)
+        // --- NEW: Manually force an item to Overdue status (Replaces old MarkAsOverdueAsync) ---
+        public async Task ManuallyMarkOverdueAsync(List<int> recordIds, UserService userService)
         {
-            var record = await _context.BorrowRecords.FindAsync(recordId);
+            var records = await _context.BorrowRecords.Where(b => recordIds.Contains(b.Id)).ToListAsync();
 
-            if (record != null && record.Status == BorrowStatus.Active)
+            foreach (var record in records)
             {
-                record.Status = BorrowStatus.Overdue;
+                if (record.Status == BorrowStatus.Active)
+                {
+                    record.Status = BorrowStatus.Overdue;
+                    // Automatically applies a strike to the borrower
+                    await userService.AddStrikeAsync(record.BorrowerId);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        // --- NEW: Force return items without borrower request ---
+        public async Task ForceReturnItemsAsync(List<int> recordIds)
+        {
+            var records = await _context.BorrowRecords.Where(b => recordIds.Contains(b.Id)).ToListAsync();
+
+            foreach (var record in records)
+            {
+                if (record.Status == BorrowStatus.Active || record.Status == BorrowStatus.Overdue || record.Status == BorrowStatus.PendingReturn)
+                {
+                    record.Status = BorrowStatus.Returned;
+                    record.ReturnDate = DateTime.Now;
+
+                    // Make the physical item available again
+                    var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
+                    if (item != null)
+                    {
+                        item.Status = ItemStatus.Available;
+                    }
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        // --- NEW: Automatically checks and penalizes overdue items ---
+        public async Task<int> ProcessAutomaticOverdueStrikesAsync(UserService userService)
+        {
+            var activeRecords = await _context.BorrowRecords
+                .Where(b => b.Status == BorrowStatus.Active)
+                .ToListAsync();
+
+            int newlyOverdueCount = 0;
+
+            foreach (var record in activeRecords)
+            {
+                // If the current time is greater than the borrow date + 24 hours
+                if (DateTime.Now > record.BorrowDate.AddDays(1))
+                {
+                    record.Status = BorrowStatus.Overdue;
+                    await userService.AddStrikeAsync(record.BorrowerId);
+                    newlyOverdueCount++;
+                }
+            }
+
+            if (newlyOverdueCount > 0)
+            {
                 await _context.SaveChangesAsync();
             }
-            else
+
+            return newlyOverdueCount;
+        }
+
+        // --- NEW: Hides a single record from the dashboard ---
+        public async Task HideRecordFromDashboardAsync(int recordId)
+        {
+            var record = await _context.BorrowRecords.FindAsync(recordId);
+            if (record != null)
             {
-                throw new Exception("Record not found or is not currently Active.");
+                record.IsHiddenFromDashboard = true;
+                await _context.SaveChangesAsync();
             }
         }
 
@@ -146,6 +210,21 @@ namespace Ventrix.Application.Services
                 record.IsHiddenFromDashboard = true;
 
             }
+            await _context.SaveChangesAsync();
+        }
+
+        // --- NEW: Restores all hidden activities ---
+        public async Task RestoreHiddenActivitiesAsync()
+        {
+            var hiddenRecords = await _context.BorrowRecords
+                .Where(b => b.IsHiddenFromDashboard == true)
+                .ToListAsync();
+
+            foreach (var record in hiddenRecords)
+            {
+                record.IsHiddenFromDashboard = false;
+            }
+
             await _context.SaveChangesAsync();
         }
     }
