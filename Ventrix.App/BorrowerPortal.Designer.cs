@@ -215,6 +215,7 @@ namespace Ventrix.App
             cmbListEquipments.BackColor = Color.Transparent;
             cmbListEquipments.BorderColor = Color.FromArgb(229, 231, 235);
             cmbListEquipments.BorderRadius = 8;
+            cmbListEquipments.Cursor = Cursors.Hand;
             cmbListEquipments.CustomizableEdges = customizableEdges7;
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -323,6 +324,7 @@ namespace Ventrix.App
             // btnLogin
             // 
             btnLogin.BorderRadius = 8;
+            btnLogin.Cursor = Cursors.Hand;
             btnLogin.CustomizableEdges = customizableEdges17;
             btnLogin.FillColor = Color.FromArgb(37, 99, 235);
             btnLogin.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
@@ -341,6 +343,7 @@ namespace Ventrix.App
             cmbGradeLevel.BackColor = Color.Transparent;
             cmbGradeLevel.BorderColor = Color.FromArgb(229, 231, 235);
             cmbGradeLevel.BorderRadius = 8;
+            cmbGradeLevel.Cursor = Cursors.Hand;
             cmbGradeLevel.CustomizableEdges = customizableEdges19;
             cmbGradeLevel.DrawMode = DrawMode.OwnerDrawFixed;
             cmbGradeLevel.DropDownStyle = ComboBoxStyle.DropDownList;

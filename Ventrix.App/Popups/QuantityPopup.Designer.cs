@@ -12,84 +12,115 @@
 
         private void InitializeComponent()
         {
-            
-            lblMessage = new System.Windows.Forms.Label();
-            
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            lblMessage = new Label();
             txtQuantity = new Guna.UI2.WinForms.Guna2TextBox();
             btnConfirm = new Guna.UI2.WinForms.Guna2Button();
             btnCancel = new Guna.UI2.WinForms.Guna2Button();
-            panelContent = new System.Windows.Forms.Panel();
+            panelContent = new Panel();
             panelContent.SuspendLayout();
             SuspendLayout();
-
+            // 
+            // lblMessage
+            // 
+            lblMessage.AutoSize = true;
+            lblMessage.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
+            lblMessage.ForeColor = Color.FromArgb(64, 64, 64);
+            lblMessage.Location = new Point(31, 31);
+            lblMessage.Margin = new Padding(4, 0, 4, 0);
+            lblMessage.Name = "lblMessage";
+            lblMessage.Size = new Size(290, 25);
+            lblMessage.TabIndex = 3;
+            lblMessage.Text = "How many identical units to add?";
+            // 
+            // txtQuantity
+            // 
+            txtQuantity.BorderRadius = 6;
+            txtQuantity.Cursor = Cursors.IBeam;
+            txtQuantity.CustomizableEdges = customizableEdges1;
+            txtQuantity.DefaultText = "1";
+            txtQuantity.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            txtQuantity.ForeColor = Color.FromArgb(13, 71, 161);
+            txtQuantity.Location = new Point(36, 77);
+            txtQuantity.Margin = new Padding(4, 6, 4, 6);
+            txtQuantity.Name = "txtQuantity";
+            txtQuantity.PlaceholderText = "";
+            txtQuantity.SelectedText = "";
+            txtQuantity.ShadowDecoration.CustomizableEdges = customizableEdges2;
+            txtQuantity.Size = new Size(395, 69);
+            txtQuantity.TabIndex = 2;
+            txtQuantity.TextAlign = HorizontalAlignment.Center;
+            // 
+            // btnConfirm
+            // 
+            btnConfirm.BorderRadius = 6;
+            btnConfirm.Cursor = Cursors.Hand;
+            btnConfirm.CustomizableEdges = customizableEdges3;
+            btnConfirm.FillColor = Color.FromArgb(13, 71, 161);
+            btnConfirm.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            btnConfirm.ForeColor = Color.White;
+            btnConfirm.Location = new Point(237, 169);
+            btnConfirm.Margin = new Padding(4, 5, 4, 5);
+            btnConfirm.Name = "btnConfirm";
+            btnConfirm.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            btnConfirm.Size = new Size(193, 62);
+            btnConfirm.TabIndex = 1;
+            btnConfirm.Text = "ADD UNITS";
+            btnConfirm.Click += btnConfirm_Click;
+            // 
+            // btnCancel
+            // 
+            btnCancel.BorderColor = Color.FromArgb(200, 200, 200);
+            btnCancel.BorderRadius = 6;
+            btnCancel.BorderThickness = 1;
+            btnCancel.Cursor = Cursors.Hand;
+            btnCancel.CustomizableEdges = customizableEdges5;
+            btnCancel.FillColor = Color.White;
+            btnCancel.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            btnCancel.ForeColor = Color.FromArgb(64, 64, 64);
+            btnCancel.Location = new Point(36, 169);
+            btnCancel.Margin = new Padding(4, 5, 4, 5);
+            btnCancel.Name = "btnCancel";
+            btnCancel.ShadowDecoration.CustomizableEdges = customizableEdges6;
+            btnCancel.Size = new Size(193, 62);
+            btnCancel.TabIndex = 0;
+            btnCancel.Text = "CANCEL";
+            btnCancel.Click += btnCancel_Click;
+            // 
             // panelContent
-            panelContent.BackColor = System.Drawing.Color.White;
+            // 
+            panelContent.BackColor = Color.White;
             panelContent.Controls.Add(btnCancel);
             panelContent.Controls.Add(btnConfirm);
             panelContent.Controls.Add(txtQuantity);
             panelContent.Controls.Add(lblMessage);
-            panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            panelContent.Location = new System.Drawing.Point(0, 64); 
+            panelContent.Dock = DockStyle.Fill;
+            panelContent.Location = new Point(4, 98);
+            panelContent.Margin = new Padding(4, 5, 4, 5);
             panelContent.Name = "panelContent";
-            panelContent.Padding = new System.Windows.Forms.Padding(20);
-            panelContent.Size = new System.Drawing.Size(350, 166);
-
-            // lblMessage
-            lblMessage.AutoSize = true;
-            lblMessage.Font = new System.Drawing.Font("Segoe UI Semibold", 10.5F, System.Drawing.FontStyle.Bold);
-            lblMessage.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
-            lblMessage.Location = new System.Drawing.Point(23, 20);
-            lblMessage.Name = "lblMessage";
-            lblMessage.Size = new System.Drawing.Size(262, 19);
-            lblMessage.Text = "How many identical units to add?";
-
-            // txtQuantity
-            txtQuantity.BorderRadius = 6;
-            txtQuantity.Cursor = System.Windows.Forms.Cursors.IBeam;
-            txtQuantity.DefaultText = "1";
-            txtQuantity.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            txtQuantity.ForeColor = System.Drawing.Color.FromArgb(13, 71, 161);
-            txtQuantity.Location = new System.Drawing.Point(27, 50);
-            txtQuantity.Name = "txtQuantity";
-            txtQuantity.Size = new System.Drawing.Size(296, 45);
-            txtQuantity.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-
-            // btnConfirm
-            btnConfirm.BorderRadius = 6;
-            btnConfirm.FillColor = System.Drawing.Color.FromArgb(13, 71, 161);
-            btnConfirm.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
-            btnConfirm.ForeColor = System.Drawing.Color.White;
-            btnConfirm.Location = new System.Drawing.Point(178, 110);
-            btnConfirm.Name = "btnConfirm";
-            btnConfirm.Size = new System.Drawing.Size(145, 40);
-            btnConfirm.Text = "ADD UNITS";
-            btnConfirm.Click += new System.EventHandler(btnConfirm_Click);
-
-            // btnCancel
-            btnCancel.BorderRadius = 6;
-            btnCancel.BorderThickness = 1;
-            btnCancel.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnCancel.FillColor = System.Drawing.Color.White;
-            btnCancel.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
-            btnCancel.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
-            btnCancel.Location = new System.Drawing.Point(27, 110);
-            btnCancel.Name = "btnCancel";
-            btnCancel.Size = new System.Drawing.Size(145, 40);
-            btnCancel.Text = "CANCEL";
-            btnCancel.Click += new System.EventHandler(btnCancel_Click);
-
+            panelContent.Padding = new Padding(27, 31, 27, 31);
+            panelContent.Size = new Size(459, 251);
+            panelContent.TabIndex = 0;
+            // 
             // QuantityPopup
-            AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(350, 230);
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(467, 354);
             Controls.Add(panelContent);
+            Margin = new Padding(4, 5, 4, 5);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "QuantityPopup";
+            Padding = new Padding(4, 98, 4, 5);
             Sizable = false;
-            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            StartPosition = FormStartPosition.CenterParent;
             Text = "Batch Add Units";
-
             panelContent.ResumeLayout(false);
             panelContent.PerformLayout();
             ResumeLayout(false);
