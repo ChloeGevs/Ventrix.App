@@ -35,9 +35,11 @@ namespace Ventrix.App
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
         private const int sidebarMinWidth = 70;
+        private Button btnFilterDates;
         private int historyCurrentPage = 1;
         private int historyTotalPages = 1;
         private const int historyPageSize = 100;
+
 
         private string historySortColumn = "Borrower";
         private bool historySortDescending = false;
@@ -607,6 +609,9 @@ namespace Ventrix.App
                     historyCurrentPage = 1;
                     await LoadHistoryData();
                 };
+
+                // Attach double-click handler so grouped rows open details
+                dgvHistory.CellDoubleClick += DgvHistory_CellDoubleClick;
             }
 
             this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); };
@@ -809,46 +814,53 @@ namespace Ventrix.App
         {
             if (pnlHistory == null) return;
 
-            int topRowY = 20;
-            int margin = 25;
+            if (btnExportExcel != null) { btnExportExcel.Parent = pnlHistory; btnExportExcel.Location = new DrawPoint(25, 20); btnExportExcel.BringToFront(); }
+            if (btnExportPDF != null) { btnExportPDF.Parent = pnlHistory; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, 20); btnExportPDF.BringToFront(); }
 
-            if (btnExportExcel != null)
+            // --- NEW: Add Date Filters dynamically ---
+            if (dtpStartDate == null)
             {
-                btnExportExcel.Parent = pnlHistory;
-                btnExportExcel.Anchor = AnchorStyles.None;
-                btnExportExcel.Location = new DrawPoint(margin, topRowY);
-                btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-                btnExportExcel.BringToFront();
+                dtpStartDate = new DateTimePicker { Parent = pnlHistory, Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today.AddMonths(-1) };
+                dtpEndDate = new DateTimePicker { Parent = pnlHistory, Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today };
+                btnFilterDates = new Button { Parent = pnlHistory, Text = "Filter Dates", BackColor = DrawColor.FromArgb(13, 71, 161), ForeColor = DrawColor.White, FlatStyle = FlatStyle.Flat, Height = 25, Width = 90 };
+
+                btnFilterDates.Click += async (s, e) => await LoadHistoryData();
             }
-            if (btnExportPDF != null)
+            // Ensure pickers created in SetupHistoryAdvancedControls() are parented to pnlHistory
+            if (dtpStartDate != null && dtpStartDate.Parent != pnlHistory)
             {
-                btnExportPDF.Parent = pnlHistory;
-                btnExportPDF.Anchor = AnchorStyles.None;
-                btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY);
-                btnExportPDF.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-                btnExportPDF.BringToFront();
+                dtpStartDate.Parent = pnlHistory;
+                dtpStartDate.Visible = true;
+                dtpStartDate.BringToFront();
+            }
+            if (dtpEndDate != null && dtpEndDate.Parent != pnlHistory)
+            {
+                dtpEndDate.Parent = pnlHistory;
+                dtpEndDate.Visible = true;
+                dtpEndDate.BringToFront();
+            }
+
+            dtpStartDate.Location = new DrawPoint(btnExportPDF.Right + 40, 22);
+            Label lblTo = new Label { Parent = pnlHistory, Text = "to", Location = new DrawPoint(dtpStartDate.Right + 5, 25), AutoSize = true };
+            dtpEndDate.Location = new DrawPoint(lblTo.Right + 5, 22);
+            // Ensure the apply button is parented and visible
+            if (btnApplyFilters != null)
+            {
+                btnApplyFilters.Parent = pnlHistory;
+                btnApplyFilters.Visible = true;
+                btnApplyFilters.BringToFront();
+                btnApplyFilters.Location = new DrawPoint(dtpEndDate.Right + 15, 20);
             }
 
             if (dgvHistory != null)
             {
-                int gridY = topRowY + 50;
+                int gridY = 75;
                 dgvHistory.Parent = pnlHistory;
-
-                dgvHistory.Anchor = AnchorStyles.None;
-                dgvHistory.Location = new DrawPoint(margin, gridY);
-                dgvHistory.Size = new DrawSize(pnlHistory.Width - (margin * 2), pnlHistory.Height - gridY - margin);
-
-                dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+                dgvHistory.Location = new DrawPoint(25, gridY);
+                dgvHistory.Size = new DrawSize(pnlHistory.Width - 50, pnlHistory.Height - gridY - 25);
                 dgvHistory.BringToFront();
-
-                if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlHistory)
-                {
-                    lblEmptyState.Bounds = dgvHistory.Bounds;
-                    lblEmptyState.BringToFront();
-                }
             }
         }
-
         private void UpdateSidebarInternalUI(bool showDetails)
         {
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
@@ -1055,6 +1067,7 @@ namespace Ventrix.App
 
             btnApplyFilters = new Button { Text = "Filter Dates", BackColor = DrawColor.FromArgb(13, 71, 161), ForeColor = DrawColor.White, FlatStyle = FlatStyle.Flat, Height = 25, Width = 80 };
             btnApplyFilters.Click += async (s, e) => { historyCurrentPage = 1; await LoadHistoryData(); };
+            btnFilterDates = btnApplyFilters;
 
             btnPrevPage = new Button { Text = "< Prev", BackColor = DrawColor.FromArgb(240, 240, 240), FlatStyle = FlatStyle.Flat, Width = 70, Height = 30 };
             btnPrevPage.Click += async (s, e) => { if (historyCurrentPage > 1) { historyCurrentPage--; await LoadHistoryData(); } };
@@ -1360,61 +1373,36 @@ namespace Ventrix.App
         private async Task LoadHistoryData()
         {
             if (dgvHistory == null) return;
-            dgvHistory.SuspendLayout();
             dgvHistory.Rows.Clear();
+            dgvHistory.Columns.Clear();
 
-            if (dgvHistory.Columns.Count == 0)
+            // Setup grouped columns
+            dgvHistory.Columns.Add("SchoolId", "School ID");
+            dgvHistory.Columns.Add("Borrower", "Borrower Name");
+            dgvHistory.Columns.Add("TotalBorrowed", "Total Borrows (In Period)");
+            dgvHistory.Columns.Add("ActiveHeld", "Currently Unreturned");
+            dgvHistory.Columns.Add("LastActive", "Last Activity");
+
+            var allLogs = await _borrowService.GetAllBorrowRecordsAsync();
+
+            if (dtpStartDate != null && dtpEndDate != null)
             {
-                dgvHistory.Columns.Add("Item", "Item Name");
-                dgvHistory.Columns.Add("Borrower", "Borrower ID");
-
-                dgvHistory.Columns.Add("Grade", "Grade/Role");
-                dgvHistory.Columns.Add("Purpose", "Purpose");
-
-                dgvHistory.Columns.Add("BTime", "Time Borrowed");
-                dgvHistory.Columns.Add("RTime", "Time Returned");
-                dgvHistory.Columns.Add("Status", "Status");
-
-                foreach (DataGridViewColumn col in dgvHistory.Columns)
-                {
-                    col.SortMode = DataGridViewColumnSortMode.Programmatic;
-                }
+                DateTime endOfDay = dtpEndDate.Value.Date.AddDays(1).AddTicks(-1);
+                allLogs = allLogs.Where(b => b.BorrowDate >= dtpStartDate.Value.Date && b.BorrowDate <= endOfDay).ToList();
             }
 
-            var fullFilteredQuery = await GetFilteredHistoryQuery();
+            var userGroups = allLogs.GroupBy(b => b.BorrowerId).OrderByDescending(g => g.Max(b => b.BorrowDate)).ToList();
 
-            int totalRecords = fullFilteredQuery.Count();
-            historyTotalPages = (int)Math.Ceiling((double)totalRecords / historyPageSize);
-            if (historyTotalPages == 0) historyTotalPages = 1;
-            if (historyCurrentPage > historyTotalPages) historyCurrentPage = historyTotalPages;
-
-            var pagedLogs = fullFilteredQuery.Skip((historyCurrentPage - 1) * historyPageSize).Take(historyPageSize).ToList();
-
-            string lastBorrower = null;
-
-            foreach (var log in pagedLogs)
+            foreach (var group in userGroups)
             {
-                string bStamp = log.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt");
-                string rStamp = log.ReturnDate.HasValue ? log.ReturnDate.Value.ToString("MMM dd, yyyy - hh:mm tt") : "---";
+                var first = group.First();
+                string bName = first.Borrower != null ? first.Borrower.FullName : "Unknown";
+                int totalBorrows = group.Count();
+                int activeBorrows = group.Count(b => b.Status == BorrowStatus.Active);
+                string lastActivity = group.Max(b => b.BorrowDate).ToString("MMM dd, yyyy");
 
-                string displayBorrower = (historySortColumn == "Borrower" && log.BorrowerId == lastBorrower) ? "" : log.BorrowerId;
-
-                dgvHistory.Rows.Add(log.ItemName, displayBorrower, log.GradeLevel.ToString(), log.Purpose, bStamp, rStamp, log.Status.ToString());
-
-                lastBorrower = log.BorrowerId;
+                dgvHistory.Rows.Add(group.Key, bName, totalBorrows, activeBorrows, lastActivity);
             }
-
-            foreach (DataGridViewColumn col in dgvHistory.Columns) { col.HeaderCell.SortGlyphDirection = SortOrder.None; }
-            if (dgvHistory.Columns.Contains(historySortColumn))
-            {
-                dgvHistory.Columns[historySortColumn].HeaderCell.SortGlyphDirection = historySortDescending ? SortOrder.Descending : SortOrder.Ascending;
-            }
-
-            if (lblPageInfo != null) lblPageInfo.Text = $"Page {historyCurrentPage} of {historyTotalPages} ({totalRecords} total items)";
-
-            ToggleNoResultsState(dgvHistory.Rows.Count == 0);
-
-            dgvHistory.ResumeLayout();
         }
 
         private async Task UpdateDashboardCounts()
@@ -1788,7 +1776,7 @@ namespace Ventrix.App
             string reportTitle = "VENTRIX SYSTEM REPORT";
 
             if (currentFilter == "ALL") { filePrefix = "Ventrix_All_Items"; reportTitle = "VENTRIX SYSTEM - ALL ITEMS REPORT\n\n"; }
-            else if (currentFilter == "AVAILABLE") { filePrefix = "Ventrix_Available_Items"; reportTitle = "VENTRIX SYSTEM - AVAILABLE ITEMS\n\n"; }
+ else if (currentFilter == "AVAILABLE") { filePrefix = "Ventrix_Available_Items"; reportTitle = "VENTRIX SYSTEM - AVAILABLE ITEMS\n\n"; }
             else if (currentFilter == "BORROWED") { filePrefix = "Ventrix_Borrowed_Items"; reportTitle = "VENTRIX SYSTEM - ACTIVELY BORROWED ITEMS\n\n"; }
             else if (currentFilter == "RECORDS") { filePrefix = "Ventrix_RecordsList"; reportTitle = "VENTRIX SYSTEM - REGISTERED RECORDS\n\n"; }
 
@@ -1837,7 +1825,6 @@ namespace Ventrix.App
                         pdfDoc.Close();
                         ToastNotification.Show(this, $"{filePrefix.Replace("_", " ")} exported successfully!", ToastType.Success);
                     }
-                    catch (Exception ex) { MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
                 }
             }
         }
@@ -1906,7 +1893,11 @@ namespace Ventrix.App
                         pdfDoc.Close();
                         ToastNotification.Show(this, $"Successfully exported {allData.Count} PDF records!", ToastType.Success);
                     }
-                    catch (Exception ex) { MessageBox.Show("Error exporting to PDF: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger.Log(ex, "AdminDashboard - Export to PDF Failed");
+                        MessageBox.Show("Failed to save the PDF file. Please ensure the file is not currently open in another program.", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
@@ -2073,6 +2064,20 @@ namespace Ventrix.App
                     else if (value == nameof(BorrowStatus.PendingReturn)) e.CellStyle.ForeColor = DrawColor.DarkMagenta;
                 }
                 if (colName == "RDate" && value == "---") e.CellStyle.ForeColor = DrawColor.LightGray;
+            }
+        }
+        private void DgvHistory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || dgvHistory == null) return;
+
+            // Extract the School ID from the clicked row
+            string schoolId = dgvHistory.Rows[e.RowIndex].Cells["SchoolId"].Value.ToString();
+            string studentName = dgvHistory.Rows[e.RowIndex].Cells["Borrower"].Value.ToString();
+
+            // Open the deep-dive popup
+            using (var popup = new UserHistoryPopup(schoolId, studentName, _borrowService))
+            {
+                ShowPopupWithFade(popup);
             }
         }
 

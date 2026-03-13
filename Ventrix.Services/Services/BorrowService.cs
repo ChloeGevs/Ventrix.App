@@ -136,7 +136,6 @@ namespace Ventrix.Application.Services
             }
         }
 
-        // --- NEW: Manually force an item to Overdue status (Replaces old MarkAsOverdueAsync) ---
         public async Task ManuallyMarkOverdueAsync(List<int> recordIds, UserService userService)
         {
             var records = await _context.BorrowRecords.Where(b => recordIds.Contains(b.Id)).ToListAsync();
@@ -146,14 +145,12 @@ namespace Ventrix.Application.Services
                 if (record.Status == BorrowStatus.Active)
                 {
                     record.Status = BorrowStatus.Overdue;
-                    // Automatically applies a strike to the borrower
                     await userService.AddStrikeAsync(record.BorrowerId);
                 }
             }
             await _context.SaveChangesAsync();
         }
 
-        // --- NEW: Force return items without borrower request ---
         public async Task ForceReturnItemsAsync(List<int> recordIds)
         {
             var records = await _context.BorrowRecords.Where(b => recordIds.Contains(b.Id)).ToListAsync();
@@ -165,7 +162,6 @@ namespace Ventrix.Application.Services
                     record.Status = BorrowStatus.Returned;
                     record.ReturnDate = DateTime.Now;
 
-                    // Make the physical item available again
                     var item = await _context.InventoryItems.FindAsync(record.InventoryItemId);
                     if (item != null)
                     {
@@ -176,7 +172,6 @@ namespace Ventrix.Application.Services
             await _context.SaveChangesAsync();
         }
 
-        // --- NEW: Automatically checks and penalizes overdue items ---
         public async Task<int> ProcessAutomaticOverdueStrikesAsync(UserService userService)
         {
             var activeRecords = await _context.BorrowRecords
@@ -187,8 +182,7 @@ namespace Ventrix.Application.Services
 
             foreach (var record in activeRecords)
             {
-                // If the current time is greater than the borrow date + 24 hours
-                if (DateTime.Now > record.BorrowDate.AddDays(1))
+                if (DateTime.Now > record.BorrowDate.AddDays(7))
                 {
                     record.Status = BorrowStatus.Overdue;
                     await userService.AddStrikeAsync(record.BorrowerId);
