@@ -44,6 +44,7 @@ namespace Ventrix.App
         private string historySortColumn = "Borrower";
         private bool historySortDescending = false;
 
+        private Guna.UI2.WinForms.Guna2TextBox txtRegSchoolId;
         private DateTimePicker dtpStartDate;
         private DateTimePicker dtpEndDate;
         private Button btnApplyFilters;
@@ -211,11 +212,58 @@ namespace Ventrix.App
             if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
             if (btnDelete != null) btnDelete.Click += async (s, e) => await btnDelete_Click(s, e);
 
+            // --- 1. DRAW THE MISSING TEXT BOX ---
+            if (pnlRegisterBorrower != null && txtRegFirstName != null && txtRegSchoolId == null)
+            {
+                txtRegSchoolId = new Guna.UI2.WinForms.Guna2TextBox();
+                txtRegSchoolId.Name = "txtRegSchoolId";
+                txtRegSchoolId.PlaceholderText = "School ID Number";
+                txtRegSchoolId.Size = txtRegFirstName.Size;
+                txtRegSchoolId.Location = new DrawPoint(txtRegFirstName.Left, txtRegFirstName.Top - 50); // Place above First Name
+                txtRegSchoolId.BorderRadius = 4;
+                pnlRegisterBorrower.Controls.Add(txtRegSchoolId);
+                txtRegSchoolId.BringToFront();
+            }
+
+            // --- 2. WIRE UP THE REGISTRATION BUTTON ---
             if (btnRegisterBorrower != null)
             {
-                btnRegisterBorrower.Click -= BtnRegisterBorrower_Click;
-                btnRegisterBorrower.Click += BtnRegisterBorrower_Click;
+                btnRegisterBorrower.Click -= btnRegisterBorrower_Click;
+                btnRegisterBorrower.Click += btnRegisterBorrower_Click;
             }
+
+            // --- 3. THE FACULTY UI TOGGLE ---
+            if (cmbRegRole != null && txtRegSchoolId != null)
+            {
+                cmbRegRole.SelectedIndexChanged += (s, e) =>
+                {
+                    txtRegSchoolId.Enabled = true;
+                    if (cmbRegRole.SelectedItem?.ToString() == "Faculty")
+                        txtRegSchoolId.PlaceholderText = "Employee ID";
+                    else
+                        txtRegSchoolId.PlaceholderText = "School ID Number";
+                };
+            }
+
+            if (cmbRegRole != null && txtRegSchoolId != null)
+            {
+                cmbRegRole.SelectedIndexChanged += (s, e) =>
+                {
+                    // Always keep it unlocked now!
+                    txtRegSchoolId.Enabled = true;
+
+                    // Just change the helpful hint text
+                    if (cmbRegRole.SelectedItem?.ToString() == "Faculty")
+                        txtRegSchoolId.PlaceholderText = "Employee ID";
+                    else
+                        txtRegSchoolId.PlaceholderText = "School ID Number";
+                };
+            }
+
+            if (btnExportExcel != null) btnExportExcel.Click += async (s, e) => {
+                if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToExcelAsync();
+                else ExportToExcel();
+            };
 
             if (btnExportExcel != null) btnExportExcel.Click += async (s, e) => {
                 if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToExcelAsync();
@@ -339,6 +387,31 @@ namespace Ventrix.App
                         await _userService.ClearStrikesAsync(userId);
                         ToastNotification.Show(this, "Account UNLOCKED. Strikes reset to 0.", ToastType.Success);
                         await LoadFromDatabase("Records");
+                    }
+                };
+                var deleteUserBtn = new ToolStripMenuItem("🗑️ Delete User Account");
+                deleteUserBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        string userName = dgvInventory.SelectedRows[0].Cells["BorrowerName"].Value.ToString();
+
+                        // Double confirmation for deletion
+                        if (MessageBox.Show($"Are you sure you want to permanently delete the account for {userName} ({userId})?", "Delete User", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                await _userService.DeleteUserAsync(userId);
+                                ToastNotification.Show(this, "User account deleted successfully.", ToastType.Success);
+                                await LoadFromDatabase("Records"); // Refresh grid
+                                await UpdateDashboardCounts();
+                            }
+                            catch (Exception ex)
+                            {
+                                // This will trigger if they try to delete someone who still holds items!
+                                MessageBox.Show(ex.Message, "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
                     }
                 };
 
@@ -520,6 +593,8 @@ namespace Ventrix.App
                 actionMenu.Items.Add(unlockAccountBtn);
                 actionMenu.Items.Add(new ToolStripSeparator());
                 actionMenu.Items.Add(approveBtn);
+                actionMenu.Items.Add(new ToolStripSeparator()); 
+                actionMenu.Items.Add(deleteUserBtn);
                 actionMenu.Items.Add(partialApproveBtn);
                 actionMenu.Items.Add(confirmReturnBtn);
                 actionMenu.Items.Add(partialReturnBtn);
@@ -1449,84 +1524,46 @@ namespace Ventrix.App
 
         #region CRUD & User Registration Actions
 
-        private async void BtnRegisterBorrower_Click(object sender, EventArgs e)
+        private async void btnRegisterBorrower_Click(object sender, EventArgs e)
         {
-            if (txtRegFirstName == null || txtRegLastName == null || cmbRegRole == null) return;
-
-            string firstName = txtRegFirstName.Text.Trim();
-            string lastName = txtRegLastName.Text.Trim();
-
-            // Get suffix, default to empty string if blank or control doesn't exist
-            string suffix = txtRegSuffix != null ? txtRegSuffix.Text.Trim() : "";
-
-            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            // 1. Unified Validation
+            if (string.IsNullOrWhiteSpace(txtRegFirstName.Text) || string.IsNullOrWhiteSpace(txtRegLastName.Text))
             {
-                MessageBox.Show("Please enter both First Name and Last Name.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please fill in the required First and Last Name fields.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            if (cmbRegRole.SelectedItem == null)
+            if (string.IsNullOrWhiteSpace(txtRegSchoolId.Text))
             {
-                MessageBox.Show("Please select a Role.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please enter an ID number for this user.", "Missing Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            if (!Enum.TryParse<UserRole>(cmbRegRole.SelectedItem.ToString(), out UserRole role))
-            {
-                MessageBox.Show("Invalid role selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            this.Cursor = Cursors.WaitCursor;
+            // 2. Process Registration
             try
             {
-                // Duplicate Name Check (Now accounts for the Suffix)
-                var existingUsers = await _userService.GetAllUsersAsync();
-                bool nameExists = existingUsers.Any(u =>
-                    u.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
-                    u.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
-                    (u.Suffix ?? "").Equals(suffix, StringComparison.OrdinalIgnoreCase));
-
-                if (nameExists)
+                var registrationData = new Ventrix.Application.DTOs.RegisterDTO
                 {
-                    this.Cursor = Cursors.Default;
-                    MessageBox.Show("A borrower with this exact First Name, Last Name, and Suffix is already registered.", "Duplicate Name Detected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                var registerDto = new RegisterDTO
-                {
-                    FirstName = firstName,
-                    LastName = lastName,
-                    Suffix = suffix, // Pass the suffix to the database
-                    Role = role
+                    UserId = txtRegSchoolId.Text.Trim(),
+                    FirstName = txtRegFirstName.Text.Trim(),
+                    LastName = txtRegLastName.Text.Trim(),
+                    Role = Enum.Parse<Ventrix.Domain.Enums.UserRole>(cmbRegRole.SelectedItem?.ToString() ?? "Student"),
                 };
 
-                var newUser = await _userService.RegisterNewBorrowerAsync(registerDto);
+                var registeredUser = await _userService.RegisterNewBorrowerAsync(registrationData);
 
-                // Format name cleanly for the success popup
-                string displayFullName = string.IsNullOrWhiteSpace(newUser.Suffix)
-                    ? $"{newUser.FirstName} {newUser.LastName}"
-                    : $"{newUser.FirstName} {newUser.LastName} {newUser.Suffix}";
+                // 3. Success & Reset
+                MessageBox.Show($"Registration successful!\n\nUser ID: {registeredUser.UserId} has been added to the system.", "Account Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                MessageBox.Show($"Borrower registered successfully!\n\nID: {newUser.UserId}\nName: {displayFullName}\nRole: {newUser.Role}\n\nPlease provide this exact ID to the borrower.", "Registration Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                // Clear inputs
+                txtRegSchoolId.Clear();
                 txtRegFirstName.Clear();
                 txtRegLastName.Clear();
-                if (txtRegSuffix != null) txtRegSuffix.Clear();
-                if (cmbRegRole.Items.Count > 0) cmbRegRole.SelectedIndex = 0;
 
                 await LoadFromDatabase("Records");
-                await UpdateDashboardCounts();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to register borrower: {ex.Message}", "Registration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                this.Cursor = Cursors.Default;
+                MessageBox.Show(ex.Message, "Registration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1776,7 +1813,7 @@ namespace Ventrix.App
             string reportTitle = "VENTRIX SYSTEM REPORT";
 
             if (currentFilter == "ALL") { filePrefix = "Ventrix_All_Items"; reportTitle = "VENTRIX SYSTEM - ALL ITEMS REPORT\n\n"; }
- else if (currentFilter == "AVAILABLE") { filePrefix = "Ventrix_Available_Items"; reportTitle = "VENTRIX SYSTEM - AVAILABLE ITEMS\n\n"; }
+            else if (currentFilter == "AVAILABLE") { filePrefix = "Ventrix_Available_Items"; reportTitle = "VENTRIX SYSTEM - AVAILABLE ITEMS\n\n"; }
             else if (currentFilter == "BORROWED") { filePrefix = "Ventrix_Borrowed_Items"; reportTitle = "VENTRIX SYSTEM - ACTIVELY BORROWED ITEMS\n\n"; }
             else if (currentFilter == "RECORDS") { filePrefix = "Ventrix_RecordsList"; reportTitle = "VENTRIX SYSTEM - REGISTERED RECORDS\n\n"; }
 
@@ -1824,6 +1861,11 @@ namespace Ventrix.App
                         pdfDoc.Add(pdfTable);
                         pdfDoc.Close();
                         ToastNotification.Show(this, $"{filePrefix.Replace("_", " ")} exported successfully!", ToastType.Success);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger.Log(ex, "AdminDashboard - Export to PDF Failed");
+                        MessageBox.Show("Failed to save the PDF file. Please ensure the file is not currently open in another program.", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

@@ -93,6 +93,7 @@ namespace Ventrix.App
                 ToggleMode("Student");
                 await EnterBorrowMode();
             };
+
         }
 
         #region Modes & UI State
@@ -503,14 +504,40 @@ namespace Ventrix.App
 
         private async Task ValidateUserRoleAndLimits()
         {
-            if (string.IsNullOrWhiteSpace(txtStudentId.Text) || txtPassword.Visible) return;
+            if (isReturnMode || string.IsNullOrWhiteSpace(txtStudentId.Text) || txtPassword.Visible) return;
 
             string inputId = txtStudentId.Text.Trim();
-            var userAccount = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.UserId == inputId);
+
+            if (inputId.Length < 6) return;
+
+            var allUsers = await _userService.GetAllUsersAsync();
+
+            var matchingUsers = allUsers.Where(u => u.UserId.ToLower().StartsWith(inputId.ToLower())).ToList();
+
+            if (matchingUsers.Count > 1)
+            {
+                MessageBox.Show("Multiple accounts share these starting characters. Please enter one more character of your ID.", "Disambiguation Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                cmbListEquipments.Enabled = false;
+                txtSubject.Enabled = false;
+                cmbGradeLevel.Enabled = false;
+                numQuantity.Enabled = false;
+                btnAddToCart.Enabled = false;
+                btnBorrow.Enabled = false;
+                btnBorrow.FillColor = DisabledGray;
+                return;
+            }
+
+            var userAccount = matchingUsers.FirstOrDefault();
 
             if (userAccount != null)
             {
-                // 1. Lockout Check
+                if (txtStudentId.Text != userAccount.UserId)
+                {
+                    txtStudentId.Text = userAccount.UserId;
+                    txtStudentId.SelectionStart = txtStudentId.Text.Length; 
+                }
+
                 if (userAccount.Strikes >= 3 && userAccount.Role.ToString() != "Admin" && userAccount.Role.ToString() != "Faculty")
                 {
                     MessageBox.Show($"ACCOUNT LOCKED: You have accumulated {userAccount.Strikes} strikes for late or damaged returns.\n\nYou are prohibited from using the borrowing system until a faculty member clears your account.", "Security Lockout", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -525,7 +552,6 @@ namespace Ventrix.App
                     return;
                 }
 
-                // 2. Enable UI
                 cmbListEquipments.Enabled = true;
                 txtSubject.Enabled = true;
                 cmbGradeLevel.Enabled = true;
@@ -534,47 +560,38 @@ namespace Ventrix.App
                 btnBorrow.Enabled = true;
                 btnBorrow.FillColor = PrimaryBlue;
 
-                // 3. Calculate Limits
-                var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == inputId).ToList();
+                var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == userAccount.UserId).ToList();
                 int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
                 int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
                 int cartTotal = _cart.Sum(c => c.Quantity);
 
-                // 4. Role-Specific Logic
                 if (userAccount.Role.ToString() == "Student")
                 {
-                    // Remove "Faculty" from options so students cannot select it
-                    if (cmbGradeLevel.Items.Contains("Faculty"))
-                    {
-                        cmbGradeLevel.Items.Remove("Faculty");
-                    }
+                    cmbGradeLevel.DataSource = null;
+                    cmbGradeLevel.Items.Clear();
 
-                    // Clear the selection if it was previously set to Faculty
-                    if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty")
-                    {
-                        cmbGradeLevel.SelectedIndex = -1;
-                    }
-
-                    // Set student limit to 3 items max
-                    int remainingAllowed = 3 - currentlyHolding - currentlyPending - cartTotal;
-                    numQuantity.Maximum = Math.Max(0, remainingAllowed);
+                    cmbGradeLevel.Items.AddRange(new object[] { "Grade 11", "Grade 12", "College" });
 
                     cmbGradeLevel.Enabled = true;
+
+                    int remainingAllowed = 3 - currentlyHolding - currentlyPending - cartTotal;
+                    numQuantity.Maximum = Math.Max(0, remainingAllowed);
                 }
-                else // Faculty or Admin
+                else 
                 {
-                    // Re-add "Faculty" if it was removed, then lock it as the selection
-                    if (!cmbGradeLevel.Items.Contains("Faculty"))
-                    {
-                        cmbGradeLevel.Items.Add("Faculty");
-                    }
+                    cmbGradeLevel.DataSource = null;
+                    cmbGradeLevel.Items.Clear();
+                    cmbGradeLevel.Items.Add("Faculty");
 
                     cmbGradeLevel.SelectedItem = "Faculty";
-                    cmbGradeLevel.Enabled = false;
+                    cmbGradeLevel.Enabled = false; 
 
-                    // Faculty can borrow up to 50 items
                     numQuantity.Maximum = 50;
                 }
+            }
+            else if (inputId.Length >= 6 && matchingUsers.Count == 0 && txtStudentId.Focused == false)
+            {
+                MessageBox.Show("ID not found. Please ask an Admin to register your account.", "Not Registered", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         #endregion
