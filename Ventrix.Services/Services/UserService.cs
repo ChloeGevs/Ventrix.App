@@ -104,6 +104,83 @@ namespace Ventrix.Application.Services
             }
         }
 
+        public async Task<User> GetUserByIdAsync(string userId)
+        {
+            return await _context.Users.FindAsync(userId);
+        }
+
+        // --- NEW: Safely update a user, even if their Primary Key (School ID) changes ---
+        public async Task UpdateUserWithIdChangeAsync(string oldUserId, User updatedData, string newUserId)
+        {
+            // If the ID didn't change, perform a standard update
+            if (oldUserId == newUserId)
+            {
+                var existing = await _context.Users.FindAsync(oldUserId);
+                if (existing != null)
+                {
+                    existing.FirstName = updatedData.FirstName;
+                    existing.LastName = updatedData.LastName;
+                    existing.Suffix = updatedData.Suffix;
+                    existing.Role = updatedData.Role;
+                    await _context.SaveChangesAsync();
+                }
+                return;
+            }
+
+            // If the ID DID change, ensure the new ID isn't already taken
+            if (await _context.Users.AnyAsync(u => u.UserId == newUserId))
+                throw new Exception("The new School ID is already in use by another account.");
+
+            // Use a transaction to safely clone, migrate records, and delete the old account
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var oldUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == oldUserId);
+                    if (oldUser == null) throw new Exception("Original user not found.");
+
+                    // 1. Create the new user with the updated data
+                    var newUser = new User
+                    {
+                        UserId = newUserId,
+                        FirstName = updatedData.FirstName,
+                        LastName = updatedData.LastName,
+                        Suffix = updatedData.Suffix,
+                        Role = updatedData.Role,
+                        Password = oldUser.Password,     // Carry over existing data
+                        CreatedAt = oldUser.CreatedAt,   // Carry over existing data
+                        Strikes = oldUser.Strikes        // Carry over existing data
+                    };
+
+                    _context.Users.Add(newUser);
+                    await _context.SaveChangesAsync();
+
+                    // 2. Migrate their borrowing history to the new ID
+                    var records = await _context.BorrowRecords.Where(b => b.BorrowerId == oldUserId).ToListAsync();
+                    foreach (var record in records)
+                    {
+                        record.BorrowerId = newUserId;
+                    }
+                    await _context.SaveChangesAsync();
+
+                    // 3. Delete the old user profile
+                    var userToDelete = await _context.Users.FindAsync(oldUserId);
+                    if (userToDelete != null)
+                    {
+                        _context.Users.Remove(userToDelete);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception("Failed to change School ID: " + ex.Message);
+                }
+            }
+        }
+
         public async Task AddStrikeAsync(string userId)
         {
             var user = await _context.Users.FindAsync(userId);

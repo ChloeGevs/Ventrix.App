@@ -35,7 +35,7 @@ namespace Ventrix.App
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
         private const int sidebarMinWidth = 70;
-        private Button btnFilterDates;
+        private Guna.UI2.WinForms.Guna2Button btnFilterDates;
         private int historyCurrentPage = 1;
         private int historyTotalPages = 1;
         private const int historyPageSize = 100;
@@ -45,11 +45,11 @@ namespace Ventrix.App
         private bool historySortDescending = false;
 
         private Guna.UI2.WinForms.Guna2TextBox txtRegSchoolId;
-        private DateTimePicker dtpStartDate;
-        private DateTimePicker dtpEndDate;
-        private Button btnApplyFilters;
-        private Button btnPrevPage;
-        private Button btnNextPage;
+        private Guna.UI2.WinForms.Guna2DateTimePicker dtpStartDate;
+        private Guna.UI2.WinForms.Guna2DateTimePicker dtpEndDate;
+        private Guna.UI2.WinForms.Guna2Button btnApplyFilters;
+        private Guna.UI2.WinForms.Guna2Button btnPrevPage;
+        private Guna.UI2.WinForms.Guna2Button btnNextPage;
         private Label lblPageInfo;
 
         public AdminDashboard(InventoryService inventoryService, BorrowService borrowService, UserService userService)
@@ -201,32 +201,119 @@ namespace Ventrix.App
                 };
             }
 
-            var controlsToBuffer = new Control[] { pnlMainContent, pnlGridContainer, pnlHistory, pnlHomeSummary, flowRecentActivity, pnlSidebar, dgvInventory, dgvHistory };
+            // Add pnlRegisterBorrower to this existing list
+            // --- ADDED ALL REGISTRATION CONTROLS TO THE DOUBLE BUFFER LIST ---
+            var controlsToBuffer = new Control[] {
+                pnlMainContent, pnlGridContainer, pnlHistory, pnlHomeSummary,
+                flowRecentActivity, pnlSidebar, dgvInventory, dgvHistory,
+                pnlRegisterBorrower, btnRegisterBorrower, txtRegFirstName,
+                txtRegLastName, txtRegSuffix, cmbRegRole, txtRegSchoolId
+            };
+
             foreach (var ctrl in controlsToBuffer)
             {
                 if (ctrl != null)
-                    typeof(Control).InvokeMember("DoubleBuffered", System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, ctrl, new object[] { true });
+                    typeof(Control).InvokeMember("DoubleBuffered",
+                        System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                        null, ctrl, new object[] { true });
             }
 
             if (btnCreate != null) btnCreate.Click += async (s, e) => await btnCreate_Click(s, e);
             if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
             if (btnDelete != null) btnDelete.Click += async (s, e) => await btnDelete_Click(s, e);
 
-            // --- 1. DRAW THE MISSING TEXT BOX ---
-            if (pnlRegisterBorrower != null && txtRegFirstName != null && txtRegSchoolId == null)
+            // --- 1. DRAW THE MISSING TEXT BOX & PROPORTIONAL STRETCH LAYOUT ---
+            if (pnlRegisterBorrower != null && txtRegFirstName != null)
             {
-                txtRegSchoolId = new Guna.UI2.WinForms.Guna2TextBox();
-                txtRegSchoolId.Name = "txtRegSchoolId";
-                txtRegSchoolId.PlaceholderText = "School ID Number";
-                txtRegSchoolId.Size = txtRegFirstName.Size;
-                txtRegSchoolId.Location = new DrawPoint(txtRegFirstName.Left, txtRegFirstName.Top - 50); // Place above First Name
-                txtRegSchoolId.BorderRadius = 4;
-                pnlRegisterBorrower.Controls.Add(txtRegSchoolId);
-                txtRegSchoolId.BringToFront();
-            }
+                if (txtRegSchoolId == null)
+                {
+                    txtRegSchoolId = new Guna.UI2.WinForms.Guna2TextBox();
+                    txtRegSchoolId.Name = "txtRegSchoolId";
+                    txtRegSchoolId.PlaceholderText = "School ID Number";
+                    txtRegSchoolId.BorderRadius = 8;
+                    txtRegSchoolId.Font = new DrawFont("Segoe UI", 10F);
+                    pnlRegisterBorrower.Controls.Add(txtRegSchoolId);
+                }
 
-            // --- 2. WIRE UP THE REGISTRATION BUTTON ---
-            if (btnRegisterBorrower != null)
+                // Make sure the header stays anchored to the top left
+                if (lblRegisterHeader != null)
+                {
+                    lblRegisterHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                }
+
+                // Check if we already created the table layout to avoid duplicates
+                TableLayoutPanel tlpReg = pnlRegisterBorrower.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
+                if (tlpReg == null)
+                {
+                    tlpReg = new TableLayoutPanel();
+                    tlpReg.Name = "tlpRegLayout";
+
+                    // 1. Reduce columns to 5 (we are removing the button from the grid)
+                    tlpReg.ColumnCount = 5;
+                    tlpReg.RowCount = 1;
+                    tlpReg.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
+
+                    typeof(Control).InvokeMember("DoubleBuffered",
+                        System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                        null, tlpReg, new object[] { true });
+
+                    // 2. Make the grid slightly narrower to leave empty space on the right for the button
+                    int buttonSpace = 150;
+                    tlpReg.Location = new DrawPoint(15, 50);
+                    tlpReg.Size = new DrawSize(pnlRegisterBorrower.Width - buttonSpace - 30, 45);
+                    tlpReg.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+                    // 3. Re-distribute the percentages across the 5 input fields
+                    tlpReg.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22F)); // School ID
+                    tlpReg.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22F)); // First Name
+                    tlpReg.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22F)); // Last Name
+                    tlpReg.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16F)); // Suffix
+                    tlpReg.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18F)); // Role
+
+                    // 4. ONLY loop through the input controls
+                    Control[] inputControls = { txtRegSchoolId, txtRegFirstName, txtRegLastName, txtRegSuffix, cmbRegRole };
+                    for (int i = 0; i < inputControls.Length; i++)
+                    {
+                        if (inputControls[i] != null)
+                        {
+                            inputControls[i].Dock = DockStyle.None;
+                            inputControls[i].Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+                            inputControls[i].Height = 36;
+                            inputControls[i].Margin = new Padding(5, 4, 5, 0);
+
+                            tlpReg.Controls.Add(inputControls[i], i, 0);
+                        }
+                    }
+
+                    pnlRegisterBorrower.Controls.Add(tlpReg);
+                    tlpReg.BringToFront();
+                }
+
+                // 5. Handle the Register Button OUTSIDE the grid to kill the flicker entirely
+                if (btnRegisterBorrower != null)
+                {
+                    pnlRegisterBorrower.Controls.Add(btnRegisterBorrower);
+                    btnRegisterBorrower.BringToFront();
+
+                    btnRegisterBorrower.Dock = DockStyle.None;
+
+                    // Anchor to Top and Right so it perfectly tracks the right edge of the panel
+                    btnRegisterBorrower.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+
+                    btnRegisterBorrower.Size = new DrawSize(120, 36);
+
+                    // Position it on the right side, aligned vertically with the inputs (Y: 50 + 4 margin = 54)
+                    btnRegisterBorrower.Location = new DrawPoint(pnlRegisterBorrower.Width - 140, 54);
+
+                }
+
+                pnlRegisterBorrower.Controls.Add(tlpReg);
+                tlpReg.BringToFront();
+            }
+        
+
+                // --- 2. WIRE UP THE REGISTRATION BUTTON ---
+                if (btnRegisterBorrower != null)
             {
                 btnRegisterBorrower.Click -= btnRegisterBorrower_Click;
                 btnRegisterBorrower.Click += btnRegisterBorrower_Click;
@@ -310,6 +397,11 @@ namespace Ventrix.App
             {
                 sidebarTimer.Interval = 10;
                 btnHamburger.Click += (s, e) => {
+
+                    // --- NEW: Turn off heavy shadows during the animation ---
+                    if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = false;
+                    if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = false;
+                    if (btnRegisterBorrower != null) btnRegisterBorrower.ShadowDecoration.Enabled = false;
 
                     if (isSidebarExpanded)
                     {
@@ -410,6 +502,43 @@ namespace Ventrix.App
                             {
                                 // This will trigger if they try to delete someone who still holds items!
                                 MessageBox.Show(ex.Message, "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                };
+
+                // --- ADD 'async' right here ---
+                var editUserBtn = new ToolStripMenuItem("✏️ Edit User Account");
+                editUserBtn.Click += async (s, e) => {
+
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+
+                        using (var popup = new Popups.EditUserPopup(userId, _userService))
+                        {
+                            // Dim the background for visual focus
+                            Form background = new Form();
+                            using (background)
+                            {
+                                background.StartPosition = FormStartPosition.Manual;
+                                background.FormBorderStyle = FormBorderStyle.None;
+                                background.Opacity = 0.50d;
+                                background.BackColor = System.Drawing.Color.Black;
+                                background.Size = this.Size;
+                                background.Location = this.Location;
+                                background.ShowInTaskbar = false;
+                                background.Show();
+
+                                popup.Owner = background;
+                                popup.ShowDialog();
+                            }
+
+                            // If they saved changes, refresh the grid!
+                            if (popup.WasUpdated)
+                            {
+                                ToastNotification.Show(this, "User updated successfully.", ToastType.Success);
+                                await LoadFromDatabase("Records");
                             }
                         }
                     }
@@ -595,6 +724,7 @@ namespace Ventrix.App
                 actionMenu.Items.Add(approveBtn);
                 actionMenu.Items.Add(new ToolStripSeparator()); 
                 actionMenu.Items.Add(deleteUserBtn);
+                actionMenu.Items.Add(editUserBtn);
                 actionMenu.Items.Add(partialApproveBtn);
                 actionMenu.Items.Add(confirmReturnBtn);
                 actionMenu.Items.Add(partialReturnBtn);
@@ -609,10 +739,14 @@ namespace Ventrix.App
                     bool isBorrowersTab = dgvInventory.Columns.Contains("BorrowerID") && !dgvInventory.Columns.Contains("RecordIDs");
                     bool isBorrowedTab = dgvInventory.Columns.Contains("RecordIDs") && dgvInventory.Columns.Contains("Status");
 
+                    // Manage visibility for Borrower (Records) tab actions
                     addStrikeBtn.Visible = isBorrowersTab;
                     lockAccountBtn.Visible = isBorrowersTab;
                     unlockAccountBtn.Visible = isBorrowersTab;
+                    deleteUserBtn.Visible = isBorrowersTab; // Keeps it hidden on other tabs
+                    editUserBtn.Visible = isBorrowersTab;   // Keeps it hidden on other tabs
 
+                    // Hide all Borrowed tab actions by default
                     approveBtn.Visible = false;
                     partialApproveBtn.Visible = false;
                     confirmReturnBtn.Visible = false;
@@ -857,10 +991,12 @@ namespace Ventrix.App
             if (pnlRegisterBorrower != null && pnlRegisterBorrower.Visible)
             {
                 pnlRegisterBorrower.Parent = pnlGridContainer;
-                pnlRegisterBorrower.Anchor = AnchorStyles.None;
+
+                // --- FIX: Lock to Top/Left so the layout engine doesn't fight our manual resizing ---
+                pnlRegisterBorrower.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+
                 pnlRegisterBorrower.Location = new DrawPoint(margin, gridY);
                 pnlRegisterBorrower.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), 100);
-                pnlRegisterBorrower.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
                 pnlRegisterBorrower.BringToFront();
 
                 gridY += pnlRegisterBorrower.Height + 20;
@@ -870,15 +1006,16 @@ namespace Ventrix.App
             {
                 dgvInventory.Parent = pnlGridContainer;
 
-                dgvInventory.Anchor = AnchorStyles.None;
+                // --- FIX: Lock to Top/Left to kill the DataGridView flicker entirely ---
+                dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+
                 dgvInventory.Location = new DrawPoint(margin, gridY);
                 dgvInventory.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), pnlGridContainer.Height - gridY - margin);
-
-                dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 dgvInventory.BringToFront();
 
                 if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlGridContainer)
                 {
+                    lblEmptyState.Anchor = AnchorStyles.Top | AnchorStyles.Left;
                     lblEmptyState.Bounds = dgvInventory.Bounds;
                     lblEmptyState.BringToFront();
                 }
@@ -892,15 +1029,6 @@ namespace Ventrix.App
             if (btnExportExcel != null) { btnExportExcel.Parent = pnlHistory; btnExportExcel.Location = new DrawPoint(25, 20); btnExportExcel.BringToFront(); }
             if (btnExportPDF != null) { btnExportPDF.Parent = pnlHistory; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, 20); btnExportPDF.BringToFront(); }
 
-            // --- NEW: Add Date Filters dynamically ---
-            if (dtpStartDate == null)
-            {
-                dtpStartDate = new DateTimePicker { Parent = pnlHistory, Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today.AddMonths(-1) };
-                dtpEndDate = new DateTimePicker { Parent = pnlHistory, Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today };
-                btnFilterDates = new Button { Parent = pnlHistory, Text = "Filter Dates", BackColor = DrawColor.FromArgb(13, 71, 161), ForeColor = DrawColor.White, FlatStyle = FlatStyle.Flat, Height = 25, Width = 90 };
-
-                btnFilterDates.Click += async (s, e) => await LoadHistoryData();
-            }
             // Ensure pickers created in SetupHistoryAdvancedControls() are parented to pnlHistory
             if (dtpStartDate != null && dtpStartDate.Parent != pnlHistory)
             {
@@ -915,9 +1043,20 @@ namespace Ventrix.App
                 dtpEndDate.BringToFront();
             }
 
-            dtpStartDate.Location = new DrawPoint(btnExportPDF.Right + 40, 22);
-            Label lblTo = new Label { Parent = pnlHistory, Text = "to", Location = new DrawPoint(dtpStartDate.Right + 5, 25), AutoSize = true };
-            dtpEndDate.Location = new DrawPoint(lblTo.Right + 5, 22);
+            // Align to match the 36px height of the export buttons
+            dtpStartDate.Location = new DrawPoint(btnExportPDF.Right + 40, 20);
+
+            // Re-use or create the "to" label
+            Label lblTo = pnlHistory.Controls.OfType<Label>().FirstOrDefault(l => l.Text == "to");
+            if (lblTo == null)
+            {
+                lblTo = new Label { Parent = pnlHistory, Text = "to", AutoSize = true, ForeColor = DrawColor.Gray, Font = new DrawFont("Segoe UI Semibold", 10F) };
+            }
+            // Vertically center the text label relative to the 36px high pickers
+            lblTo.Location = new DrawPoint(dtpStartDate.Right + 10, 28);
+
+            dtpEndDate.Location = new DrawPoint(lblTo.Right + 10, 20);
+
             // Ensure the apply button is parented and visible
             if (btnApplyFilters != null)
             {
@@ -931,8 +1070,10 @@ namespace Ventrix.App
             {
                 int gridY = 75;
                 dgvHistory.Parent = pnlHistory;
+                dgvHistory.Anchor = AnchorStyles.None;
                 dgvHistory.Location = new DrawPoint(25, gridY);
                 dgvHistory.Size = new DrawSize(pnlHistory.Width - 50, pnlHistory.Height - gridY - 25);
+                dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 dgvHistory.BringToFront();
             }
         }
@@ -1026,18 +1167,26 @@ namespace Ventrix.App
             if (pnlHomeSummary != null && pnlHomeSummary.Visible)
             {
                 pnlHomeSummary.Bounds = innerSafeArea;
-
                 ArrangeHomeView();
             }
 
-            if (pnlGridContainer != null && pnlGridContainer.Visible) pnlGridContainer.Bounds = innerSafeArea;
-            if (pnlHistory != null && pnlHistory.Visible) pnlHistory.Bounds = innerSafeArea;
+            if (pnlGridContainer != null && pnlGridContainer.Visible)
+            {
+                pnlGridContainer.Bounds = innerSafeArea;
+                ArrangeInventoryView(); // Allows it to seamlessly retract/expand
+            }
+
+            if (pnlHistory != null && pnlHistory.Visible)
+            {
+                pnlHistory.Bounds = innerSafeArea;
+                ArrangeHistoryView(); // Allows it to seamlessly retract/expand
+            }
 
             this.ResumeLayout(true);
         }
         #endregion
 
-        #region Navigation & Data Loading
+            #region Navigation & Data Loading
         private async Task<List<InventoryItem>> GetDamagedItemsAsync()
         {
             return (await _inventoryService.GetAllItemsAsync())
@@ -1137,17 +1286,57 @@ namespace Ventrix.App
 
         private void SetupHistoryAdvancedControls()
         {
-            dtpStartDate = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today.AddMonths(-1) };
-            dtpEndDate = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = 110, Value = DateTime.Today };
+            // Modernized Start Date Picker
+            dtpStartDate = new Guna.UI2.WinForms.Guna2DateTimePicker
+            {
+                Format = DateTimePickerFormat.Short,
+                Width = 140,
+                Height = 36,
+                Value = DateTime.Today.AddMonths(-1),
+                BorderRadius = 8,
+                FillColor = DrawColor.FromArgb(245, 248, 252),
+                ForeColor = DrawColor.FromArgb(64, 64, 64),
+                Font = new DrawFont("Segoe UI", 9.5F),
+                Animated = true,
+                Cursor = Cursors.Hand
+            };
 
-            btnApplyFilters = new Button { Text = "Filter Dates", BackColor = DrawColor.FromArgb(13, 71, 161), ForeColor = DrawColor.White, FlatStyle = FlatStyle.Flat, Height = 25, Width = 80 };
+            // Modernized End Date Picker
+            dtpEndDate = new Guna.UI2.WinForms.Guna2DateTimePicker
+            {
+                Format = DateTimePickerFormat.Short,
+                Width = 140,
+                Height = 36,
+                Value = DateTime.Today,
+                BorderRadius = 8,
+                FillColor = DrawColor.FromArgb(245, 248, 252),
+                ForeColor = DrawColor.FromArgb(64, 64, 64),
+                Font = new DrawFont("Segoe UI", 9.5F),
+                Animated = true,
+                Cursor = Cursors.Hand
+            };
+
+            // Modernized Apply Button
+            btnApplyFilters = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "Filter Dates",
+                FillColor = DrawColor.FromArgb(13, 71, 161),
+                ForeColor = DrawColor.White,
+                BorderRadius = 8,
+                Height = 36,     // Keeps it perfectly aligned with the DatePickers
+                Width = 130,     // INCREASED WIDTH so the text breathes nicely
+                Font = new DrawFont("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                Animated = true,
+                Cursor = Cursors.Hand
+            };
             btnApplyFilters.Click += async (s, e) => { historyCurrentPage = 1; await LoadHistoryData(); };
             btnFilterDates = btnApplyFilters;
 
-            btnPrevPage = new Button { Text = "< Prev", BackColor = DrawColor.FromArgb(240, 240, 240), FlatStyle = FlatStyle.Flat, Width = 70, Height = 30 };
+            // Optional: Upgraded Pagination Buttons (if you use them)
+            btnPrevPage = new Guna.UI2.WinForms.Guna2Button { Text = "< Prev", FillColor = DrawColor.FromArgb(240, 240, 240), ForeColor = DrawColor.Black, BorderRadius = 6, Width = 70, Height = 30 };
             btnPrevPage.Click += async (s, e) => { if (historyCurrentPage > 1) { historyCurrentPage--; await LoadHistoryData(); } };
 
-            btnNextPage = new Button { Text = "Next >", BackColor = DrawColor.FromArgb(240, 240, 240), FlatStyle = FlatStyle.Flat, Width = 70, Height = 30 };
+            btnNextPage = new Guna.UI2.WinForms.Guna2Button { Text = "Next >", FillColor = DrawColor.FromArgb(240, 240, 240), ForeColor = DrawColor.Black, BorderRadius = 6, Width = 70, Height = 30 };
             btnNextPage.Click += async (s, e) => { if (historyCurrentPage < historyTotalPages) { historyCurrentPage++; await LoadHistoryData(); } };
 
             lblPageInfo = new Label { Text = "Page 1 of 1", AutoSize = true, Font = new DrawFont("Segoe UI", 10, FontStyle.Bold) };

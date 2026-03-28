@@ -93,7 +93,6 @@ namespace Ventrix.App
                 ToggleMode("Student");
                 await EnterBorrowMode();
             };
-
         }
 
         #region Modes & UI State
@@ -408,6 +407,7 @@ namespace Ventrix.App
                     }
                 }
 
+                // REPLACE THIS BLOCK INSIDE BtnBorrow_Click:
                 if (successfulCheckouts > 0)
                 {
                     MessageBox.Show("Borrow request successful! Please wait for the admin to approve your items.", "Borrow Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -417,9 +417,15 @@ namespace Ventrix.App
                         _cart.Remove(processedItem);
                     }
 
+                    // If all items were successfully processed, wipe the form clean!
                     if (_cart.Count == 0)
                     {
-                        txtSubject.Clear();
+                        ClearAllInputs();
+                    }
+                    else
+                    {
+                        // If some items failed (e.g. out of stock), just update the cart
+                        UpdateCartUI();
                     }
                 }
                 else
@@ -427,9 +433,13 @@ namespace Ventrix.App
                     MessageBox.Show("No items were borrowed. Your selection has not been changed.", "Borrowing Incomplete", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                UpdateCartUI();
+                // Only re-validate if there are still items left in the cart
+                if (_cart.Count > 0)
+                {
+                    await ValidateUserRoleAndLimits();
+                }
+
                 await LoadEquipmentListAsync();
-                await ValidateUserRoleAndLimits();
             }
             catch (Exception ex)
             {
@@ -454,6 +464,16 @@ namespace Ventrix.App
             SetLoadingState(true);
             try
             {
+                // --- NEW: Verify if the ID is actually registered in the system first ---
+                var userAccount = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.UserId == studentId && u.Role != UserRole.Admin);
+
+                if (userAccount == null)
+                {
+                    MessageBox.Show("Student ID not found. Please register an account first.", "Not Registered", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // If registered, proceed to check for active items
                 var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync())
                     .Where(b => b.BorrowerId == studentId && (b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue))
                     .ToList();
@@ -485,7 +505,9 @@ namespace Ventrix.App
 
                             MessageBox.Show($"Successfully requested return for {itemsToReturn.Count} item(s)!\n\nPlease present the physical item(s) to the admin/technician for final confirmation.", "Return Pending Confirmation", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                            await ValidateUserRoleAndLimits();
+                            // Wipe the inputs clean after a successful return!
+                            ClearAllInputs();
+
                             await EnterBorrowMode();
                         }
                     }
@@ -504,40 +526,14 @@ namespace Ventrix.App
 
         private async Task ValidateUserRoleAndLimits()
         {
-            if (isReturnMode || string.IsNullOrWhiteSpace(txtStudentId.Text) || txtPassword.Visible) return;
+            if (string.IsNullOrWhiteSpace(txtStudentId.Text) || txtPassword.Visible) return;
 
             string inputId = txtStudentId.Text.Trim();
-
-            if (inputId.Length < 6) return;
-
-            var allUsers = await _userService.GetAllUsersAsync();
-
-            var matchingUsers = allUsers.Where(u => u.UserId.ToLower().StartsWith(inputId.ToLower())).ToList();
-
-            if (matchingUsers.Count > 1)
-            {
-                MessageBox.Show("Multiple accounts share these starting characters. Please enter one more character of your ID.", "Disambiguation Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                cmbListEquipments.Enabled = false;
-                txtSubject.Enabled = false;
-                cmbGradeLevel.Enabled = false;
-                numQuantity.Enabled = false;
-                btnAddToCart.Enabled = false;
-                btnBorrow.Enabled = false;
-                btnBorrow.FillColor = DisabledGray;
-                return;
-            }
-
-            var userAccount = matchingUsers.FirstOrDefault();
+            var userAccount = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.UserId == inputId);
 
             if (userAccount != null)
             {
-                if (txtStudentId.Text != userAccount.UserId)
-                {
-                    txtStudentId.Text = userAccount.UserId;
-                    txtStudentId.SelectionStart = txtStudentId.Text.Length; 
-                }
-
+                // 1. Lockout Check
                 if (userAccount.Strikes >= 3 && userAccount.Role.ToString() != "Admin" && userAccount.Role.ToString() != "Faculty")
                 {
                     MessageBox.Show($"ACCOUNT LOCKED: You have accumulated {userAccount.Strikes} strikes for late or damaged returns.\n\nYou are prohibited from using the borrowing system until a faculty member clears your account.", "Security Lockout", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -552,6 +548,7 @@ namespace Ventrix.App
                     return;
                 }
 
+                // 2. Enable UI
                 cmbListEquipments.Enabled = true;
                 txtSubject.Enabled = true;
                 cmbGradeLevel.Enabled = true;
@@ -560,38 +557,47 @@ namespace Ventrix.App
                 btnBorrow.Enabled = true;
                 btnBorrow.FillColor = PrimaryBlue;
 
-                var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == userAccount.UserId).ToList();
+                // 3. Calculate Limits
+                var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == inputId).ToList();
                 int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
                 int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
                 int cartTotal = _cart.Sum(c => c.Quantity);
 
+                // 4. Role-Specific Logic
                 if (userAccount.Role.ToString() == "Student")
                 {
-                    cmbGradeLevel.DataSource = null;
-                    cmbGradeLevel.Items.Clear();
+                    // Remove "Faculty" from options so students cannot select it
+                    if (cmbGradeLevel.Items.Contains("Faculty"))
+                    {
+                        cmbGradeLevel.Items.Remove("Faculty");
+                    }
 
-                    cmbGradeLevel.Items.AddRange(new object[] { "Grade 11", "Grade 12", "College" });
+                    // Clear the selection if it was previously set to Faculty
+                    if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty")
+                    {
+                        cmbGradeLevel.SelectedIndex = -1;
+                    }
 
-                    cmbGradeLevel.Enabled = true;
-
+                    // Set student limit to 3 items max
                     int remainingAllowed = 3 - currentlyHolding - currentlyPending - cartTotal;
                     numQuantity.Maximum = Math.Max(0, remainingAllowed);
+
+                    cmbGradeLevel.Enabled = true;
                 }
-                else 
+                else // Faculty or Admin
                 {
-                    cmbGradeLevel.DataSource = null;
-                    cmbGradeLevel.Items.Clear();
-                    cmbGradeLevel.Items.Add("Faculty");
+                    // Re-add "Faculty" if it was removed, then lock it as the selection
+                    if (!cmbGradeLevel.Items.Contains("Faculty"))
+                    {
+                        cmbGradeLevel.Items.Add("Faculty");
+                    }
 
                     cmbGradeLevel.SelectedItem = "Faculty";
-                    cmbGradeLevel.Enabled = false; 
+                    cmbGradeLevel.Enabled = false;
 
+                    // Faculty can borrow up to 50 items
                     numQuantity.Maximum = 50;
                 }
-            }
-            else if (inputId.Length >= 6 && matchingUsers.Count == 0 && txtStudentId.Focused == false)
-            {
-                MessageBox.Show("ID not found. Please ask an Admin to register your account.", "Not Registered", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         #endregion
@@ -618,96 +624,7 @@ namespace Ventrix.App
             return hashIndex > 0 ? name.Substring(0, hashIndex).Trim() : name.Trim();
         }
 
-        private List<InventoryItem> ShowMultiUnitSelectionPopup(List<InventoryItem> units, string baseName, int requiredQuantity)
-        {
-            var selectedUnits = new List<InventoryItem>();
-            using (Form popup = new Form())
-            {
-                popup.Text = $"Select Units: {baseName}";
-                popup.Size = new Size(380, 250);
-                popup.StartPosition = FormStartPosition.CenterParent;
-                popup.FormBorderStyle = FormBorderStyle.FixedDialog;
-                popup.MaximizeBox = false;
-                popup.MinimizeBox = false;
-                popup.BackColor = Color.White;
-
-                Label lbl = new Label { Text = $"Please check exactly {requiredQuantity} specific {baseName}(s):", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI Semibold", 10) };
-
-                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 320, Height = 110, Font = new Font("Segoe UI", 10), BorderStyle = BorderStyle.FixedSingle };
-                foreach (var unit in units)
-                {
-                    clb.Items.Add(new UnitComboItem { Text = $"{unit.Name} (Condition: {unit.Condition})", Unit = unit });
-                }
-
-                Button btnOk = new Button { Text = "Confirm", Location = new Point(130, 165), Width = 100, Height = 35, BackColor = PrimaryBlue, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-                btnOk.FlatAppearance.BorderSize = 0;
-                btnOk.Click += (s, e) => {
-                    if (clb.CheckedItems.Count != requiredQuantity)
-                    {
-                        MessageBox.Show($"You requested {requiredQuantity} item(s). Please check exactly {requiredQuantity} box(es).", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    foreach (UnitComboItem item in clb.CheckedItems) selectedUnits.Add(item.Unit);
-                    popup.DialogResult = DialogResult.OK;
-                };
-
-                popup.Controls.Add(lbl);
-                popup.Controls.Add(clb);
-                popup.Controls.Add(btnOk);
-                popup.ShowDialog(this);
-            }
-
-            return selectedUnits;
-        }
-
-        private List<BorrowRecord> ShowMultiReturnSelectionPopup(List<BorrowRecord> records)
-        {
-            var selectedRecords = new List<BorrowRecord>();
-            using (Form popup = new Form())
-            {
-                popup.Text = "Bulk Return Items";
-                popup.Size = new Size(420, 320);
-                popup.StartPosition = FormStartPosition.CenterParent;
-                popup.FormBorderStyle = FormBorderStyle.FixedDialog;
-                popup.MaximizeBox = false;
-                popup.MinimizeBox = false;
-                popup.BackColor = Color.White;
-
-                Label lbl = new Label { Text = "Check ALL the items you are returning right now:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI Semibold", 10) };
-
-                CheckedListBox clb = new CheckedListBox { Location = new Point(20, 45), Width = 360, Height = 170, Font = new Font("Segoe UI", 10), CheckOnClick = true, BorderStyle = BorderStyle.FixedSingle };
-                foreach (var record in records)
-                {
-                    string statusTag = record.Status == BorrowStatus.Overdue ? "[OVERDUE] " : "";
-                    clb.Items.Add(new RecordComboItem { Text = $"{statusTag}{record.ItemName} (Borrowed: {record.BorrowDate:MMM dd, yyyy})", RecordId = record.Id });
-                }
-
-                Button btnOk = new Button { Text = "Request Return", Location = new Point(150, 230), Width = 120, Height = 35, BackColor = SuccessGreen, ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
-                btnOk.FlatAppearance.BorderSize = 0;
-                btnOk.Click += (s, e) => {
-                    if (clb.CheckedItems.Count == 0)
-                    {
-                        MessageBox.Show("Please select at least one item to return.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    foreach (RecordComboItem item in clb.CheckedItems)
-                    {
-                        selectedRecords.Add(records.First(r => r.Id == item.RecordId));
-                    }
-                    popup.DialogResult = DialogResult.OK;
-                };
-
-                popup.Controls.Add(lbl);
-                popup.Controls.Add(clb);
-                popup.Controls.Add(btnOk);
-                popup.ShowDialog(this);
-            }
-
-            return selectedRecords;
-        }
-
+       
         private void SetLoadingState(bool isLoading)
         {
             this.Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
@@ -732,6 +649,27 @@ namespace Ventrix.App
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void ClearAllInputs()
+        {
+            txtStudentId.Clear();
+            txtSubject.Clear();
+
+            if (cmbListEquipments.Items.Count > 0)
+                cmbListEquipments.SelectedIndex = -1;
+
+            if (cmbGradeLevel.Items.Count > 0)
+                cmbGradeLevel.SelectedIndex = -1;
+
+            // --- FIX: Temporarily raise the maximum before resetting to 1 to avoid the crash! ---
+            numQuantity.Maximum = 50;
+            numQuantity.Value = 1;
+
+            _cart.Clear();
+            UpdateCartUI();
+
+            txtStudentId.Focus();
         }
         #endregion
 

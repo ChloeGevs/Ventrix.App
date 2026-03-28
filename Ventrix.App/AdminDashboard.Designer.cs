@@ -542,7 +542,7 @@ namespace Ventrix.App
             pnlRegisterBorrower.Location = new Point(20, 20);
             pnlRegisterBorrower.Name = "pnlRegisterBorrower";
             pnlRegisterBorrower.ShadowDecoration.CustomizableEdges = customizableEdges45;
-            pnlRegisterBorrower.Size = new Size(1100, 100);
+            pnlRegisterBorrower.Size = new Size(1100, 154);
             pnlRegisterBorrower.TabIndex = 10;
             pnlRegisterBorrower.Visible = false;
             // 
