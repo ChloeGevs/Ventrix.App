@@ -8,20 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Ventrix.App.Controls;
 using Ventrix.App.Popups;
 using Ventrix.Application.DTOs;
 using Ventrix.Application.Services;
-using Ventrix.Domain.Models;
 using Ventrix.Domain.Enums;
-
+using Ventrix.Domain.Models;
 using DrawColor = System.Drawing.Color;
-using DrawPoint = System.Drawing.Point;
-using DrawSize = System.Drawing.Size;
-using DrawRect = System.Drawing.Rectangle;
 using DrawFont = System.Drawing.Font;
+using DrawPoint = System.Drawing.Point;
+using DrawRect = System.Drawing.Rectangle;
+using DrawSize = System.Drawing.Size;
 
 namespace Ventrix.App
 {
@@ -398,10 +398,15 @@ namespace Ventrix.App
                 sidebarTimer.Interval = 10;
                 btnHamburger.Click += (s, e) => {
 
-                    // --- NEW: Turn off heavy shadows during the animation ---
+                    // Turn off heavy shadows during the animation
                     if (pnlGridContainer != null) pnlGridContainer.ShadowDecoration.Enabled = false;
                     if (pnlHomeSummary != null) pnlHomeSummary.ShadowDecoration.Enabled = false;
                     if (btnRegisterBorrower != null) btnRegisterBorrower.ShadowDecoration.Enabled = false;
+
+                    // --- NEW: PRIME THE SLIDING REVEAL EFFECT ---
+                    if (dgvInventory != null) dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
+                    if (pnlRegisterBorrower != null) pnlRegisterBorrower.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                    // ---------------------------------------------
 
                     if (isSidebarExpanded)
                     {
@@ -1006,8 +1011,8 @@ namespace Ventrix.App
             {
                 dgvInventory.Parent = pnlGridContainer;
 
-                // --- FIX: Lock to Top/Left to kill the DataGridView flicker entirely ---
-                dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                // --- NEW: Restore Full Anchoring so the right side tracks perfectly ---
+                dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
                 dgvInventory.Location = new DrawPoint(margin, gridY);
                 dgvInventory.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), pnlGridContainer.Height - gridY - margin);
@@ -1126,6 +1131,8 @@ namespace Ventrix.App
 
         private void SidebarTimer_Tick(object sender, EventArgs e)
         {
+            // Suspend the specific panel that holds the grid to stop the flicker
+            if (pnlMainContent != null) pnlMainContent.SuspendLayout();
             this.SuspendLayout();
 
             int targetWidth = isSidebarExpanded ? sidebarMinWidth : sidebarMaxWidth;
@@ -1173,20 +1180,22 @@ namespace Ventrix.App
             if (pnlGridContainer != null && pnlGridContainer.Visible)
             {
                 pnlGridContainer.Bounds = innerSafeArea;
-                ArrangeInventoryView(); // Allows it to seamlessly retract/expand
+                ArrangeInventoryView();
             }
 
             if (pnlHistory != null && pnlHistory.Visible)
             {
                 pnlHistory.Bounds = innerSafeArea;
-                ArrangeHistoryView(); // Allows it to seamlessly retract/expand
+                ArrangeHistoryView();
             }
 
             this.ResumeLayout(true);
+            // Resume the main content layout immediately after the math is done
+            if (pnlMainContent != null) pnlMainContent.ResumeLayout(true);
         }
         #endregion
 
-            #region Navigation & Data Loading
+        #region Navigation & Data Loading
         private async Task<List<InventoryItem>> GetDamagedItemsAsync()
         {
             return (await _inventoryService.GetAllItemsAsync())
@@ -1356,7 +1365,8 @@ namespace Ventrix.App
                 items = items.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToString().ToLower().Contains(search)).ToList();
             }
 
-            if (filter == "All")
+            // 1. UPDATE THIS LINE
+            if (filter.Equals("All", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("Item Name", "Category", "Total Units", "Available", "Borrowed", "Damaged");
                 var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
@@ -1375,7 +1385,8 @@ namespace Ventrix.App
                 }
                 if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
             }
-            else if (filter == "Records")
+            // 2. UPDATE THIS LINE
+            else if (filter.Equals("Records", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held", "Strikes", "Account Status");
 
@@ -1396,7 +1407,8 @@ namespace Ventrix.App
                     dgvInventory.Rows.Add(u.UserId, u.FullName, u.Role.ToString(), itemsHeld, u.Strikes, accountStatus);
                 }
             }
-            else if (filter == "Borrowed")
+            // 3. UPDATE THIS LINE
+            else if (filter.Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested/Approved On", "Due Date", "Status");
                 dgvInventory.Columns["RecordIDs"].Visible = false;
@@ -1406,6 +1418,16 @@ namespace Ventrix.App
                     .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending ||
                                 b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
                     .ToList();
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    pendingAndActive = pendingAndActive.Where(b =>
+                        (b.BorrowerId != null && b.BorrowerId.ToLower().Contains(search)) ||
+                        (b.Borrower != null && b.Borrower.FullName.ToLower().Contains(search)) ||
+                        (b.ItemName != null && b.ItemName.ToLower().Contains(search)) ||
+                        b.Status.ToString().ToLower().Contains(search)
+                    ).ToList();
+                }
 
                 var groupedRecords = pendingAndActive
                     .GroupBy(b => new { b.BorrowerId, b.Status })
@@ -1425,14 +1447,12 @@ namespace Ventrix.App
                 {
                     string dueDateStr;
 
-                    // Due date only appears if the item is no longer Pending (meaning it was approved)
                     if (group.Status == BorrowStatus.Pending)
                     {
-                        dueDateStr = "---"; 
+                        dueDateStr = "---";
                     }
                     else
                     {
-                        // Calculates due date as exactly 24 hours after the admin approved it
                         dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy");
                     }
 
@@ -1442,16 +1462,16 @@ namespace Ventrix.App
                         group.BorrowerName,
                         group.Items,
                         group.LastUpdate.ToString("MMM dd, yyyy"),
-                        dueDateStr, 
+                        dueDateStr,
                         group.Status.ToString()
                     );
                 }
 
-                // Adjust column widths for better readability
                 if (dgvInventory.Columns.Contains("Items")) dgvInventory.Columns["Items"].FillWeight = 150;
                 if (dgvInventory.Columns.Contains("DueDate")) dgvInventory.Columns["DueDate"].FillWeight = 110;
             }
-            else if (filter == "Available")
+            // 4. UPDATE THIS LINE
+            else if (filter.Equals("Available", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("Item Name", "Category", "Available Units");
                 var groupedItems = items.Where(i => i.Status == ItemStatus.Available).GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
@@ -1649,24 +1669,62 @@ namespace Ventrix.App
 
             var allLogs = await _borrowService.GetAllBorrowRecordsAsync();
 
+            // 1. Apply Date Filters
             if (dtpStartDate != null && dtpEndDate != null)
             {
                 DateTime endOfDay = dtpEndDate.Value.Date.AddDays(1).AddTicks(-1);
                 allLogs = allLogs.Where(b => b.BorrowDate >= dtpStartDate.Value.Date && b.BorrowDate <= endOfDay).ToList();
             }
 
-            var userGroups = allLogs.GroupBy(b => b.BorrowerId).OrderByDescending(g => g.Max(b => b.BorrowDate)).ToList();
-
-            foreach (var group in userGroups)
+            // 2. --- APPLY THE MISSING SEARCH LOGIC ---
+            string search = txtSearch?.Text?.ToLower() ?? "";
+            if (!string.IsNullOrEmpty(search))
             {
-                var first = group.First();
-                string bName = first.Borrower != null ? first.Borrower.FullName : "Unknown";
-                int totalBorrows = group.Count();
-                int activeBorrows = group.Count(b => b.Status == BorrowStatus.Active);
-                string lastActivity = group.Max(b => b.BorrowDate).ToString("MMM dd, yyyy");
-
-                dgvHistory.Rows.Add(group.Key, bName, totalBorrows, activeBorrows, lastActivity);
+                allLogs = allLogs.Where(b =>
+                    (b.BorrowerId != null && b.BorrowerId.ToLower().Contains(search)) ||
+                    (b.Borrower != null && b.Borrower.FullName.ToLower().Contains(search)) ||
+                    (b.ItemName != null && b.ItemName.ToLower().Contains(search))
+                ).ToList();
             }
+
+            // 3. Group the data 
+            var userGroupsQuery = allLogs.GroupBy(b => b.BorrowerId).Select(g => new {
+                BorrowerId = g.Key,
+                BorrowerName = g.First().Borrower != null ? g.First().Borrower.FullName : "Unknown",
+                TotalBorrowed = g.Count(),
+                ActiveHeld = g.Count(b => b.Status == BorrowStatus.Active),
+                LastActive = g.Max(b => b.BorrowDate)
+            });
+
+            // 4. --- APPLY PROPER COLUMN SORTING ---
+            switch (historySortColumn)
+            {
+                case "SchoolId":
+                    userGroupsQuery = historySortDescending ? userGroupsQuery.OrderByDescending(x => x.BorrowerId) : userGroupsQuery.OrderBy(x => x.BorrowerId);
+                    break;
+                case "Borrower":
+                    userGroupsQuery = historySortDescending ? userGroupsQuery.OrderByDescending(x => x.BorrowerName) : userGroupsQuery.OrderBy(x => x.BorrowerName);
+                    break;
+                case "TotalBorrowed":
+                    userGroupsQuery = historySortDescending ? userGroupsQuery.OrderByDescending(x => x.TotalBorrowed) : userGroupsQuery.OrderBy(x => x.TotalBorrowed);
+                    break;
+                case "ActiveHeld":
+                    userGroupsQuery = historySortDescending ? userGroupsQuery.OrderByDescending(x => x.ActiveHeld) : userGroupsQuery.OrderBy(x => x.ActiveHeld);
+                    break;
+                case "LastActive":
+                default:
+                    userGroupsQuery = historySortDescending ? userGroupsQuery.OrderByDescending(x => x.LastActive) : userGroupsQuery.OrderBy(x => x.LastActive);
+                    break;
+            }
+
+            // 5. Populate Grid
+            foreach (var group in userGroupsQuery)
+            {
+                dgvHistory.Rows.Add(group.BorrowerId, group.BorrowerName, group.TotalBorrowed, group.ActiveHeld, group.LastActive.ToString("MMM dd, yyyy"));
+            }
+
+            // Manage Empty State 
+            ToggleNoResultsState(dgvHistory.Rows.Count == 0);
         }
 
         private async Task UpdateDashboardCounts()
@@ -2339,6 +2397,7 @@ namespace Ventrix.App
                 }
             }
         }
+
         #endregion
     }
 }
