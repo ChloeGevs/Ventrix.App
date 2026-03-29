@@ -39,10 +39,25 @@ namespace Ventrix.Application.Services
 
         public async Task<List<InventoryItem>> GetAllItemsAsync()
         {
-            // Fix: Only return items that are not "Archived" (Soft Delete)
-            return await _context.InventoryItems
-                .Where(i => i.Status != ItemStatus.Unavailable || i.Condition != Condition.Damaged)
-                .ToListAsync();
+            return await _context.InventoryItems.ToListAsync();
+        }
+        public async Task<List<InventoryItem>> GetTrueAvailableItemsAsync()
+        {
+            // 1. Get all items that are physically marked as 'Available'
+            var physicallyAvailable = (await GetAllItemsAsync())
+                .Where(i => i.Status == ItemStatus.Available)
+                .ToList();
+
+            // 2. Get all IDs of items currently sitting in 'Pending' borrow requests
+            var pendingItemIds = await _context.BorrowRecords
+                .Where(b => b.Status == BorrowStatus.Pending)
+                .Select(b => b.InventoryItemId)
+                .ToListAsync(); // Added Async here for better performance
+
+            // 3. Return only items that are NOT in a pending request
+            return physicallyAvailable
+                .Where(i => !pendingItemIds.Contains(i.Id))
+                .ToList();
         }
 
         public async Task<List<InventoryItem>> GetFilteredInventoryAsync(string statusFilter = "All", string searchTerm = "")

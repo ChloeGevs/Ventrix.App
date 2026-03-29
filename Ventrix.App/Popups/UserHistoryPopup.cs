@@ -13,15 +13,27 @@ namespace Ventrix.App.Popups
     {
         private readonly string _schoolId;
         private readonly BorrowService _borrowService;
+        // NEW: Variables to hold the dates passed from the dashboard
+        private readonly DateTime? _startDate;
+        private readonly DateTime? _endDate;
         private DataGridView dgvUserHistory;
 
-        public UserHistoryPopup(string schoolId, string studentName, BorrowService borrowService)
+        // NEW: Added startDate and endDate to the constructor
+        public UserHistoryPopup(string schoolId, string studentName, BorrowService borrowService, DateTime? startDate = null, DateTime? endDate = null)
         {
             _schoolId = schoolId;
             _borrowService = borrowService;
+            _startDate = startDate;
+            _endDate = endDate;
 
             InitializeComponent();
-            this.Text = $"Full Audit History: {studentName} ({schoolId})";
+
+            // Update title to show if it is filtered or not
+            if (_startDate.HasValue && _endDate.HasValue)
+                this.Text = $"Audit History: {studentName} ({_startDate.Value:MMM dd} to {_endDate.Value:MMM dd})";
+            else
+                this.Text = $"Full Audit History: {studentName} ({schoolId})";
+
             this.Size = new Size(800, 500);
 
             SetupGrid();
@@ -70,9 +82,21 @@ namespace Ventrix.App.Popups
         private async void LoadStudentHistory()
         {
             var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
-            var studentRecords = allRecords.Where(b => b.BorrowerId == _schoolId).OrderByDescending(b => b.BorrowDate).ToList();
 
-            foreach (var r in studentRecords)
+            // 1. Get all records for this specific student
+            var studentQuery = allRecords.Where(b => b.BorrowerId == _schoolId);
+
+            // 2. NEW: Apply the exact same date filter logic if dates were passed in!
+            if (_startDate.HasValue && _endDate.HasValue)
+            {
+                DateTime endOfDay = _endDate.Value.Date.AddDays(1).AddTicks(-1);
+                studentQuery = studentQuery.Where(b => b.BorrowDate >= _startDate.Value.Date && b.BorrowDate <= endOfDay);
+            }
+
+            // 3. Convert to list and order by newest first
+            var finalRecords = studentQuery.OrderByDescending(b => b.BorrowDate).ToList();
+
+            foreach (var r in finalRecords)
             {
                 string rStamp = r.ReturnDate.HasValue ? r.ReturnDate.Value.ToString("MMM dd, yyyy - hh:mm tt") : "---";
                 dgvUserHistory.Rows.Add(r.Id, r.ItemName, r.BorrowDate.ToString("MMM dd, yyyy - hh:mm tt"), rStamp, r.Status.ToString());

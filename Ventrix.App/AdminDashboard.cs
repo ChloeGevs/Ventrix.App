@@ -692,30 +692,37 @@ namespace Ventrix.App
                     }
                 };
 
-                // NEW: Partial Overdue Menu Item
+                // NEW: Updated Partial Overdue Menu Item logic
                 var partialOverdueBtn = new ToolStripMenuItem("⏰ Select Specific Items to Mark Overdue...");
                 partialOverdueBtn.Click += async (s, e) => {
                     var ids = GetSelectedRecordIds();
                     if (ids.Any())
                     {
                         var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
-                        // Overdue can only be applied to currently Active items
-                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) && r.Status == BorrowStatus.Active).ToList();
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) &&
+                            (r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue)).ToList();
 
                         if (validRecords.Any())
                         {
                             var selectedToOverdue = ShowMultiRecordSelectionPopup(
                                 "Mark Overdue",
-                                "Select the specific items to mark as overdue:\n(A strike will automatically be issued)",
+                                "Select the specific items to mark as overdue:",
                                 validRecords,
                                 "Mark Overdue",
                                 DrawColor.DarkOrange);
 
                             if (selectedToOverdue.Any())
                             {
+                                // 1. Update the database
                                 await _borrowService.ManuallyMarkOverdueAsync(selectedToOverdue, _userService);
+
                                 ToastNotification.Show(this, $"{selectedToOverdue.Count} item(s) marked Overdue & Strike issued!", ToastType.Warning);
+
+                                // 2. CRITICAL: Refresh the grid data so the colors update
                                 await LoadFromDatabase("Borrowed");
+
+                                // 3. Update the dashboard cards
+                                await UpdateDashboardCounts();
                             }
                         }
                     }
@@ -771,24 +778,40 @@ namespace Ventrix.App
                     {
                         string status = dgvInventory.SelectedRows[0].Cells["Status"].Value?.ToString() ?? "";
 
+                        // Reset visibility for all buttons before checking status
+                        approveBtn.Visible = false;
+                        partialApproveBtn.Visible = false;
+                        confirmReturnBtn.Visible = false;
+                        partialReturnBtn.Visible = false;
+                        confirmDamagedReturnBtn.Visible = false;
+                        partialForceReturnBtn.Visible = false;
+                        partialOverdueBtn.Visible = false;
+
+                        // Actions for items waiting for Admin Approval
                         if (status == "Pending")
                         {
                             approveBtn.Visible = true;
                             partialApproveBtn.Visible = true;
                         }
+
+                        // Actions for items the borrower claims to have returned
                         if (status == "PendingReturn")
                         {
                             confirmReturnBtn.Visible = true;
                             partialReturnBtn.Visible = true;
+                            partialOverdueBtn.Visible = true;
                             confirmDamagedReturnBtn.Visible = true;
                         }
 
+                        // Actions for items currently held by the borrower
                         if (status == "Active")
                         {
                             partialForceReturnBtn.Visible = true;
                             partialOverdueBtn.Visible = true;
                             confirmDamagedReturnBtn.Visible = true;
                         }
+
+                        // Actions for items already past the 7-day limit
                         if (status == "Overdue")
                         {
                             partialForceReturnBtn.Visible = true;
@@ -1357,6 +1380,7 @@ namespace Ventrix.App
             dgvInventory.Rows.Clear();
             dgvInventory.Columns.Clear();
 
+            // FIXED: Added Async() to the method call
             var items = await _inventoryService.GetAllItemsAsync();
             string search = txtSearch?.Text?.ToLower() ?? "";
 
@@ -1365,19 +1389,25 @@ namespace Ventrix.App
                 items = items.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToString().ToLower().Contains(search)).ToList();
             }
 
-            // 1. UPDATE THIS LINE
+            // 1. UPDATE THIS LINE ("All" Filter)
             if (filter.Equals("All", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("Item Name", "Category", "Total Units", "Available", "Borrowed", "Damaged");
                 var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
 
-                var unconfirmedRecords = await _borrowService.GetAllBorrowRecordsAsync();
-                var outRecords = unconfirmedRecords.Where(r => r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue).ToList();
+                var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                var outRecords = allRecords.Where(r => r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue).ToList();
+
+                // NEW: Get IDs of physical items tied up in pending requests
+                var pendingItemIds = allRecords.Where(r => r.Status == BorrowStatus.Pending).Select(r => r.InventoryItemId).ToList();
 
                 foreach (var group in groupedItems)
                 {
                     int total = group.Count();
-                    int avail = group.Count(x => x.Status == ItemStatus.Available);
+
+                    // CHANGED: Available = Physical Available minus those in Pending status
+                    int avail = group.Count(x => x.Status == ItemStatus.Available && !pendingItemIds.Contains(x.Id));
+
                     int borrowed = outRecords.Count(r => GetBaseItemName(r.ItemName ?? "") == group.Key.BaseName);
                     int damaged = group.Count(x => x.Condition == Condition.Damaged);
 
@@ -1385,7 +1415,8 @@ namespace Ventrix.App
                 }
                 if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
             }
-            // 2. UPDATE THIS LINE
+
+            // 2. UPDATE THIS LINE ("Records" Filter - No changes needed here)
             else if (filter.Equals("Records", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held", "Strikes", "Account Status");
@@ -1401,13 +1432,17 @@ namespace Ventrix.App
 
                 foreach (var u in users)
                 {
-                    int itemsHeld = records.Count(r => r.BorrowerId == u.UserId && r.Status == BorrowStatus.Active);
+                    int itemsHeld = records.Count(r => r.BorrowerId == u.UserId &&  
+                                 (r.Status == BorrowStatus.Active ||
+                                  r.Status == BorrowStatus.Overdue ||
+                                  r.Status == BorrowStatus.PendingReturn));
                     string accountStatus = u.Strikes >= 3 ? "LOCKED" : "ACTIVE";
 
                     dgvInventory.Rows.Add(u.UserId, u.FullName, u.Role.ToString(), itemsHeld, u.Strikes, accountStatus);
                 }
             }
-            // 3. UPDATE THIS LINE
+
+            // 3. UPDATE THIS LINE ("Borrowed" Filter - No changes needed here)
             else if (filter.Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested/Approved On", "Due Date", "Status");
@@ -1453,7 +1488,7 @@ namespace Ventrix.App
                     }
                     else
                     {
-                        dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy");
+                        dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy"); 
                     }
 
                     dgvInventory.Rows.Add(
@@ -1470,13 +1505,28 @@ namespace Ventrix.App
                 if (dgvInventory.Columns.Contains("Items")) dgvInventory.Columns["Items"].FillWeight = 150;
                 if (dgvInventory.Columns.Contains("DueDate")) dgvInventory.Columns["DueDate"].FillWeight = 110;
             }
-            // 4. UPDATE THIS LINE
+
+            // 4. UPDATE THIS LINE ("Available" Filter)
             else if (filter.Equals("Available", StringComparison.OrdinalIgnoreCase))
             {
                 SetupColumns("Item Name", "Category", "Available Units");
-                var groupedItems = items.Where(i => i.Status == ItemStatus.Available).GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
 
-                foreach (var group in groupedItems) dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), group.Count());
+                // NEW: Get IDs of items tied up in pending requests
+                var pendingItemIds = (await _borrowService.GetAllBorrowRecordsAsync())
+                    .Where(b => b.Status == BorrowStatus.Pending)
+                    .Select(b => b.InventoryItemId)
+                    .ToList();
+
+                // CHANGED: Filter out items that are physically available BUT stuck in Pending
+                var groupedItems = items
+                    .Where(i => i.Status == ItemStatus.Available && !pendingItemIds.Contains(i.Id))
+                    .GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
+
+                foreach (var group in groupedItems)
+                {
+                    dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), group.Count());
+                }
+
                 if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
             }
 
@@ -1876,6 +1926,27 @@ namespace Ventrix.App
         private async Task DgvInventory_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || dgvInventory == null) return;
+
+            // --- NEW POPUP LOGIC FOR THE "BORROWED" TAB ---
+            if (dgvInventory.Columns.Contains("RecordIDs") && dgvInventory.Columns.Contains("Items"))
+            {
+                // Note: Used "BorrowerName" (no space) because your SetupColumns removes spaces!
+                string borrowerName = dgvInventory.Rows[e.RowIndex].Cells["BorrowerName"].Value?.ToString() ?? "Unknown Borrower";
+                string itemsStr = dgvInventory.Rows[e.RowIndex].Cells["Items"].Value?.ToString() ?? "";
+                string status = dgvInventory.Rows[e.RowIndex].Cells["Status"].Value?.ToString() ?? "";
+
+                // Open the dedicated popup form
+                using (var popup = new Ventrix.App.Popups.BorrowerItemsPopup(borrowerName, status, itemsStr))
+                {
+                    // USING YOUR EXISTING FADE METHOD HERE!
+                    ShowPopupWithFade(popup);
+                }
+
+                // Return so it doesn't try to run OpenItemGroupDetails() on the Borrowed tab
+                return;
+            }
+
+            // --- YOUR EXISTING LOGIC FOR OTHER TABS ---
             await OpenItemGroupDetails();
         }
 
@@ -2303,12 +2374,36 @@ namespace Ventrix.App
                 {
                     e.CellStyle.Font = new DrawFont("Segoe UI", 10.5F, FontStyle.Bold);
 
-                    if (value == nameof(ItemStatus.Available) || value == nameof(Condition.Good)) e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
-                    else if (value == nameof(BorrowStatus.Active) || value == nameof(ItemStatus.Borrowed)) e.CellStyle.ForeColor = DrawColor.DarkOrange;
-                    else if (value == nameof(BorrowStatus.Pending)) e.CellStyle.ForeColor = DrawColor.Goldenrod;
-                    else if (value == nameof(BorrowStatus.PendingReturn)) e.CellStyle.ForeColor = DrawColor.DarkMagenta;
-                    else if (value == nameof(BorrowStatus.Overdue)) e.CellStyle.ForeColor = DrawColor.Red;
+                    if (value == nameof(ItemStatus.Available) || value == nameof(Condition.Good))
+                        e.CellStyle.ForeColor = DrawColor.MediumSeaGreen;
+                    else if (value == nameof(BorrowStatus.Active) || value == nameof(ItemStatus.Borrowed))
+                        e.CellStyle.ForeColor = DrawColor.DarkOrange;
+                    else if (value == nameof(BorrowStatus.Pending))
+                        e.CellStyle.ForeColor = DrawColor.Goldenrod;
+                    else if (value == nameof(BorrowStatus.Overdue))
+                        e.CellStyle.ForeColor = DrawColor.Red;
                     else e.CellStyle.ForeColor = DrawColor.IndianRed;
+
+                    // --- NEW: Visual Warning for unconfirmed returns older than 24 hours ---
+                    if (value == nameof(BorrowStatus.PendingReturn))
+                    {
+                        e.CellStyle.ForeColor = DrawColor.DarkMagenta;
+
+                        // Ensure we are looking at the correct column for the timestamp
+                        if (dgv.Columns.Contains("RequestedApprovedOn"))
+                        {
+                            var cellValue = dgv.Rows[e.RowIndex].Cells["RequestedApprovedOn"].Value;
+                            if (cellValue != null && DateTime.TryParse(cellValue.ToString(), out DateTime lastUpdate))
+                            {
+                                // Highlight the row if it's been waiting for admin confirmation for over 24 hours
+                                if (DateTime.Now > lastUpdate.AddDays(1))
+                                {
+                                    e.CellStyle.BackColor = DrawColor.MistyRose; // Subtle red background
+                                    e.CellStyle.ForeColor = DrawColor.Firebrick;  // Darker red text
+                                }
+                            }
+                        }
+                    }
                 }
 
                 if (colName == "AccountStatus")
@@ -2359,12 +2454,15 @@ namespace Ventrix.App
         {
             if (e.RowIndex < 0 || dgvHistory == null) return;
 
-            // Extract the School ID from the clicked row
             string schoolId = dgvHistory.Rows[e.RowIndex].Cells["SchoolId"].Value.ToString();
             string studentName = dgvHistory.Rows[e.RowIndex].Cells["Borrower"].Value.ToString();
 
-            // Open the deep-dive popup
-            using (var popup = new UserHistoryPopup(schoolId, studentName, _borrowService))
+            // NEW: Grab the current dates from the filter pickers
+            DateTime? start = dtpStartDate?.Value;
+            DateTime? end = dtpEndDate?.Value;
+
+            // PASS the dates into the popup so it matches the dashboard view perfectly
+            using (var popup = new UserHistoryPopup(schoolId, studentName, _borrowService, start, end))
             {
                 ShowPopupWithFade(popup);
             }

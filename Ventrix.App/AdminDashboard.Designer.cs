@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace Ventrix.App
 {
@@ -896,5 +897,7 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2TextBox txtRegSuffix; // NEW: Suffix field added
         private Guna.UI2.WinForms.Guna2ComboBox cmbRegRole;
         private Guna.UI2.WinForms.Guna2Button btnRegisterBorrower;
+
+        private Chart chartInventoryHealth;
     }
 }

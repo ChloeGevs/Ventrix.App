@@ -363,8 +363,10 @@ namespace Ventrix.App
 
                 foreach (var cartItem in _cart)
                 {
-                    var allAvailableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
-                    var specificUnits = allAvailableItems.Where(i => GetBaseItemName(i.Name).Equals(cartItem.BaseItemName, StringComparison.OrdinalIgnoreCase)).ToList();
+                    var allAvailableItems = await _inventoryService.GetTrueAvailableItemsAsync();
+                    var specificUnits = allAvailableItems
+                        .Where(i => GetBaseItemName(i.Name).Equals(cartItem.BaseItemName, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
 
                     if (specificUnits.Count < cartItem.Quantity)
                     {
@@ -606,7 +608,9 @@ namespace Ventrix.App
         private async Task LoadEquipmentListAsync()
         {
             cmbListEquipments.Items.Clear();
-            var availableItems = await _inventoryService.GetFilteredInventoryAsync("Available", "");
+
+            // CHANGE: Use the new logic that excludes Pending reservations
+            var availableItems = await _inventoryService.GetTrueAvailableItemsAsync();
 
             var distinctItemNames = availableItems
                 .Select(item => GetBaseItemName(item.Name))

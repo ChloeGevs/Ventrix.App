@@ -136,18 +136,36 @@ namespace Ventrix.Application.Services
             }
         }
 
+        // FIX: Changed the first parameter to accept List<int> recordIds instead of List<BorrowRecord>
         public async Task ManuallyMarkOverdueAsync(List<int> recordIds, UserService userService)
         {
-            var records = await _context.BorrowRecords.Where(b => recordIds.Contains(b.Id)).ToListAsync();
+            if (recordIds == null || !recordIds.Any()) return;
 
-            foreach (var record in records)
+            var recordsToUpdate = await _context.BorrowRecords
+                .Where(r => recordIds.Contains(r.Id))
+                .ToListAsync();
+
+            // Group all the selected items by the student who borrowed them
+            var groupedByBorrower = recordsToUpdate.GroupBy(r => r.BorrowerId);
+
+            foreach (var group in groupedByBorrower)
             {
-                if (record.Status == BorrowStatus.Active)
+                string borrowerId = group.Key;
+
+                // --- ITEM LOOP STARTS ---
+                // We loop through the items ONLY to change their status
+                foreach (var record in group)
                 {
                     record.Status = BorrowStatus.Overdue;
-                    await userService.AddStrikeAsync(record.BorrowerId);
                 }
+                // --- ITEM LOOP ENDS ---
+
+                // CRITICAL: The strike MUST be outside the item loop!
+                // Because it is out here, it only happens ONCE per student, 
+                // no matter how many items were in the loop above.
+                await userService.AddStrikeAsync(borrowerId);
             }
+
             await _context.SaveChangesAsync();
         }
 
@@ -174,28 +192,31 @@ namespace Ventrix.Application.Services
 
         public async Task<int> ProcessAutomaticOverdueStrikesAsync(UserService userService)
         {
-            var activeRecords = await _context.BorrowRecords
-                .Where(b => b.Status == BorrowStatus.Active)
+            var overdueRecords = await _context.BorrowRecords
+                .Where(b => b.Status == BorrowStatus.Active && DateTime.Now > b.BorrowDate.AddDays(7))
                 .ToListAsync();
 
-            int newlyOverdueCount = 0;
+            if (!overdueRecords.Any()) return 0;
 
-            foreach (var record in activeRecords)
+            // Group the late items by student
+            var overdueGroups = overdueRecords.GroupBy(b => b.BorrowerId);
+
+            foreach (var group in overdueGroups)
             {
-                if (DateTime.Now > record.BorrowDate.AddDays(7))
+                string borrowerId = group.Key;
+
+                // Change statuses
+                foreach (var record in group)
                 {
                     record.Status = BorrowStatus.Overdue;
-                    await userService.AddStrikeAsync(record.BorrowerId);
-                    newlyOverdueCount++;
                 }
+
+                // CRITICAL: Give 1 strike per student, outside the item loop!
+                await userService.AddStrikeAsync(borrowerId);
             }
 
-            if (newlyOverdueCount > 0)
-            {
-                await _context.SaveChangesAsync();
-            }
-
-            return newlyOverdueCount;
+            await _context.SaveChangesAsync();
+            return overdueRecords.Count;
         }
 
         // --- NEW: Hides a single record from the dashboard ---
