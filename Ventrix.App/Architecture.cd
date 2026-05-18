@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Ventrix.App.Properties.Resources" Collapsed="true">
+    <Position X="8.75" Y="7" Width="1.5" />
+    <InheritanceLine Type="System.Object" FixedToPoint="true">
+      <Path>
+        <Point X="7.5" Y="6.312" />
+        <Point X="7.5" Y="6.687" />
+        <Point X="10.625" Y="6.687" />
+        <Point X="10.625" Y="7.375" />
+        <Point X="10.25" Y="7.375" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAACCQAAAAAAICAAEEQRUBAAAQEAAAAAAIQAAAACAYQ=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Controls.ActivityCard">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAUAAAAACAAAACAIAAAAAAAAAAAAAAgAA=</HashCode>
+      <FileName>Controls\ActivityCard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Controls.AlertTile">
+    <Position X="2.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAACACAACAAQAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Controls\AlertTile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Controls.MetricCard">
+    <Position X="2.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAgAAADAAAAAAAACAAABCAEAAAAEAAAAAAAABAEA=</HashCode>
+      <FileName>Controls\MetricCard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Controls.ToastNotification" Collapsed="true">
+    <Position X="10" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQABQAAACAAAAAAAACAAAACAIAMAAAAAAAAAAAQAAA=</HashCode>
+      <FileName>Popups\ToastNotification.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.BorrowerItemsPopup" Collapsed="true">
+    <Position X="13" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAABAAAACAAAACAAAAQAAABIAAAAABAAA=</HashCode>
+      <FileName>Popups\BorrowerItemsPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.BorrowPopup" Collapsed="true">
+    <Position X="10" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACQAAAACBAAIgAAACAAAACAAABAABAAQAAAAACAAA=</HashCode>
+      <FileName>Popups\BorrowPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.EditUserPopup" Collapsed="true">
+    <Position X="8.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACQAAAAgCAEAAEAAACAAEACgABAABAIACAEAQIBBAA=</HashCode>
+      <FileName>Popups\EditUserPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.InventoryPopup" Collapsed="true">
+    <Position X="11.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAACAEBCAAAAAAAACAACACCAAAABRAAAAAAAIAAAQ=</HashCode>
+      <FileName>Popups\InventoryPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.ItemGroupPopup" Collapsed="true">
+    <Position X="13.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEQBSAEAIKRQMBABAACIQAQigAAAAAQCAUCEAAACAAg=</HashCode>
+      <FileName>Popups\ItemGroupPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.QuantityPopup" Collapsed="true">
+    <Position X="6.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAACAAAAkCAACAAEAiAIAAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>Popups\QuantityPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.RepairDetailsPopup" Collapsed="true">
+    <Position X="4.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAACQAARAAAACAACACAEAAQARAAIAAAADAAAA=</HashCode>
+      <FileName>Popups\RepairDetailsPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.ShowMultiReturnSelectionPopup" Collapsed="true">
+    <Position X="8.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAiCAAAEAAgCAAAgiAEAABAAAAAAAAEABAAA=</HashCode>
+      <FileName>Popups\ShowMultiReturnSelectionPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.ShowMultiUnitSelectionPopup" Collapsed="true">
+    <Position X="6.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAiCAAAEAEACAAAAiAAAABAgAAAAgAEABAAA=</HashCode>
+      <FileName>Popups\ShowMultiUnitSelectionPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Popups.UserHistoryPopup" Collapsed="true">
+    <Position X="8.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACEAIAIAAACkAAACAAAAAAAAAAAAAABCAAA=</HashCode>
+      <FileName>Popups\UserHistoryPopup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.AdminDashboard" Collapsed="true">
+    <Position X="4.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>Dy6w0GFtAvUFDEAgiwGICUhvCMkkRAWWgfLMxdhmEyw=</HashCode>
+      <FileName>AdminDashboard.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.BorrowerPortal" Collapsed="true">
+    <Position X="4.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CIgCEYICAHSAU2AAABCgAACKAAoIBATgAACcSAVCCQI=</HashCode>
+      <FileName>BorrowerPortal.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.Program" Collapsed="true">
+    <Position X="4.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIgAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAA=</HashCode>
+      <FileName>Program.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Ventrix.App.ThemeManager" Collapsed="true">
+    <Position X="6.75" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACgACAQAAAAAAAAAAgAAAAAAAAAAAIAAgAAQ=</HashCode>
+      <FileName>ThemeManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="System.Windows.Forms.UserControl">
+    <Position X="0.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="MaterialSkin.Controls.MaterialForm" Collapsed="true">
+    <Position X="6.5" Y="0.5" Width="1.5" />
+    <NestedTypes>
+      <Class Name="MaterialSkin.Controls.MaterialForm.FormStyles" Collapsed="true">
+        <TypeIdentifier />
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier />
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="System.Windows.Forms.Form" Collapsed="true">
+    <Position X="6.5" Y="3" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="System.Object" Collapsed="true">
+    <Position X="6.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.DTOs.LoginDTO" Collapsed="true">
+    <Position X="18.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.DTOs.RegisterDTO" Collapsed="true">
+    <Position X="20" Y="1.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.Services.BorrowService" Collapsed="true">
+    <Position X="16.5" Y="0.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.Services.DatabaseBackupService" Collapsed="true">
+    <Position X="18.25" Y="0.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.Services.ErrorLogger" Collapsed="true">
+    <Position X="20" Y="0.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.Services.InventoryService" Collapsed="true">
+    <Position X="16.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="Ventrix.Application.Services.UserService" Collapsed="true">
+    <Position X="16.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Enum Name="Ventrix.App.Controls.ToastType" Collapsed="true">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAQAAAAAAABAAAgAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Popups\ToastNotification.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
