@@ -31,6 +31,14 @@ namespace Ventrix.App
         private readonly BorrowService _borrowService;
         private readonly UserService _userService;
 
+        // ── Second-screen tablet support ─────────────────────────────────────
+        /// <summary>
+        /// Reference to the Borrower Portal that launched this dashboard.
+        /// When set, sign-out will restore that portal (which may be running on a
+        /// tablet screen) instead of creating a fresh instance.
+        /// </summary>
+        private readonly BorrowerPortal? _borrowerPortal;
+
         private bool isSigningOut = false;
         private bool isSidebarExpanded = true;
         private const int sidebarMaxWidth = 240;
@@ -52,11 +60,12 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2Button btnNextPage;
         private Label lblPageInfo;
 
-        public AdminDashboard(InventoryService inventoryService, BorrowService borrowService, UserService userService)
+        public AdminDashboard(InventoryService inventoryService, BorrowService borrowService, UserService userService, BorrowerPortal? borrowerPortal = null)
         {
             _inventoryService = inventoryService;
             _borrowService = borrowService;
             _userService = userService;
+            _borrowerPortal = borrowerPortal;
 
             InitializeComponent();
             SetupHistoryAdvancedControls();
@@ -310,10 +319,10 @@ namespace Ventrix.App
                 pnlRegisterBorrower.Controls.Add(tlpReg);
                 tlpReg.BringToFront();
             }
-        
 
-                // --- 2. WIRE UP THE REGISTRATION BUTTON ---
-                if (btnRegisterBorrower != null)
+
+            // --- 2. WIRE UP THE REGISTRATION BUTTON ---
+            if (btnRegisterBorrower != null)
             {
                 btnRegisterBorrower.Click -= btnRegisterBorrower_Click;
                 btnRegisterBorrower.Click += btnRegisterBorrower_Click;
@@ -734,7 +743,7 @@ namespace Ventrix.App
                 actionMenu.Items.Add(unlockAccountBtn);
                 actionMenu.Items.Add(new ToolStripSeparator());
                 actionMenu.Items.Add(approveBtn);
-                actionMenu.Items.Add(new ToolStripSeparator()); 
+                actionMenu.Items.Add(new ToolStripSeparator());
                 actionMenu.Items.Add(deleteUserBtn);
                 actionMenu.Items.Add(editUserBtn);
                 actionMenu.Items.Add(partialApproveBtn);
@@ -1432,7 +1441,7 @@ namespace Ventrix.App
 
                 foreach (var u in users)
                 {
-                    int itemsHeld = records.Count(r => r.BorrowerId == u.UserId &&  
+                    int itemsHeld = records.Count(r => r.BorrowerId == u.UserId &&
                                  (r.Status == BorrowStatus.Active ||
                                   r.Status == BorrowStatus.Overdue ||
                                   r.Status == BorrowStatus.PendingReturn));
@@ -1488,7 +1497,7 @@ namespace Ventrix.App
                     }
                     else
                     {
-                        dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy"); 
+                        dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy");
                     }
 
                     dgvInventory.Rows.Add(
@@ -1973,11 +1982,20 @@ namespace Ventrix.App
                 {
                     isSigningOut = true; // This prevents Application.Exit() from killing the whole app
 
-                    // Create a fresh instance of the Borrower Portal
-                    var borrowerPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
-
-                    // Show the portal (its built-in Load event will automatically set it back to Student Mode)
-                    borrowerPortal.Show();
+                    if (_borrowerPortal != null && !_borrowerPortal.IsDisposed)
+                    {
+                        // The portal is still alive (may be running on the tablet screen).
+                        // Restore it to the primary screen and reset its UI for the next borrower.
+                        _borrowerPortal.ReturnToMainScreen();
+                        _borrowerPortal.Show();
+                        _borrowerPortal.BringToFront();
+                    }
+                    else
+                    {
+                        // No stored portal reference — create a fresh one as before.
+                        var borrowerPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+                        borrowerPortal.Show();
+                    }
 
                     // Close the Admin Dashboard
                     this.Close();

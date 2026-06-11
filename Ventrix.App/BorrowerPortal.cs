@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Ventrix.App.Popups;
 using Ventrix.Application.DTOs;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Enums;
@@ -16,6 +17,16 @@ namespace Ventrix.App
         private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
         private readonly UserService _userService;
+
+        // ── Second-screen tablet support ─────────────────────────────────────
+        private readonly DualScreenService _DualScreenService = new DualScreenService();
+
+        /// <summary>
+        /// True while this portal is running on a secondary screen (tablet mode).
+        /// When true the FormClosed handler suppresses Application.Exit() so the
+        /// Admin Dashboard stays alive if the portal window is accidentally closed.
+        /// </summary>
+        public bool IsOnSecondScreen { get; private set; } = false;
 
         private bool isReturnMode = false;
         private List<CartItem> _cart = new List<CartItem>();
@@ -42,7 +53,14 @@ namespace Ventrix.App
 
         private void SetupEvents()
         {
-            FormClosed += (s, e) => System.Windows.Forms.Application.Exit();
+            // Only exit the whole application when the portal itself is the primary (and only) window.
+            // When IsOnSecondScreen is true the Admin Dashboard is the primary window, so closing
+            // the tablet portal should not terminate the app.
+            FormClosed += (s, e) =>
+            {
+                if (!IsOnSecondScreen)
+                    System.Windows.Forms.Application.Exit();
+            };
 
             btnAdminToggle.Click += (s, e) => ToggleMode("Admin");
             btnStudentToggle.Click += async (s, e) => { ToggleMode("Student"); await EnterBorrowMode(); };
@@ -313,9 +331,30 @@ namespace Ventrix.App
 
                     if (adminUser != null)
                     {
-                        var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService);
+                        // ── Show the tablet setup prompt ──────────────────────────────
+                        using var prompt = new DualScreenPopup(_DualScreenService);
+                        var promptResult = prompt.ShowDialog(this);
+
+                        // Open the Admin Dashboard (passes 'this' so sign-out can restore us)
+                        var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService, this);
                         dashboard.Show();
-                        this.Hide();
+
+                        if (promptResult == DialogResult.OK && _DualScreenService.HasSecondScreen())
+                        {
+                            // Move the portal to the tablet / second screen and keep it visible
+                            var secondScreen = _DualScreenService.GetSecondaryScreen()!;
+                            _DualScreenService.PositionFormOnScreen(this, secondScreen);
+                            IsOnSecondScreen = true;
+
+                            // Reset the portal back to student mode for the tablet
+                            ToggleMode("Student");
+                            await EnterBorrowMode();
+                        }
+                        else
+                        {
+                            // No second screen chosen — hide as before
+                            this.Hide();
+                        }
                     }
                     else
                     {
@@ -628,7 +667,7 @@ namespace Ventrix.App
             return hashIndex > 0 ? name.Substring(0, hashIndex).Trim() : name.Trim();
         }
 
-       
+
         private void SetLoadingState(bool isLoading)
         {
             this.Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
@@ -647,7 +686,7 @@ namespace Ventrix.App
         {
             if (keyData == (Keys.Control | Keys.Shift | Keys.D))
             {
-                var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService);
+                var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService, this);
                 dashboard.Show();
                 this.Hide();
                 return true;
@@ -676,6 +715,22 @@ namespace Ventrix.App
             txtStudentId.Focus();
         }
         #endregion
+
+        // ── Second-screen tablet support ─────────────────────────────────────
+
+        /// <summary>
+        /// Called by <see cref="AdminDashboard"/> when the admin signs out.
+        /// Moves this portal back to the centre of the primary screen,
+        /// clears the second-screen flag, and resets the UI to student mode
+        /// so it is ready for the next borrower.
+        /// </summary>
+        public void ReturnToMainScreen()
+        {
+            IsOnSecondScreen = false;
+            _DualScreenService.ReturnFormToPrimaryScreen(this);
+            ToggleMode("Student");
+            _ = EnterBorrowMode(); // fire-and-forget; resets the cart / dropdowns
+        }
 
         private class CartItem
         {
