@@ -35,28 +35,38 @@ namespace Ventrix.App
             return null;
         }
 
-        // ─── Positioning ─────────────────────────────────────────────────────────
+        /// ─── Positioning ─────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Moves and resizes <paramref name="form"/> to fill the working area of
-        /// <paramref name="targetScreen"/>. Ideal for tablet / kiosk display.
+        /// Moves and resizes <paramref name="form"/> to fill the target screen completely,
+        /// removing borders and locking it on top.
         /// </summary>
         public void PositionFormOnScreen(Form form, Screen targetScreen)
         {
-            // Normalise first so we can reposition freely
+            // 1. Strip the borders and title bar so it cannot be dragged or minimized
+            form.FormBorderStyle = FormBorderStyle.None;
+
+            // 2. Force it to sit above the Windows Taskbar and all other applications
+            form.TopMost = true;
+
+            // 3. Position it using .Bounds instead of .WorkingArea so it completely covers the taskbar
             form.WindowState = FormWindowState.Normal;
             form.StartPosition = FormStartPosition.Manual;
-            form.Location = targetScreen.WorkingArea.Location;
-            form.Size = targetScreen.WorkingArea.Size;
+            form.Location = targetScreen.Bounds.Location;
+            form.Size = targetScreen.Bounds.Size;
         }
 
         /// <summary>
-        /// Returns <paramref name="form"/> to the centre of the primary screen at
-        /// its original 1200 × 800 resolution (capped to the available working area).
+        /// Returns <paramref name="form"/> to the centre of the primary screen,
+        /// restoring its title bar and default behavior.
         /// </summary>
         public void ReturnFormToPrimaryScreen(Form form)
         {
             Screen primary = Screen.PrimaryScreen ?? Screen.AllScreens[0];
+
+            // 1. Restore the borders and allow other windows to go over it
+            form.FormBorderStyle = FormBorderStyle.Sizable; // Or FixedSingle, depending on your original design
+            form.TopMost = false;
 
             form.WindowState = FormWindowState.Normal;
             form.StartPosition = FormStartPosition.Manual;

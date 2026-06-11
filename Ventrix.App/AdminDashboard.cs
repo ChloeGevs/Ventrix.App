@@ -117,6 +117,12 @@ namespace Ventrix.App
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (keyData == (Keys.Control | Keys.Shift | Keys.D))
+            {
+                SignOutAdmin();
+                return true;
+            }
+
             if (keyData == Keys.Tab || keyData == (Keys.Shift | Keys.Tab))
             {
                 var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
@@ -209,6 +215,20 @@ namespace Ventrix.App
                     flowRecentActivity.ResumeLayout(true);
                 };
             }
+
+            // --- The Specific Export Button ---
+            var exportSpecificQRsBtn = new ToolStripMenuItem("🖨️ Export Specific Item QR Tags...");
+            exportSpecificQRsBtn.Click += async (s, e) => {
+                await GenerateSpecificItemQRCodesAsync();
+            };
+
+            // --- The All Export Button ---
+            var exportAllQRsBtn = new ToolStripMenuItem("📦 Export ALL Item QR Tags (Batch)");
+            exportAllQRsBtn.Click += async (s, e) => {
+                this.Cursor = Cursors.WaitCursor;
+                try { await BatchGenerateAllItemQRCodesAsync(); }
+                finally { this.Cursor = Cursors.Default; }
+            };
 
             // Add pnlRegisterBorrower to this existing list
             // --- ADDED ALL REGISTRATION CONTROLS TO THE DOUBLE BUFFER LIST ---
@@ -753,6 +773,9 @@ namespace Ventrix.App
                 actionMenu.Items.Add(partialForceReturnBtn);
                 actionMenu.Items.Add(partialOverdueBtn);
                 actionMenu.Items.Add(partialReturnBtn);
+                actionMenu.Items.Add(new ToolStripSeparator());
+                actionMenu.Items.Add(exportSpecificQRsBtn);
+                actionMenu.Items.Add(exportAllQRsBtn);
 
                 dgvInventory.ContextMenuStrip = actionMenu;
 
@@ -829,6 +852,9 @@ namespace Ventrix.App
                     }
 
                     if (!isBorrowersTab && !isBorrowedTab) e.Cancel = true;
+                    exportSpecificQRsBtn.Visible = !isBorrowersTab && !isBorrowedTab;
+                    exportAllQRsBtn.Visible = !isBorrowersTab && !isBorrowedTab;
+
                 };
 
                 dgvInventory.CellDoubleClick += async (s, e) => await DgvInventory_CellDoubleClick(s, e);
@@ -861,6 +887,61 @@ namespace Ventrix.App
             }
 
             this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); };
+        }
+
+        private async Task GenerateSpecificItemQRCodesAsync()
+        {
+            var allItems = (await _inventoryService.GetAllItemsAsync()).ToList();
+
+            if (!allItems.Any())
+            {
+                MessageBox.Show("There are no items in the inventory to generate codes for.", "Empty Inventory", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Launch the new popup, utilizing your existing ShowPopupWithFade method!
+            using (var popup = new Ventrix.App.Popups.MultiItemSelectionPopup(
+                "Generate Specific QR Tags",
+                "Select the specific equipment units you want to generate QR tags for:",
+                allItems,
+                "Generate Selected",
+                Color.FromArgb(13, 71, 161))) // Ventrix Blue
+            {
+                if (ShowPopupWithFade(popup) == DialogResult.OK)
+                {
+                    var selectedItems = popup.SelectedItems;
+
+                    if (!selectedItems.Any()) return;
+
+                    this.Cursor = Cursors.WaitCursor;
+                    try
+                    {
+                        string saveDirectory = @"C:\Ventrix_QR_Tags\Items";
+                        if (!System.IO.Directory.Exists(saveDirectory))
+                        {
+                            System.IO.Directory.CreateDirectory(saveDirectory);
+                        }
+
+                        // Reference your service
+                        var qrService = new Ventrix.Application.Services.QrCodeService();
+                        int generatedCount = 0;
+
+                        foreach (var item in selectedItems)
+                        {
+                            var sticker = qrService.GenerateItemQrCodeWithLabel(item.Id, item.Name);
+                            string fileName = $"Item_{item.Id}_{item.Name}";
+                            qrService.SaveQrSticker(sticker, saveDirectory, fileName);
+                            generatedCount++;
+                        }
+
+                        MessageBox.Show($"Successfully generated {generatedCount} specific QR tags!\n\nYou can find them at:\n{saveDirectory}", "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    finally
+                    {
+                        this.Cursor = Cursors.Default;
+                    }
+                }
+            }
         }
 
         #region Helper Popups
@@ -1259,6 +1340,76 @@ namespace Ventrix.App
                 activeBtn.Font = new DrawFont("Segoe UI", 11F, FontStyle.Bold);
                 activeBtn.ForeColor = DrawColor.White;
             }
+        }
+
+        private void SignOutAdmin()
+        {
+            if (MessageBox.Show("Are you sure you want to sign out?", "Ventrix System", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                isSigningOut = true; // Prevents Application.Exit() from killing the app
+
+                if (_borrowerPortal != null && !_borrowerPortal.IsDisposed)
+                {
+                    // Restore the hidden/tablet portal to the primary screen
+                    _borrowerPortal.ReturnToMainScreen();
+                    _borrowerPortal.Show();
+                    _borrowerPortal.BringToFront();
+                }
+                else
+                {
+                    var borrowerPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+                    borrowerPortal.Show();
+                }
+
+                // Close the dashboard
+                this.Close();
+            }
+            else
+            {
+                // Reset the combobox selection if they cancel
+                if (cmbAccountActions != null) cmbAccountActions.SelectedIndex = -1;
+            }
+        }
+
+        private async Task BatchGenerateAllItemQRCodesAsync()
+        {
+            // Change this path if you want to save them somewhere else like your Desktop
+            string saveDirectory = @"C:\Ventrix_QR_Tags\Items";
+
+            // Create the folder immediately if it doesn't exist
+            if (!Directory.Exists(saveDirectory))
+            {
+                Directory.CreateDirectory(saveDirectory);
+            }
+
+            // Initialize the service
+            var qrService = new QrCodeService();
+
+            // Fetch every single physical item unit from the database
+            var allItems = await _inventoryService.GetAllItemsAsync();
+
+            if (!allItems.Any())
+            {
+                MessageBox.Show("There are no items in the inventory to generate codes for.", "Empty Inventory", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int generatedCount = 0;
+
+            foreach (var item in allItems)
+            {
+                // Generate the composite image with the QR code and the text label
+                var sticker = qrService.GenerateItemQrCodeWithLabel(item.Id, item.Name);
+
+                // Save the image. We use the ID and Name to ensure every file is uniquely named!
+                string fileName = $"Item_{item.Id}_{item.Name}";
+                qrService.SaveQrSticker(sticker, saveDirectory, fileName);
+
+                generatedCount++;
+            }
+
+            // Let the admin know it finished successfully
+            MessageBox.Show($"Successfully generated and saved {generatedCount} QR tags!\n\nYou can find them all at:\n{saveDirectory}", "Batch Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private async Task SwitchView(string viewName, string filter = "All")
@@ -1978,32 +2129,7 @@ namespace Ventrix.App
         {
             if (cmbAccountActions?.SelectedItem?.ToString() == "Sign out")
             {
-                if (MessageBox.Show("Are you sure you want to sign out?", "Ventrix System", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    isSigningOut = true; // This prevents Application.Exit() from killing the whole app
-
-                    if (_borrowerPortal != null && !_borrowerPortal.IsDisposed)
-                    {
-                        // The portal is still alive (may be running on the tablet screen).
-                        // Restore it to the primary screen and reset its UI for the next borrower.
-                        _borrowerPortal.ReturnToMainScreen();
-                        _borrowerPortal.Show();
-                        _borrowerPortal.BringToFront();
-                    }
-                    else
-                    {
-                        // No stored portal reference — create a fresh one as before.
-                        var borrowerPortal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
-                        borrowerPortal.Show();
-                    }
-
-                    // Close the Admin Dashboard
-                    this.Close();
-                }
-                else
-                {
-                    cmbAccountActions.SelectedIndex = -1;
-                }
+                SignOutAdmin();
             }
         }
         #endregion

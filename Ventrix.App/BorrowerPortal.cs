@@ -108,8 +108,7 @@ namespace Ventrix.App
                 await _userService.InitializeDefaultAdminAsync();
                 var backupService = new DatabaseBackupService();
                 _ = backupService.RunDailyBackupAsync();
-                ToggleMode("Student");
-                await EnterBorrowMode();
+                ToggleMode("Admin");
             };
         }
 
@@ -124,6 +123,17 @@ namespace Ventrix.App
             btnStudentToggle.Text = "Student Mode";
 
             bool isAdmin = mode == "Admin";
+
+            if (IsOnSecondScreen)
+            {
+                btnAdminToggle.Visible = false;
+                btnStudentToggle.Visible = false;
+            }
+            else
+            {
+                btnAdminToggle.Visible = true;
+                btnStudentToggle.Visible = true;
+            }
 
             lblLoginHeader.Text = isAdmin ? "Admin Access" : "Borrowing Portal";
             txtStudentId.PlaceholderText = isAdmin ? "Username / Admin ID" : "Student / Faculty ID Number";
@@ -331,30 +341,7 @@ namespace Ventrix.App
 
                     if (adminUser != null)
                     {
-                        // ── Show the tablet setup prompt ──────────────────────────────
-                        using var prompt = new DualScreenPopup(_DualScreenService);
-                        var promptResult = prompt.ShowDialog(this);
-
-                        // Open the Admin Dashboard (passes 'this' so sign-out can restore us)
-                        var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService, this);
-                        dashboard.Show();
-
-                        if (promptResult == DialogResult.OK && _DualScreenService.HasSecondScreen())
-                        {
-                            // Move the portal to the tablet / second screen and keep it visible
-                            var secondScreen = _DualScreenService.GetSecondaryScreen()!;
-                            _DualScreenService.PositionFormOnScreen(this, secondScreen);
-                            IsOnSecondScreen = true;
-
-                            // Reset the portal back to student mode for the tablet
-                            ToggleMode("Student");
-                            await EnterBorrowMode();
-                        }
-                        else
-                        {
-                            // No second screen chosen — hide as before
-                            this.Hide();
-                        }
+                        await LaunchAdminDashboardAsync(); // <-- Replaces the old popup and dashboard code
                     }
                     else
                     {
@@ -686,9 +673,8 @@ namespace Ventrix.App
         {
             if (keyData == (Keys.Control | Keys.Shift | Keys.D))
             {
-                var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService, this);
-                dashboard.Show();
-                this.Hide();
+                // Fire and forget the async launch so it runs immediately via shortcut
+                _ = LaunchAdminDashboardAsync();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
@@ -724,14 +710,62 @@ namespace Ventrix.App
         /// clears the second-screen flag, and resets the UI to student mode
         /// so it is ready for the next borrower.
         /// </summary>
+        /// 
+        private async Task LaunchAdminDashboardAsync()
+        {
+            // ── Show the tablet setup prompt ──────────────────────────────
+            using var prompt = new DualScreenPopup(_DualScreenService);
+            var promptResult = prompt.ShowDialog(this);
+
+            // Instantiate the dashboard
+            var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService, this);
+
+            // FORCE ADMIN DASHBOARD TO PRIMARY SCREEN
+            var primaryScreen = Screen.PrimaryScreen ?? Screen.AllScreens[0];
+            dashboard.StartPosition = FormStartPosition.Manual;
+
+            // Calculate center position for the dashboard
+            int x = primaryScreen.WorkingArea.Left + (primaryScreen.WorkingArea.Width - dashboard.Width) / 2;
+            int y = primaryScreen.WorkingArea.Top + (primaryScreen.WorkingArea.Height - dashboard.Height) / 2;
+            dashboard.Location = new Point(x, y);
+
+            dashboard.Show();
+
+            if (promptResult == DialogResult.OK && _DualScreenService.HasSecondScreen())
+            {
+                // Move the portal to the tablet / second screen and keep it visible
+                var secondScreen = _DualScreenService.GetSecondaryScreen()!;
+                _DualScreenService.PositionFormOnScreen(this, secondScreen);
+                IsOnSecondScreen = true;
+
+                // Reset the portal back to student mode for the tablet
+                ToggleMode("Student");
+                await EnterBorrowMode();
+            }
+            else
+            {
+                // No second screen chosen — hide as before
+                this.Hide();
+            }
+        }
         public void ReturnToMainScreen()
         {
             IsOnSecondScreen = false;
             _DualScreenService.ReturnFormToPrimaryScreen(this);
-            ToggleMode("Student");
-            _ = EnterBorrowMode(); // fire-and-forget; resets the cart / dropdowns
+            ToggleMode("Admin");
         }
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            // If a user tries to close the window (e.g., Alt+F4) while it is locked to the second screen, block it.
+            // The only way to close this portal now is for the Admin to sign out from the Dashboard.
+            if (IsOnSecondScreen && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                return; // Stop the closing process immediately
+            }
 
+            base.OnFormClosing(e);
+        }
         private class CartItem
         {
             public string BaseItemName { get; set; }
