@@ -7,6 +7,8 @@ using System.Windows.Forms;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Models;
 using Ventrix.Domain.Enums;
+using Ventrix.App.Controls;
+using Guna.UI2.WinForms;
 
 namespace Ventrix.App.Popups
 {
@@ -16,7 +18,13 @@ namespace Ventrix.App.Popups
         private readonly InventoryService _inventoryService;
         private readonly Func<Task> _onSaved;
 
-        private DataGridView dgvDamagedItems;
+        private int _targetY;
+        private bool _isAnimating = false;
+        private readonly List<Guna2Panel> _itemCards = new List<Guna2Panel>();
+
+        // Typewriter Effect Variables
+        private readonly string _targetHeaderText = "Requires Attention";
+        private int _typewriterIndex = 0;
 
         public RepairDetailsPopup(List<InventoryItem> damagedItems, InventoryService inventoryService, Func<Task> onSaved)
         {
@@ -27,95 +35,277 @@ namespace Ventrix.App.Popups
             InitializeComponent();
             this.Text = "Damaged Items Report";
 
-            SetupGrid();
-            LoadItems();
+            this.Opacity = 0;
+            this.StartPosition = FormStartPosition.CenterParent;
+
+            // Clear header text initially for the typewriter effect
+            lblHeader.Text = "";
+
+            this.Load += RepairDetailsPopup_Load;
+            LoadCards();
         }
 
-        private void SetupGrid()
+        private void RepairDetailsPopup_Load(object sender, EventArgs e)
         {
-            dgvDamagedItems = new DataGridView
+            _targetY = this.Location.Y;
+            this.Location = new Point(this.Location.X, _targetY + 40);
+
+            // Prepare cards for staggered slide-up
+            int index = 0;
+            foreach (var card in _itemCards)
             {
-                Location = new Point(25, 120), 
-                Size = new Size(this.Width - 50, this.Height - 220),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                ReadOnly = true,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                RowHeadersVisible = false,
-                BackgroundColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
-                GridColor = Color.FromArgb(230, 235, 240)
+                card.Tag = card.Top;
+                card.Top += 20 + (15 * index);
+                index++;
+            }
+
+            // Window and Card Animation Timer
+            System.Windows.Forms.Timer animTimer = new System.Windows.Forms.Timer { Interval = 15 };
+            animTimer.Tick += (object s, EventArgs ev) =>
+            {
+                // Smooth Form Fade & Slide
+                this.Opacity += (1.0 - this.Opacity) * 0.18;
+
+                int currentY = this.Location.Y;
+                int distance = currentY - _targetY;
+
+                if (distance > 0)
+                {
+                    int move = (int)Math.Ceiling(distance * 0.18);
+                    this.Location = new Point(this.Location.X, currentY - move);
+                }
+
+                // Smoothly drift item cards into place
+                bool cardsMoving = false;
+                foreach (var card in _itemCards)
+                {
+                    if (card.Tag is int targetTop && card.Top > targetTop)
+                    {
+                        int cardDist = card.Top - targetTop;
+                        int cardMove = (int)Math.Ceiling(cardDist * 0.15);
+                        card.Top -= cardMove;
+                        cardsMoving = true;
+                    }
+                }
+
+                if (distance <= 0 && !cardsMoving && this.Opacity >= 0.98)
+                {
+                    this.Opacity = 1.0;
+                    this.Location = new Point(this.Location.X, _targetY);
+
+                    foreach (var card in _itemCards)
+                    {
+                        if (card.Tag is int targetTop) card.Top = targetTop;
+                    }
+
+                    animTimer.Stop();
+                    animTimer.Dispose();
+                }
+            };
+            animTimer.Start();
+
+            // Start Typewriter Animation Timer
+            System.Windows.Forms.Timer typeTimer = new System.Windows.Forms.Timer { Interval = 40 }; // 40ms per character
+            typeTimer.Tick += (object s, EventArgs ev) =>
+            {
+                if (_typewriterIndex < _targetHeaderText.Length)
+                {
+                    lblHeader.Text += _targetHeaderText[_typewriterIndex];
+                    _typewriterIndex++;
+                }
+                else
+                {
+                    typeTimer.Stop();
+                    typeTimer.Dispose();
+                }
             };
 
-            dgvDamagedItems.ColumnHeadersHeight = 40;
-            dgvDamagedItems.EnableHeadersVisualStyles = false;
-            dgvDamagedItems.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(13, 71, 161);
-            dgvDamagedItems.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dgvDamagedItems.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            dgvDamagedItems.DefaultCellStyle.Font = new Font("Segoe UI", 10);
-            dgvDamagedItems.DefaultCellStyle.Padding = new Padding(5);
-            dgvDamagedItems.RowTemplate.Height = 40;
-
-            dgvDamagedItems.Columns.Add("Id", "System ID");
-            dgvDamagedItems.Columns.Add("Name", "Item Name");
-            dgvDamagedItems.Columns.Add("Category", "Category");
-
-            ContextMenuStrip repairMenu = new ContextMenuStrip();
-            var fixBtn = new ToolStripMenuItem("🔧 Mark Item as Repaired");
-            fixBtn.Click += async (s, e) => await RepairSelectedItemAsync();
-            repairMenu.Items.Add(fixBtn);
-            dgvDamagedItems.ContextMenuStrip = repairMenu;
-
-            this.Controls.Add(dgvDamagedItems);
-            dgvDamagedItems.BringToFront();
+            // Give the form a tiny moment to start appearing before typing starts
+            Task.Delay(100).ContinueWith(t => this.Invoke(new Action(() => typeTimer.Start())));
         }
 
-        private void LoadItems()
+        private async Task ClosePopupAsync()
         {
-            dgvDamagedItems.Rows.Clear();
+            if (_isAnimating) return;
+            _isAnimating = true;
+
+            System.Windows.Forms.Timer animTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            animTimer.Tick += (object s, EventArgs ev) =>
+            {
+                this.Opacity -= 0.15;
+                this.Location = new Point(this.Location.X, this.Location.Y + 4);
+
+                if (this.Opacity <= 0)
+                {
+                    animTimer.Stop();
+                    animTimer.Dispose();
+                    this.Close();
+                }
+            };
+            animTimer.Start();
+        }
+
+        private void LoadCards()
+        {
+            flowRepairList.Controls.Clear();
+            _itemCards.Clear();
+
+            if (_damagedItems == null || _damagedItems.Count == 0)
+            {
+                Guna2Panel emptyPanel = new Guna2Panel
+                {
+                    Size = new Size(flowRepairList.Width - 10, 120),
+                    FillColor = Color.FromArgb(248, 250, 252),
+                    BorderRadius = 12,
+                    BorderThickness = 1,
+                    BorderColor = Color.FromArgb(226, 232, 240)
+                };
+
+                Label lblIcon = new Label
+                {
+                    Text = "✨",
+                    Font = new Font("Segoe UI Emoji", 20F),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Size = new Size(emptyPanel.Width, 40),
+                    Location = new Point(0, 20)
+                };
+
+                Label lblEmpty = new Label
+                {
+                    Text = "All items are fully repaired and ready to go!",
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    ForeColor = Color.FromArgb(100, 116, 139),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Size = new Size(emptyPanel.Width, 30),
+                    Location = new Point(0, 65)
+                };
+
+                emptyPanel.Controls.Add(lblIcon);
+                emptyPanel.Controls.Add(lblEmpty);
+                flowRepairList.Controls.Add(emptyPanel);
+                return;
+            }
+
             foreach (var item in _damagedItems)
             {
-                dgvDamagedItems.Rows.Add(item.Id, item.Name, item.Category.ToString());
+                var card = CreateItemCard(item);
+                flowRepairList.Controls.Add(card);
+                _itemCards.Add(card);
             }
         }
 
-        private async Task RepairSelectedItemAsync()
+        private Guna2Panel CreateItemCard(InventoryItem item)
         {
-            if (dgvDamagedItems.SelectedRows.Count > 0)
+            Guna2Panel card = new Guna2Panel
             {
-                int itemId = Convert.ToInt32(dgvDamagedItems.SelectedRows[0].Cells["Id"].Value);
-                string itemName = dgvDamagedItems.SelectedRows[0].Cells["Name"].Value.ToString();
+                Size = new Size(flowRepairList.Width - 10, 75),
+                FillColor = Color.White,
+                BorderRadius = 10,
+                BorderThickness = 1,
+                BorderColor = Color.FromArgb(226, 232, 240),
+                CustomBorderThickness = new Padding(5, 0, 0, 0),
+                CustomBorderColor = Color.FromArgb(244, 63, 94),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 0, 10)
+            };
 
-                if (MessageBox.Show($"Are you sure you want to mark '{itemName}' as fully repaired and available?", "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            Label lblName = new Label
+            {
+                Text = item.Name,
+                Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Location = new Point(20, 15),
+                AutoSize = true,
+                BackColor = Color.Transparent
+            };
+            card.Controls.Add(lblName);
+
+            Label lblDetails = new Label
+            {
+                Text = $"System ID: #{item.Id}  •  Category: {item.Category}",
+                Font = new Font("Segoe UI Semibold", 8.5F),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(20, 40),
+                AutoSize = true,
+                BackColor = Color.Transparent
+            };
+            card.Controls.Add(lblDetails);
+
+            Guna2Button btnFix = new Guna2Button
+            {
+                Text = "Repair",
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
+                FillColor = Color.FromArgb(99, 102, 241),
+                HoverState = { FillColor = Color.FromArgb(79, 70, 229) },
+                ForeColor = Color.White,
+                BorderRadius = 16,
+                Size = new Size(95, 34),
+                Location = new Point(card.Width - 110, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Cursor = Cursors.Hand,
+                Animated = true
+            };
+            btnFix.Click += async (s, e) => await RepairItemAsync(item.Id, item.Name);
+            card.Controls.Add(btnFix);
+
+            EventHandler hoverIn = (s, e) =>
+            {
+                card.FillColor = Color.FromArgb(248, 250, 252);
+                card.BorderColor = Color.FromArgb(203, 213, 225);
+            };
+            EventHandler hoverOut = (s, e) =>
+            {
+                card.FillColor = Color.White;
+                card.BorderColor = Color.FromArgb(226, 232, 240);
+            };
+
+            card.MouseEnter += hoverIn;
+            lblName.MouseEnter += hoverIn;
+            lblDetails.MouseEnter += hoverIn;
+
+            card.MouseLeave += hoverOut;
+            lblName.MouseLeave += hoverOut;
+            lblDetails.MouseLeave += hoverOut;
+
+            return card;
+        }
+
+        private async Task RepairItemAsync(int itemId, string itemName)
+        {
+            if (MessageBox.Show($"Are you sure you want to mark '{itemName}' as fully repaired and available?", "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
                 {
-                    try
+                    var itemToFix = await _inventoryService.GetItemByIdAsync(itemId);
+                    if (itemToFix != null)
                     {
-                        var itemToFix = await _inventoryService.GetItemByIdAsync(itemId);
-                        if (itemToFix != null)
-                        {
-                            itemToFix.Condition = Condition.Good;
-                            itemToFix.Status = ItemStatus.Available;
-                            await _inventoryService.UpdateItemAsync(
-                                itemToFix.Id,
-                                itemToFix.Name,
-                                itemToFix.Category.ToString(),
-                                itemToFix.Status.ToString(),
-                                itemToFix.Condition
-                            );
+                        itemToFix.Condition = Condition.Good;
+                        itemToFix.Status = ItemStatus.Available;
+                        await _inventoryService.UpdateItemAsync(
+                            itemToFix.Id,
+                            itemToFix.Name,
+                            itemToFix.Category.ToString(),
+                            itemToFix.Status.ToString(),
+                            itemToFix.Condition
+                        );
 
-                            _damagedItems.RemoveAll(i => i.Id == itemId);
-                            LoadItems();
+                        _damagedItems.RemoveAll(i => i.Id == itemId);
 
-                            MessageBox.Show($"{itemName} is now back in active inventory!", "Repaired", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
+                        this.Location = new Point(this.Location.X, this.Location.Y + 5);
+
+                        // Briefly re-trigger typewriter when reloading
+                        lblHeader.Text = "";
+                        _typewriterIndex = 0;
+
+                        LoadCards();
+                        RepairDetailsPopup_Load(this, EventArgs.Empty);
+
+                        ToastNotification.Show(this, $"{itemName} is back in active inventory!", ToastType.Success);
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error updating database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error updating database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -128,7 +318,7 @@ namespace Ventrix.App.Popups
 
         private void btnClose_Click(object sender, EventArgs e)
         {
-            this.Close();
+            _ = ClosePopupAsync();
         }
     }
 }

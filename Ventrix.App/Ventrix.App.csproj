@@ -16,6 +16,8 @@
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
 		<PackageReference Include="Guna.UI2.WinForms" Version="2.0.4.7" />
 		<PackageReference Include="iTextSharp.LGPLv2.Core" Version="3.7.12" />
+		<PackageReference Include="LibVLCSharp" Version="3.10.1" />
+		<PackageReference Include="LibVLCSharp.WinForms" Version="3.10.1" />
 		<PackageReference Include="MaterialSkin.2" Version="2.3.1" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
 
@@ -25,8 +27,11 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="QRCoder" Version="1.8.0" />
+		<PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
 
 		<PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
+
+		<PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
 
 		<PackageReference Include="WinForms.DataVisualization" Version="1.10.0" />
 	</ItemGroup>
@@ -39,6 +44,12 @@
 	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\computercilab_bg.gif">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Resources\computercilab_bg.mp4">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\Untitled design.mp4">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

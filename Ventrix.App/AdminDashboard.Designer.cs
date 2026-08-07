@@ -702,38 +702,41 @@ namespace Ventrix.App
             lblEmptyState.Text = "🔍 No records found matching your criteria.";
             lblEmptyState.TextAlign = ContentAlignment.MiddleCenter;
             lblEmptyState.Visible = false;
+            //
+            //
+            //
+            int geminiPillRadius = 18; // Creates the signature Gemini pill shape
+            Font geminiFont = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             // 
             // btnExportExcel
             // 
+            btnExportExcel.Text = "📊 Excel"; // Clean Unicode icon
+            btnExportExcel.Font = geminiFont;
+            // Gemini Signature Soft Surface Background
+            btnExportExcel.FillColor = Color.FromArgb(240, 244, 249);
+            // Crisp Emerald Ink
+            btnExportExcel.ForeColor = Color.FromArgb(19, 115, 51);
+            // Slightly deeper neutral on hover
+            btnExportExcel.HoverState.FillColor = Color.FromArgb(223, 229, 235);
+            btnExportExcel.HoverState.ForeColor = Color.FromArgb(11, 87, 36);
+            btnExportExcel.BorderRadius = geminiPillRadius;
             btnExportExcel.Animated = true;
-            btnExportExcel.BorderRadius = 8;
             btnExportExcel.Cursor = Cursors.Hand;
-            btnExportExcel.CustomizableEdges = customizableEdges48;
-            btnExportExcel.FillColor = Color.MediumSeaGreen;
-            btnExportExcel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnExportExcel.ForeColor = Color.White;
-            btnExportExcel.Location = new Point(0, 0);
-            btnExportExcel.Name = "btnExportExcel";
-            btnExportExcel.ShadowDecoration.CustomizableEdges = customizableEdges49;
-            btnExportExcel.Size = new Size(100, 35);
-            btnExportExcel.TabIndex = 5;
-            btnExportExcel.Text = "📄 EXCEL";
             // 
             // btnExportPDF
             // 
+            btnExportPDF.Text = "📄 PDF";
+            btnExportPDF.Font = geminiFont;
+            // Gemini Signature Soft Surface Background
+            btnExportPDF.FillColor = Color.FromArgb(240, 244, 249);
+            // Crisp Crimson Ink
+            btnExportPDF.ForeColor = Color.FromArgb(197, 34, 31);
+            // Slightly deeper neutral on hover
+            btnExportPDF.HoverState.FillColor = Color.FromArgb(223, 229, 235);
+            btnExportPDF.HoverState.ForeColor = Color.FromArgb(165, 23, 20);
+            btnExportPDF.BorderRadius = geminiPillRadius;
             btnExportPDF.Animated = true;
-            btnExportPDF.BorderRadius = 8;
             btnExportPDF.Cursor = Cursors.Hand;
-            btnExportPDF.CustomizableEdges = customizableEdges50;
-            btnExportPDF.FillColor = Color.IndianRed;
-            btnExportPDF.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnExportPDF.ForeColor = Color.White;
-            btnExportPDF.Location = new Point(0, 0);
-            btnExportPDF.Name = "btnExportPDF";
-            btnExportPDF.ShadowDecoration.CustomizableEdges = customizableEdges51;
-            btnExportPDF.Size = new Size(100, 35);
-            btnExportPDF.TabIndex = 6;
-            btnExportPDF.Text = "📕 PDF";
             // 
             // pnlHistory
             // 

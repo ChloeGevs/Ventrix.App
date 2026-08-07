@@ -43,14 +43,27 @@ namespace Ventrix.App
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges31 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges32 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges29 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges30 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+
             mainTableLayout = new TableLayoutPanel();
+            pnlLeftBranding = new Guna.UI2.WinForms.Guna2Panel();
+            pnlRightContainer = new Guna.UI2.WinForms.Guna2Panel();
+            lblBrandLogo = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblBrandTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblBrandDesc = new Guna.UI2.WinForms.Guna2HtmlLabel();
             pnlLoginCard = new Guna.UI2.WinForms.Guna2Panel();
+            pnlInputContainer = new Guna.UI2.WinForms.Guna2Panel();
             lblEquipmentList = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblGradeLevelTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblCreateAccount = new Guna.UI2.WinForms.Guna2HtmlLabel();
             btnAdminToggle = new Guna.UI2.WinForms.Guna2Button();
             btnStudentToggle = new Guna.UI2.WinForms.Guna2Button();
             lblLoginHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtStudentId = new Guna.UI2.WinForms.Guna2TextBox();
+            txtPassword = new Guna.UI2.WinForms.Guna2TextBox(); // Restored declaration control
             cmbListEquipments = new Guna.UI2.WinForms.Guna2ComboBox();
             lblQuantity = new Guna.UI2.WinForms.Guna2HtmlLabel();
             numQuantity = new Guna.UI2.WinForms.Guna2NumericUpDown();
@@ -62,319 +75,399 @@ namespace Ventrix.App
             cmbGradeLevel = new Guna.UI2.WinForms.Guna2ComboBox();
             btnAddToCart = new Guna.UI2.WinForms.Guna2Button();
             btnClearCart = new Guna.UI2.WinForms.Guna2Button();
-            lstCart = new ListBox();
-            txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
+            flwCartContainer = new System.Windows.Forms.FlowLayoutPanel();
+
             mainTableLayout.SuspendLayout();
+            pnlLeftBranding.SuspendLayout();
+            pnlRightContainer.SuspendLayout();
             pnlLoginCard.SuspendLayout();
+            pnlInputContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numQuantity).BeginInit();
             SuspendLayout();
+
             // 
             // mainTableLayout
             // 
             mainTableLayout.BackColor = Color.FromArgb(243, 244, 246);
-            mainTableLayout.BackgroundImage = Properties.Resources._5_imresizer__1_;
-            mainTableLayout.BackgroundImageLayout = ImageLayout.Stretch;
-            mainTableLayout.ColumnCount = 3;
+            mainTableLayout.ColumnCount = 2;
             mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 600F));
             mainTableLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            mainTableLayout.Controls.Add(pnlLoginCard, 1, 1);
+            mainTableLayout.Controls.Add(pnlLeftBranding, 0, 0);
+            mainTableLayout.Controls.Add(pnlRightContainer, 1, 0);
             mainTableLayout.Dock = DockStyle.Fill;
             mainTableLayout.Location = new Point(0, 0);
             mainTableLayout.Name = "mainTableLayout";
-            mainTableLayout.RowCount = 3;
-            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 750F));
-            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            mainTableLayout.Size = new Size(1200, 800);
+            mainTableLayout.RowCount = 1;
+            mainTableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            mainTableLayout.Size = new Size(1280, 850);
             mainTableLayout.TabIndex = 0;
+
+            // 
+            // pnlLeftBranding
+            // 
+            pnlLeftBranding.BackColor = Color.Transparent;
+            pnlLeftBranding.Controls.Add(lblBrandLogo);
+            pnlLeftBranding.Controls.Add(lblBrandTitle);
+            pnlLeftBranding.Controls.Add(lblBrandDesc);
+            pnlLeftBranding.Dock = DockStyle.Fill;
+            pnlLeftBranding.Location = new Point(0, 0);
+            pnlLeftBranding.Margin = new Padding(0);
+            pnlLeftBranding.Name = "pnlLeftBranding";
+            pnlLeftBranding.Size = new Size(640, 850);
+            pnlLeftBranding.TabIndex = 1;
+
+            // 
+            // pnlRightContainer
+            // 
+            pnlRightContainer.BackColor = Color.Transparent;
+            pnlRightContainer.Controls.Add(pnlLoginCard);
+            pnlRightContainer.CustomizableEdges = customizableEdges29;
+            pnlRightContainer.Dock = DockStyle.Fill;
+            pnlRightContainer.Location = new Point(640, 0);
+            pnlRightContainer.Margin = new Padding(0);
+            pnlRightContainer.Name = "pnlRightContainer";
+            pnlRightContainer.ShadowDecoration.CustomizableEdges = customizableEdges30;
+            pnlRightContainer.Size = new Size(640, 850);
+            pnlRightContainer.TabIndex = 2;
+
+            // 
+            // lblBrandLogo
+            // 
+            lblBrandLogo.BackColor = Color.Transparent;
+            lblBrandLogo.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
+            lblBrandLogo.ForeColor = Color.White;
+            lblBrandLogo.Location = new Point(60, 60);
+            lblBrandLogo.Name = "lblBrandLogo";
+            lblBrandLogo.Text = "❖ Ventrix";
+
+            // 
+            // lblBrandTitle
+            // 
+            lblBrandTitle.BackColor = Color.Transparent;
+            lblBrandTitle.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
+            lblBrandTitle.ForeColor = Color.White;
+            lblBrandTitle.Location = new Point(60, 300);
+            lblBrandTitle.Name = "lblBrandTitle";
+            lblBrandTitle.Text = "Equipment<br>Borrowing Portal";
+
+            // 
+            // lblBrandDesc
+            // 
+            lblBrandDesc.BackColor = Color.Transparent;
+            lblBrandDesc.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+            lblBrandDesc.ForeColor = Color.FromArgb(219, 234, 254);
+            lblBrandDesc.Location = new Point(60, 520);
+            lblBrandDesc.AutoSize = false;
+            lblBrandDesc.Size = new Size(500, 100);
+            lblBrandDesc.Name = "lblBrandDesc";
+            lblBrandDesc.Text = "Request and provision laboratory equipment for training, education, or testing purposes. Specify your grade level, subject, and necessary items to proceed.";
+
             // 
             // pnlLoginCard
             // 
+            pnlLoginCard.Anchor = AnchorStyles.None;
             pnlLoginCard.BackColor = Color.Transparent;
             pnlLoginCard.BorderRadius = 16;
-            pnlLoginCard.Controls.Add(lblEquipmentList);
+            pnlLoginCard.Controls.Add(pnlInputContainer);
             pnlLoginCard.Controls.Add(lblCreateAccount);
             pnlLoginCard.Controls.Add(btnAdminToggle);
             pnlLoginCard.Controls.Add(btnStudentToggle);
             pnlLoginCard.Controls.Add(lblLoginHeader);
             pnlLoginCard.Controls.Add(txtStudentId);
-            pnlLoginCard.Controls.Add(cmbListEquipments);
-            pnlLoginCard.Controls.Add(lblQuantity);
-            pnlLoginCard.Controls.Add(numQuantity);
-            pnlLoginCard.Controls.Add(lblSubject);
-            pnlLoginCard.Controls.Add(txtSubject);
+            pnlLoginCard.Controls.Add(txtPassword); // Added back to container children controls
             pnlLoginCard.Controls.Add(btnReturn);
             pnlLoginCard.Controls.Add(btnBorrow);
             pnlLoginCard.Controls.Add(btnLogin);
-            pnlLoginCard.Controls.Add(cmbGradeLevel);
-            pnlLoginCard.Controls.Add(btnAddToCart);
-            pnlLoginCard.Controls.Add(btnClearCart);
-            pnlLoginCard.Controls.Add(lstCart);
-            pnlLoginCard.Controls.Add(txtPassword);
             pnlLoginCard.CustomizableEdges = customizableEdges27;
-            pnlLoginCard.Dock = DockStyle.Fill;
             pnlLoginCard.FillColor = Color.White;
-            pnlLoginCard.Location = new Point(303, 28);
+            pnlLoginCard.Location = new Point(40, 35);
             pnlLoginCard.Name = "pnlLoginCard";
             pnlLoginCard.ShadowDecoration.BorderRadius = 16;
-            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(20, 0, 0, 0);
+            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(25, 0, 0, 0); 
             pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges28;
             pnlLoginCard.ShadowDecoration.Enabled = true;
-            pnlLoginCard.ShadowDecoration.Shadow = new Padding(0, 5, 10, 10);
-            pnlLoginCard.Size = new Size(594, 744);
+            pnlLoginCard.ShadowDecoration.Depth = 15; 
+            pnlLoginCard.ShadowDecoration.Shadow = new Padding(3, 3, 15, 15);
+            pnlLoginCard.Size = new Size(560, 780);
             pnlLoginCard.TabIndex = 0;
+
             // 
-            // lblEquipmentList
+            // pnlInputContainer
             // 
-            lblEquipmentList.BackColor = Color.Transparent;
-            lblEquipmentList.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
-            lblEquipmentList.ForeColor = Color.FromArgb(107, 114, 128);
-            lblEquipmentList.Location = new Point(60, 262);
-            lblEquipmentList.Name = "lblEquipmentList";
-            lblEquipmentList.Size = new Size(131, 23);
-            lblEquipmentList.TabIndex = 16;
-            lblEquipmentList.Text = "Select Equipment";
+            pnlInputContainer.BackColor = Color.Transparent;
+            pnlInputContainer.BorderColor = Color.FromArgb(243, 244, 246);
+            pnlInputContainer.BorderRadius = 12;
+            pnlInputContainer.BorderThickness = 1;
+            pnlInputContainer.Controls.Add(lblEquipmentList);
+            pnlInputContainer.Controls.Add(cmbListEquipments);
+            pnlInputContainer.Controls.Add(lblQuantity);
+            pnlInputContainer.Controls.Add(numQuantity);
+            pnlInputContainer.Controls.Add(lblSubject);
+            pnlInputContainer.Controls.Add(txtSubject);
+            pnlInputContainer.Controls.Add(lblGradeLevelTitle);
+            pnlInputContainer.Controls.Add(cmbGradeLevel);
+            pnlInputContainer.Controls.Add(btnAddToCart);
+            pnlInputContainer.Controls.Add(flwCartContainer);
+            pnlInputContainer.Controls.Add(btnClearCart);
+            pnlInputContainer.CustomizableEdges = customizableEdges31;
+            pnlInputContainer.FillColor = Color.FromArgb(249, 250, 251);
+            pnlInputContainer.Location = new Point(25, 195);
+            pnlInputContainer.Name = "pnlInputContainer";
+            pnlInputContainer.ShadowDecoration.CustomizableEdges = customizableEdges32;
+            pnlInputContainer.Size = new Size(510, 500);
+            pnlInputContainer.TabIndex = 21;
+
             // 
-            // lblCreateAccount
+            // lblLoginHeader
             // 
-            lblCreateAccount.BackColor = Color.Transparent;
-            lblCreateAccount.Cursor = Cursors.Hand;
-            lblCreateAccount.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCreateAccount.ForeColor = Color.FromArgb(156, 163, 175);
-            lblCreateAccount.Location = new Point(171, 689);
-            lblCreateAccount.Name = "lblCreateAccount";
-            lblCreateAccount.Size = new Size(285, 25);
-            lblCreateAccount.TabIndex = 12;
-            lblCreateAccount.Text = "Need an account? See administrator.";
+            lblLoginHeader.AutoSize = false;
+            lblLoginHeader.BackColor = Color.Transparent;
+            lblLoginHeader.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            lblLoginHeader.ForeColor = Color.FromArgb(31, 41, 55);
+            lblLoginHeader.Location = new Point(0, 25);
+            lblLoginHeader.Name = "lblLoginHeader";
+            lblLoginHeader.Size = new Size(560, 40);
+            lblLoginHeader.TabIndex = 13;
+            lblLoginHeader.Text = "Borrowing Portal";
+            lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
+
             // 
             // btnAdminToggle
             // 
             btnAdminToggle.BorderRadius = 8;
             btnAdminToggle.Cursor = Cursors.Hand;
             btnAdminToggle.CustomizableEdges = customizableEdges1;
-            btnAdminToggle.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            btnAdminToggle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             btnAdminToggle.ForeColor = Color.White;
-            btnAdminToggle.Location = new Point(60, 116);
+            btnAdminToggle.Location = new Point(25, 75);
             btnAdminToggle.Name = "btnAdminToggle";
             btnAdminToggle.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            btnAdminToggle.Size = new Size(230, 48);
+            btnAdminToggle.Size = new Size(245, 38);
             btnAdminToggle.TabIndex = 1;
             btnAdminToggle.Text = "Admin Mode";
+
             // 
             // btnStudentToggle
             // 
             btnStudentToggle.BorderRadius = 8;
             btnStudentToggle.Cursor = Cursors.Hand;
             btnStudentToggle.CustomizableEdges = customizableEdges3;
-            btnStudentToggle.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            btnStudentToggle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             btnStudentToggle.ForeColor = Color.White;
-            btnStudentToggle.Location = new Point(310, 116);
+            btnStudentToggle.Location = new Point(290, 75);
             btnStudentToggle.Name = "btnStudentToggle";
             btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnStudentToggle.Size = new Size(230, 48);
+            btnStudentToggle.Size = new Size(245, 38);
             btnStudentToggle.TabIndex = 0;
             btnStudentToggle.Text = "Student Mode";
-            // 
-            // lblLoginHeader
-            // 
-            lblLoginHeader.AutoSize = false;
-            lblLoginHeader.BackColor = Color.Transparent;
-            lblLoginHeader.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
-            lblLoginHeader.ForeColor = Color.FromArgb(31, 41, 55);
-            lblLoginHeader.Location = new Point(0, 35);
-            lblLoginHeader.Name = "lblLoginHeader";
-            lblLoginHeader.Size = new Size(594, 60);
-            lblLoginHeader.TabIndex = 13;
-            lblLoginHeader.Text = "Borrowing Portal";
-            lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
+
             // 
             // txtStudentId
             // 
-            txtStudentId.BorderColor = Color.FromArgb(229, 231, 235);
+            txtStudentId.BorderColor = Color.FromArgb(209, 213, 219);
             txtStudentId.BorderRadius = 8;
             txtStudentId.CustomizableEdges = customizableEdges5;
-            txtStudentId.DefaultText = "";
-            txtStudentId.FillColor = Color.FromArgb(249, 250, 251);
-            txtStudentId.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtStudentId.FillColor = Color.White;
+            txtStudentId.Font = new Font("Segoe UI", 10F);
             txtStudentId.ForeColor = Color.FromArgb(31, 41, 55);
+            txtStudentId.FocusedState.BorderColor = Color.FromArgb(37, 99, 235);
             txtStudentId.IconLeft = Properties.Resources.user;
             txtStudentId.IconLeftOffset = new Point(5, 0);
-            txtStudentId.Location = new Point(60, 195);
+            txtStudentId.Location = new Point(25, 130);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
             txtStudentId.PlaceholderText = "Enter ID Number";
-            txtStudentId.SelectedText = "";
             txtStudentId.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            txtStudentId.Size = new Size(480, 46);
+            txtStudentId.Size = new Size(510, 44);
             txtStudentId.TabIndex = 2;
             txtStudentId.TextOffset = new Point(5, 0);
+
+            // 
+            // txtPassword (Restored completely for Admin Mode access)
+            // 
+            txtPassword.BorderColor = Color.FromArgb(209, 213, 219);
+            txtPassword.BorderRadius = 8;
+            txtPassword.Cursor = Cursors.IBeam;
+            txtPassword.CustomizableEdges = customizableEdges25;
+            txtPassword.FillColor = Color.White;
+            txtPassword.Font = new Font("Segoe UI", 10F);
+            txtPassword.ForeColor = Color.FromArgb(31, 41, 55);
+            txtPassword.FocusedState.BorderColor = Color.FromArgb(37, 99, 235);
+            txtPassword.IconLeft = Properties.Resources.locked;
+            txtPassword.IconLeftOffset = new Point(5, 0);
+            txtPassword.IconRight = Properties.Resources.eye;
+            txtPassword.Location = new Point(25, 195);
+            txtPassword.Margin = new Padding(3, 4, 3, 4);
+            txtPassword.Name = "txtPassword";
+            txtPassword.PasswordChar = '●';
+            txtPassword.PlaceholderText = "Enter Password";
+            txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges26;
+            txtPassword.Size = new Size(510, 44);
+            txtPassword.TabIndex = 9;
+            txtPassword.TextOffset = new Point(5, 0);
+            txtPassword.UseSystemPasswordChar = true;
+            txtPassword.Visible = false;
+
+            // 
+            // lblEquipmentList
+            // 
+            lblEquipmentList.BackColor = Color.Transparent;
+            lblEquipmentList.Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold);
+            lblEquipmentList.ForeColor = Color.FromArgb(107, 114, 128);
+            lblEquipmentList.Location = new Point(15, 15);
+            lblEquipmentList.Name = "lblEquipmentList";
+            lblEquipmentList.Size = new Size(125, 18);
+            lblEquipmentList.TabIndex = 16;
+            lblEquipmentList.Text = "SELECT EQUIPMENT";
+
             // 
             // cmbListEquipments
             // 
             cmbListEquipments.BackColor = Color.Transparent;
-            cmbListEquipments.BorderColor = Color.FromArgb(229, 231, 235);
+            cmbListEquipments.BorderColor = Color.FromArgb(209, 213, 219);
             cmbListEquipments.BorderRadius = 8;
             cmbListEquipments.Cursor = Cursors.Hand;
             cmbListEquipments.CustomizableEdges = customizableEdges7;
             cmbListEquipments.DrawMode = DrawMode.OwnerDrawFixed;
             cmbListEquipments.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbListEquipments.FillColor = Color.FromArgb(249, 250, 251);
-            cmbListEquipments.FocusedColor = Color.Empty;
-            cmbListEquipments.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cmbListEquipments.FillColor = Color.White;
+            cmbListEquipments.Font = new Font("Segoe UI", 10F);
             cmbListEquipments.ForeColor = Color.FromArgb(31, 41, 55);
-            cmbListEquipments.ItemHeight = 30;
-            cmbListEquipments.Location = new Point(60, 291);
+            cmbListEquipments.FocusedState.BorderColor = Color.FromArgb(37, 99, 235);
+            cmbListEquipments.ItemHeight = 28;
+            cmbListEquipments.Location = new Point(15, 38);
             cmbListEquipments.Name = "cmbListEquipments";
             cmbListEquipments.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            cmbListEquipments.Size = new Size(480, 36);
+            cmbListEquipments.Size = new Size(480, 34);
             cmbListEquipments.TabIndex = 3;
+
             // 
             // lblQuantity
             // 
             lblQuantity.BackColor = Color.Transparent;
-            lblQuantity.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            lblQuantity.Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold);
             lblQuantity.ForeColor = Color.FromArgb(107, 114, 128);
-            lblQuantity.Location = new Point(60, 340);
+            lblQuantity.Location = new Point(15, 82);
             lblQuantity.Name = "lblQuantity";
-            lblQuantity.Size = new Size(29, 23);
+            lblQuantity.Size = new Size(30, 18);
             lblQuantity.TabIndex = 14;
-            lblQuantity.Text = "Qty";
+            lblQuantity.Text = "QTY";
+
             // 
             // numQuantity
             // 
             numQuantity.BackColor = Color.Transparent;
-            numQuantity.BorderColor = Color.FromArgb(229, 231, 235);
+            numQuantity.BorderColor = Color.FromArgb(209, 213, 219);
             numQuantity.BorderRadius = 8;
             numQuantity.CustomizableEdges = customizableEdges9;
-            numQuantity.FillColor = Color.FromArgb(249, 250, 251);
-            numQuantity.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            numQuantity.Location = new Point(60, 368);
+            numQuantity.FillColor = Color.White;
+            numQuantity.Font = new Font("Segoe UI", 10F);
+            numQuantity.Location = new Point(15, 103);
             numQuantity.Margin = new Padding(3, 4, 3, 4);
             numQuantity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numQuantity.Name = "numQuantity";
             numQuantity.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            numQuantity.Size = new Size(117, 46);
+            numQuantity.Size = new Size(75, 40);
             numQuantity.TabIndex = 4;
-            numQuantity.UpDownButtonFillColor = Color.FromArgb(229, 231, 235);
+            numQuantity.UpDownButtonFillColor = Color.FromArgb(243, 244, 246);
             numQuantity.Value = new decimal(new int[] { 1, 0, 0, 0 });
+
             // 
             // lblSubject
             // 
             lblSubject.BackColor = Color.Transparent;
-            lblSubject.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            lblSubject.Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold);
             lblSubject.ForeColor = Color.FromArgb(107, 114, 128);
-            lblSubject.Location = new Point(223, 340);
+            lblSubject.Location = new Point(105, 82);
             lblSubject.Name = "lblSubject";
-            lblSubject.Size = new Size(133, 23);
+            lblSubject.Size = new Size(125, 18);
             lblSubject.TabIndex = 15;
-            lblSubject.Text = "Subject / Purpose";
+            lblSubject.Text = "SUBJECT / PURPOSE";
+
             // 
             // txtSubject
             // 
-            txtSubject.BorderColor = Color.FromArgb(229, 231, 235);
+            txtSubject.BorderColor = Color.FromArgb(209, 213, 219);
             txtSubject.BorderRadius = 8;
             txtSubject.CustomizableEdges = customizableEdges11;
-            txtSubject.DefaultText = "";
-            txtSubject.FillColor = Color.FromArgb(249, 250, 251);
-            txtSubject.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtSubject.FillColor = Color.White;
+            txtSubject.Font = new Font("Segoe UI", 10F);
             txtSubject.ForeColor = Color.FromArgb(31, 41, 55);
-            txtSubject.Location = new Point(223, 368);
+            txtSubject.FocusedState.BorderColor = Color.FromArgb(37, 99, 235);
+            txtSubject.Location = new Point(105, 103);
             txtSubject.Margin = new Padding(3, 4, 3, 4);
             txtSubject.Name = "txtSubject";
             txtSubject.PlaceholderText = "e.g., IT 211";
-            txtSubject.SelectedText = "";
             txtSubject.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            txtSubject.Size = new Size(317, 46);
+            txtSubject.Size = new Size(390, 40);
             txtSubject.TabIndex = 5;
             txtSubject.TextOffset = new Point(5, 0);
+
             // 
-            // btnReturn
+            // lblGradeLevelTitle
             // 
-            btnReturn.BorderRadius = 8;
-            btnReturn.Cursor = Cursors.Hand;
-            btnReturn.CustomizableEdges = customizableEdges13;
-            btnReturn.FillColor = Color.FromArgb(243, 244, 246);
-            btnReturn.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
-            btnReturn.ForeColor = Color.FromArgb(31, 41, 55);
-            btnReturn.HoverState.FillColor = Color.FromArgb(229, 231, 235);
-            btnReturn.Location = new Point(60, 612);
-            btnReturn.Name = "btnReturn";
-            btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            btnReturn.Size = new Size(230, 52);
-            btnReturn.TabIndex = 7;
-            btnReturn.Text = "Return Items";
-            // 
-            // btnBorrow
-            // 
-            btnBorrow.BorderRadius = 8;
-            btnBorrow.Cursor = Cursors.Hand;
-            btnBorrow.CustomizableEdges = customizableEdges15;
-            btnBorrow.FillColor = Color.FromArgb(37, 99, 235);
-            btnBorrow.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
-            btnBorrow.ForeColor = Color.White;
-            btnBorrow.HoverState.FillColor = Color.FromArgb(29, 78, 216);
-            btnBorrow.Location = new Point(310, 612);
-            btnBorrow.Name = "btnBorrow";
-            btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            btnBorrow.Size = new Size(230, 52);
-            btnBorrow.TabIndex = 8;
-            btnBorrow.Text = "Borrow ";
-            // 
-            // btnLogin
-            // 
-            btnLogin.BorderRadius = 8;
-            btnLogin.Cursor = Cursors.Hand;
-            btnLogin.CustomizableEdges = customizableEdges17;
-            btnLogin.FillColor = Color.FromArgb(37, 99, 235);
-            btnLogin.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
-            btnLogin.ForeColor = Color.White;
-            btnLogin.HoverState.FillColor = Color.FromArgb(29, 78, 216);
-            btnLogin.Location = new Point(60, 595);
-            btnLogin.Name = "btnLogin";
-            btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            btnLogin.Size = new Size(480, 52);
-            btnLogin.TabIndex = 10;
-            btnLogin.Text = "Login to Dashboard";
-            btnLogin.Visible = false;
+            lblGradeLevelTitle.BackColor = Color.Transparent;
+            lblGradeLevelTitle.Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold);
+            lblGradeLevelTitle.ForeColor = Color.FromArgb(107, 114, 128);
+            lblGradeLevelTitle.Location = new Point(15, 153);
+            lblGradeLevelTitle.Name = "lblGradeLevelTitle";
+            lblGradeLevelTitle.Size = new Size(150, 18);
+            lblGradeLevelTitle.TabIndex = 20;
+            lblGradeLevelTitle.Text = "GRADE LEVEL / FACULTY";
+
             // 
             // cmbGradeLevel
             // 
             cmbGradeLevel.BackColor = Color.Transparent;
-            cmbGradeLevel.BorderColor = Color.FromArgb(229, 231, 235);
+            cmbGradeLevel.BorderColor = Color.FromArgb(209, 213, 219);
             cmbGradeLevel.BorderRadius = 8;
             cmbGradeLevel.Cursor = Cursors.Hand;
             cmbGradeLevel.CustomizableEdges = customizableEdges19;
             cmbGradeLevel.DrawMode = DrawMode.OwnerDrawFixed;
             cmbGradeLevel.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbGradeLevel.FillColor = Color.FromArgb(249, 250, 251);
-            cmbGradeLevel.FocusedColor = Color.Empty;
-            cmbGradeLevel.Font = new Font("Segoe UI", 10.5F);
+            cmbGradeLevel.FillColor = Color.White;
+            cmbGradeLevel.Font = new Font("Segoe UI", 10F);
             cmbGradeLevel.ForeColor = Color.FromArgb(31, 41, 55);
-            cmbGradeLevel.ItemHeight = 30;
+            cmbGradeLevel.FocusedState.BorderColor = Color.FromArgb(37, 99, 235);
+            cmbGradeLevel.ItemHeight = 28;
             cmbGradeLevel.Items.AddRange(new object[] { "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Faculty" });
-            cmbGradeLevel.Location = new Point(223, 422);
+            cmbGradeLevel.Location = new Point(15, 176);
             cmbGradeLevel.Name = "cmbGradeLevel";
             cmbGradeLevel.ShadowDecoration.CustomizableEdges = customizableEdges20;
-            cmbGradeLevel.Size = new Size(317, 36);
-            cmbGradeLevel.StartIndex = 0;
+            cmbGradeLevel.Size = new Size(480, 34);
             cmbGradeLevel.TabIndex = 6;
+
             // 
             // btnAddToCart
             // 
             btnAddToCart.BorderRadius = 8;
             btnAddToCart.Cursor = Cursors.Hand;
             btnAddToCart.CustomizableEdges = customizableEdges21;
-            btnAddToCart.FillColor = Color.FromArgb(243, 244, 246);
+            btnAddToCart.FillColor = Color.FromArgb(239, 246, 255);
             btnAddToCart.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             btnAddToCart.ForeColor = Color.FromArgb(37, 99, 235);
-            btnAddToCart.HoverState.FillColor = Color.FromArgb(229, 231, 235);
-            btnAddToCart.Location = new Point(60, 480);
+            btnAddToCart.HoverState.FillColor = Color.FromArgb(219, 234, 254);
+            btnAddToCart.Location = new Point(15, 230);
             btnAddToCart.Name = "btnAddToCart";
             btnAddToCart.ShadowDecoration.CustomizableEdges = customizableEdges22;
-            btnAddToCart.Size = new Size(144, 42);
+            btnAddToCart.Size = new Size(220, 42);
             btnAddToCart.TabIndex = 17;
-            btnAddToCart.Text = "Select Item ";
+            btnAddToCart.Text = "+ Add to Selection";
+
+            // 
+            // flwCartContainer
+            // 
+            flwCartContainer.AutoScroll = true;
+            flwCartContainer.BackColor = Color.White;
+            flwCartContainer.BorderStyle = BorderStyle.None;
+            flwCartContainer.FlowDirection = FlowDirection.TopDown;
+            flwCartContainer.Location = new Point(245, 230);
+            flwCartContainer.Name = "flwCartContainer";
+            flwCartContainer.Padding = new Padding(4);
+            flwCartContainer.Size = new Size(250, 192);
+            flwCartContainer.TabIndex = 19;
+            flwCartContainer.WrapContents = false;
+
             // 
             // btnClearCart
             // 
@@ -384,70 +477,113 @@ namespace Ventrix.App
             btnClearCart.Cursor = Cursors.Hand;
             btnClearCart.CustomizableEdges = customizableEdges23;
             btnClearCart.FillColor = Color.White;
-            btnClearCart.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            btnClearCart.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
             btnClearCart.ForeColor = Color.FromArgb(239, 68, 68);
             btnClearCart.HoverState.FillColor = Color.FromArgb(254, 242, 242);
-            btnClearCart.Location = new Point(60, 532);
+            btnClearCart.Location = new Point(245, 432);
             btnClearCart.Name = "btnClearCart";
             btnClearCart.ShadowDecoration.CustomizableEdges = customizableEdges24;
-            btnClearCart.Size = new Size(144, 42);
+            btnClearCart.Size = new Size(250, 36);
             btnClearCart.TabIndex = 18;
             btnClearCart.Text = "Clear Selection";
+
             // 
-            // lstCart
+            // btnLogin
             // 
-            lstCart.BackColor = Color.FromArgb(249, 250, 251);
-            lstCart.BorderStyle = BorderStyle.None;
-            lstCart.Font = new Font("Segoe UI", 10.5F);
-            lstCart.ForeColor = Color.FromArgb(31, 41, 55);
-            lstCart.FormattingEnabled = true;
-            lstCart.Location = new Point(231, 480);
-            lstCart.Name = "lstCart";
-            lstCart.Size = new Size(309, 92);
-            lstCart.TabIndex = 19;
+            btnLogin.BorderRadius = 8;
+            btnLogin.Cursor = Cursors.Hand;
+            btnLogin.CustomizableEdges = customizableEdges17;
+            btnLogin.FillColor = Color.FromArgb(37, 99, 235);
+            btnLogin.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            btnLogin.ForeColor = Color.White;
+            btnLogin.HoverState.FillColor = Color.FromArgb(29, 78, 216);
+            btnLogin.Location = new Point(25, 710);
+            btnLogin.Name = "btnLogin";
+            btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges18;
+            btnLogin.Size = new Size(510, 48);
+            btnLogin.TabIndex = 10;
+            btnLogin.Text = "Login to Dashboard";
+            btnLogin.Visible = false;
+
             // 
-            // txtPassword
+            // btnReturn
             // 
-            txtPassword.BorderColor = Color.FromArgb(229, 231, 235);
-            txtPassword.BorderRadius = 8;
-            txtPassword.Cursor = Cursors.IBeam;
-            txtPassword.CustomizableEdges = customizableEdges25;
-            txtPassword.DefaultText = "";
-            txtPassword.FillColor = Color.FromArgb(249, 250, 251);
-            txtPassword.Font = new Font("Segoe UI", 10.5F);
-            txtPassword.ForeColor = Color.FromArgb(31, 41, 55);
-            txtPassword.IconLeft = Properties.Resources.locked;
-            txtPassword.IconLeftOffset = new Point(5, 0);
-            txtPassword.IconRight = Properties.Resources.eye;
-            txtPassword.Location = new Point(60, 291);
-            txtPassword.Margin = new Padding(3, 4, 3, 4);
-            txtPassword.Name = "txtPassword";
-            txtPassword.PasswordChar = '●';
-            txtPassword.PlaceholderText = "Enter Password";
-            txtPassword.SelectedText = "";
-            txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges26;
-            txtPassword.Size = new Size(480, 46);
-            txtPassword.TabIndex = 9;
-            txtPassword.TextOffset = new Point(5, 0);
-            txtPassword.UseSystemPasswordChar = true;
-            txtPassword.Visible = false;
+            btnReturn.BorderRadius = 8;
+            btnReturn.Cursor = Cursors.Hand;
+            btnReturn.CustomizableEdges = customizableEdges13;
+            btnReturn.FillColor = Color.FromArgb(243, 244, 246);
+            btnReturn.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
+            btnReturn.ForeColor = Color.FromArgb(31, 41, 55);
+            btnReturn.HoverState.FillColor = Color.FromArgb(229, 231, 235);
+            btnReturn.Location = new Point(25, 710);
+            btnReturn.Name = "btnReturn";
+            btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges14;
+            btnReturn.Size = new Size(240, 48);
+            btnReturn.TabIndex = 7;
+            btnReturn.Text = "Return Items";
+
+            // 
+            // btnBorrow
+            // 
+            btnBorrow.BorderRadius = 8;
+            btnBorrow.Cursor = Cursors.Hand;
+            btnBorrow.CustomizableEdges = customizableEdges15;
+            btnBorrow.FillColor = Color.FromArgb(37, 99, 235);
+            btnBorrow.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
+            btnBorrow.ForeColor = Color.White;
+            btnBorrow.HoverState.FillColor = Color.FromArgb(29, 78, 216);
+            btnBorrow.Location = new Point(280, 710);
+            btnBorrow.Name = "btnBorrow";
+            btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges16;
+            btnBorrow.Size = new Size(255, 48);
+            btnBorrow.TabIndex = 8;
+            btnBorrow.Text = "Checkout Request";
+
+            // 
+            // lblCreateAccount
+            // 
+            lblCreateAccount.BackColor = Color.Transparent;
+            lblCreateAccount.Cursor = Cursors.Hand;
+            lblCreateAccount.Font = new Font("Segoe UI", 9.5F);
+            lblCreateAccount.ForeColor = Color.FromArgb(156, 163, 175);
+            lblCreateAccount.Location = new Point(140, 785);
+            lblCreateAccount.Name = "lblCreateAccount";
+            lblCreateAccount.Size = new Size(280, 25);
+            lblCreateAccount.TabIndex = 12;
+            lblCreateAccount.Text = "Need an account? See administrator.";
+
             // 
             // BorrowerPortal
             // 
-            ClientSize = new Size(1200, 800);
+            ClientSize = new Size(1280, 850);
             Controls.Add(mainTableLayout);
+            MinimumSize = new Size(1024, 768);
+            FormBorderStyle = FormBorderStyle.None;
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "BorrowerPortal";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Ventrix | Borrower Portal";
             mainTableLayout.ResumeLayout(false);
+            pnlLeftBranding.ResumeLayout(false);
+            pnlLeftBranding.PerformLayout();
+            pnlRightContainer.ResumeLayout(false);
             pnlLoginCard.ResumeLayout(false);
             pnlLoginCard.PerformLayout();
+            pnlInputContainer.ResumeLayout(false);
+            pnlInputContainer.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numQuantity).EndInit();
             ResumeLayout(false);
         }
 
         private System.Windows.Forms.TableLayoutPanel mainTableLayout;
+        private Guna.UI2.WinForms.Guna2Panel pnlLeftBranding;
+        private Guna.UI2.WinForms.Guna2Panel pnlRightContainer;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblBrandLogo;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblBrandTitle;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblBrandDesc;
         private Guna.UI2.WinForms.Guna2Panel pnlLoginCard;
+        private Guna.UI2.WinForms.Guna2Panel pnlInputContainer;
         private Guna.UI2.WinForms.Guna2Button btnAdminToggle;
         private Guna.UI2.WinForms.Guna2Button btnStudentToggle;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblLoginHeader;
@@ -462,10 +598,11 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2Button btnLogin;
         private Guna.UI2.WinForms.Guna2TextBox txtPassword;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblEquipmentList;
+        private Guna.UI2.WinForms.Guna2HtmlLabel lblGradeLevelTitle;
         private Guna.UI2.WinForms.Guna2ComboBox cmbGradeLevel;
         private Guna.UI2.WinForms.Guna2Button btnAddToCart;
         private Guna.UI2.WinForms.Guna2Button btnClearCart;
-        private System.Windows.Forms.ListBox lstCart;
         private Guna.UI2.WinForms.Guna2HtmlLabel lblCreateAccount;
+        private System.Windows.Forms.FlowLayoutPanel flwCartContainer;
     }
 }

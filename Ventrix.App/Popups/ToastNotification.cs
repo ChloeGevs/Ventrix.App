@@ -1,134 +1,225 @@
-﻿using Guna.UI2.WinForms;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using Guna.UI2.WinForms;
 
 namespace Ventrix.App.Controls
 {
-    public enum ToastType
-    {
-        Success,
-        Error,
-        Info,
-        Warning
-    }
+    public enum ToastType { Success, Warning, Error, Info }
 
     public partial class ToastNotification : Form
     {
-        private Label lblMessage;
-        private System.Windows.Forms.Timer actionTimer;
-        private int toastLifeCounter = 0;
-        private ToastAction action;
-        private int targetY;
-
-        private enum ToastAction { FadeIn, Wait, FadeOut }
-
-        protected override bool ShowWithoutActivation => true;
+        private System.Windows.Forms.Timer animTimer;
+        private System.Windows.Forms.Timer dismissTimer;
+        private System.Windows.Forms.Timer fadeOutTimer;
 
         public ToastNotification(string message, ToastType type)
         {
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Size = new Size(320, 60);
-            this.BackColor = Color.White;
-            this.ShowInTaskbar = false;
-            this.TopMost = true;
-            this.Opacity = 0.0;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.Manual;
+            ShowInTaskbar = false;
+            Width = 380;
+            Height = 84;
+            BackColor = Color.White;
 
-            Guna2Elipse elipse = new Guna2Elipse();
-            elipse.TargetControl = this;
-            elipse.BorderRadius = 12;
+            // Modern app notification card style with soft shadow elevation
+            Guna2BorderlessForm borderless = new Guna2BorderlessForm
+            {
+                BorderRadius = 12,
+                ContainerControl = this,
+                ShadowColor = Color.FromArgb(40, 0, 0, 0)
+            };
 
-            lblMessage = new Label
+            // Status accent color mapping
+            Color accentColor = type switch
+            {
+                ToastType.Success => Color.FromArgb(16, 185, 129),  // Emerald Green
+                ToastType.Warning => Color.FromArgb(217, 119, 6),   // Amber Gold
+                ToastType.Error => Color.FromArgb(225, 29, 72),     // Rose Red
+                _ => Color.FromArgb(79, 70, 229)                    // Indigo Accent
+            };
+
+            string titleText = type switch
+            {
+                ToastType.Success => "Success",
+                ToastType.Warning => "System Warning",
+                ToastType.Error => "Action Failed",
+                _ => "Notification"
+            };
+
+            // Left vertical status strip (native OS notification style)
+            Panel pnlStrip = new Panel
+            {
+                Width = 5,
+                Dock = DockStyle.Left,
+                BackColor = accentColor
+            };
+            Controls.Add(pnlStrip);
+
+            // App Source & Timestamp Header
+            Label lblHeader = new Label
+            {
+                Text = "VENTRIX  •  Just now",
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(148, 163, 184),
+                Location = new Point(16, 12),
+                AutoSize = true
+            };
+            Controls.Add(lblHeader);
+
+            // Manual Close Button (✕)
+            Button btnClose = new Button
+            {
+                Text = "✕",
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(148, 163, 184),
+                BackColor = Color.Transparent,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(22, 22),
+                Location = new Point(346, 10),
+                Cursor = Cursors.Hand
+            };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.FlatAppearance.MouseOverBackColor = Color.FromArgb(241, 245, 249);
+            btnClose.Click += (s, e) => CloseToast();
+            Controls.Add(btnClose);
+
+            // Title Label (Bold header)
+            Label lblTitle = new Label
+            {
+                Text = titleText,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Location = new Point(16, 30),
+                AutoSize = true
+            };
+            Controls.Add(lblTitle);
+
+            // Message Body Label
+            Label lblMessage = new Label
             {
                 Text = message,
-                Font = new Font("Segoe UI Semibold", 10F),
-                ForeColor = Color.White,
-                AutoSize = false,
-                Size = new Size(270, 60),
-                Location = new Point(50, 0),
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Location = new Point(16, 50),
+                Size = new Size(335, 24),
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            this.Controls.Add(lblMessage);
+            Controls.Add(lblMessage);
 
-            Label lblIcon = new Label
-            {
-                Font = new Font("Segoe UI", 14F),
-                AutoSize = false,
-                Size = new Size(50, 60),
-                Location = new Point(0, 0),
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-            this.Controls.Add(lblIcon);
+            // Pause auto-dismiss timer when user hovers over the notification card
+            this.MouseEnter += (s, e) => dismissTimer?.Stop();
+            this.MouseLeave += (s, e) => dismissTimer?.Start();
+        }
 
-            switch (type)
+        private void CloseToast()
+        {
+            animTimer?.Stop();
+            dismissTimer?.Stop();
+            fadeOutTimer?.Stop();
+            this.Close();
+            this.Dispose();
+        }
+
+        public static void Show(Form parent, string message, ToastType type)
+        {
+            if (parent == null || parent.IsDisposed) return;
+
+            if (parent.InvokeRequired)
             {
-                case ToastType.Success:
-                    this.BackColor = Color.MediumSeaGreen;
-                    lblIcon.Text = "✔️";
-                    break;
-                case ToastType.Error:
-                    this.BackColor = Color.IndianRed;
-                    lblIcon.Text = "❌";
-                    break;
-                case ToastType.Warning:
-                    this.BackColor = Color.DarkOrange;
-                    lblIcon.Text = "⚠️";
-                    break;
-                case ToastType.Info:
-                    this.BackColor = Color.FromArgb(33, 150, 243);
-                    lblIcon.Text = "ℹ️";
-                    break;
+                parent.Invoke(new Action(() => Show(parent, message, type)));
+                return;
             }
 
-            actionTimer = new System.Windows.Forms.Timer { Interval = 15 };
-            actionTimer.Tick += ActionTimer_Tick;
-        }
-
-        public static void Show(Form owner, string message, ToastType type = ToastType.Success)
-        {
-            ToastNotification toast = new ToastNotification(message, type);
-
-            int startX = owner.Location.X + owner.Width - toast.Width - 30;
-            toast.targetY = owner.Location.Y + owner.Height - toast.Height - 30;
-
-            toast.Location = new Point(startX, toast.targetY + 20);
-            toast.action = ToastAction.FadeIn;
-
-            toast.Show(owner);
-            toast.actionTimer.Start();
-        }
-
-        private void ActionTimer_Tick(object sender, EventArgs e)
-        {
-            switch (action)
+            try
             {
-                case ToastAction.FadeIn:
-                    if (this.Opacity < 1.0)
-                    {
-                        this.Opacity += 0.1;
-                        if (this.Top > targetY) this.Top -= 2;
-                    }
-                    else action = ToastAction.Wait;
-                    break;
+                ToastNotification toast = new ToastNotification(message, type)
+                {
+                    TopMost = true
+                };
 
-                case ToastAction.Wait:
-                    toastLifeCounter++;
-                    if (toastLifeCounter >= 160) action = ToastAction.FadeOut;
-                    break;
+                Rectangle screenRect = Screen.FromControl(parent).WorkingArea;
+                int targetX;
+                int startY;
 
-                case ToastAction.FadeOut:
-                    if (this.Opacity > 0.0)
+                // Seamless positioning calculation for Normal and Maximized window states
+                if (parent.WindowState == FormWindowState.Maximized)
+                {
+                    targetX = screenRect.Right - toast.Width - 30;
+                    startY = screenRect.Top + 25;
+                }
+                else
+                {
+                    targetX = parent.Location.X + parent.Width - toast.Width - 30;
+                    startY = parent.Location.Y + 80;
+
+                    // Boundary fallback to prevent off-screen clipping on standard windows
+                    if (targetX + toast.Width > screenRect.Right)
                     {
-                        this.Opacity -= 0.1;
-                        this.Top += 1;
+                        targetX = screenRect.Right - toast.Width - 30;
                     }
-                    else
+                }
+
+                toast.Location = new Point(targetX, startY - 20);
+                toast.Opacity = 0;
+                toast.Show(parent);
+
+                // Smooth slide-in entrance animation
+                toast.animTimer = new System.Windows.Forms.Timer { Interval = 10 };
+                int currentY = startY - 20;
+
+                toast.animTimer.Tick += (s, e) =>
+                {
+                    if (toast.IsDisposed) { toast.animTimer.Stop(); toast.animTimer.Dispose(); return; }
+
+                    if (toast.Opacity < 1.0) toast.Opacity += 0.2;
+                    if (currentY < startY)
                     {
-                        actionTimer.Stop();
-                        actionTimer.Dispose();
-                        this.Close();
+                        currentY += 4;
+                        toast.Location = new Point(targetX, currentY);
                     }
-                    break;
+                    if (toast.Opacity >= 1.0 && currentY >= startY)
+                    {
+                        toast.animTimer.Stop();
+                        toast.animTimer.Dispose();
+                    }
+                };
+                toast.animTimer.Start();
+
+                // Auto-dismiss timer (3.5 seconds)
+                toast.dismissTimer = new System.Windows.Forms.Timer { Interval = 3500 };
+                toast.dismissTimer.Tick += (s, e) =>
+                {
+                    toast.dismissTimer.Stop();
+                    toast.dismissTimer.Dispose();
+
+                    if (toast.IsDisposed) return;
+
+                    // Fade out exit animation
+                    toast.fadeOutTimer = new System.Windows.Forms.Timer { Interval = 15 };
+                    toast.fadeOutTimer.Tick += (s2, e2) =>
+                    {
+                        if (toast.IsDisposed) { toast.fadeOutTimer.Stop(); toast.fadeOutTimer.Dispose(); return; }
+
+                        if (toast.Opacity > 0.0)
+                        {
+                            toast.Opacity -= 0.12;
+                        }
+                        else
+                        {
+                            toast.fadeOutTimer.Stop();
+                            toast.fadeOutTimer.Dispose();
+                            toast.Close();
+                            toast.Dispose();
+                        }
+                    };
+                    toast.fadeOutTimer.Start();
+                };
+                toast.dismissTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("ToastNotification Error: " + ex.Message);
             }
         }
     }

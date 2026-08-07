@@ -1,9 +1,10 @@
-﻿using MaterialSkin.Controls;
-using Ventrix.Application.Services;
-using Ventrix.Domain.Models;
+﻿using Guna.UI2.WinForms;
+using MaterialSkin.Controls;
 using System;
 using System.Windows.Forms;
+using Ventrix.Application.Services;
 using Ventrix.Domain.Enums;
+using Ventrix.Domain.Models;
 
 namespace Ventrix.App.Popups
 {
@@ -21,6 +22,9 @@ namespace Ventrix.App.Popups
 
             InitializeComponent();
             ThemeManager.ApplyMaterialTheme(this);
+
+            // Style any internal buttons or textboxes inside the popup
+            ThemeManager.StyleActionButton(btnConfirm, Color.FromArgb(46, 125, 50), Color.FromArgb(56, 142, 60));
             AcceptButton = btnConfirm;
 
             this.Text = $"Checkout: {_itemName} (Unit #{id})";

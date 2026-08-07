@@ -1,3 +1,5 @@
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using Guna.UI2.WinForms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,6 +11,9 @@ using Ventrix.Application.DTOs;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Enums;
 using Ventrix.Domain.Models;
+using LibVLCSharp.Shared;
+using LibVLCSharp.WinForms;
+using System.IO;
 
 namespace Ventrix.App
 {
@@ -18,6 +23,11 @@ namespace Ventrix.App
         private readonly BorrowService _borrowService;
         private readonly UserService _userService;
 
+        private Guna2AnimateWindow formAnimator;
+        private Guna2Elipse formElipse;
+        private PictureBox _videoBackground;
+        private Label _nativeLogo;
+        private Label _nativeDesc;
         // ── Second-screen tablet support ─────────────────────────────────────
         private readonly DualScreenService _DualScreenService = new DualScreenService();
 
@@ -47,23 +57,145 @@ namespace Ventrix.App
             _userService = userService;
 
             InitializeComponent();
+            SetupAnimations();
             SetupEvents();
             SetupFocusHighlighting();
+            this.Load += BorrowerPortal_Load;
+        }
+
+        private void SetupAnimations()
+        {
+            // 1. Smooth Form Load Animation
+            formAnimator = new Guna2AnimateWindow
+            {
+                TargetForm = this,
+                AnimationType = Guna2AnimateWindow.AnimateWindowType.AW_BLEND,
+                Interval = 400
+            };
+
+            // Round the form corners
+            formElipse = new Guna2Elipse
+            {
+                TargetControl = this,
+                BorderRadius = 20
+            };
+        }
+
+        private void SetupVideoBackground()
+        {
+            try
+            {
+                string bgPath = Path.Combine(System.Windows.Forms.Application.StartupPath, "Resources", "computercilab_bg.gif");
+
+                if (File.Exists(bgPath))
+                {
+                    _videoBackground = new System.Windows.Forms.PictureBox
+                    {
+                        Dock = DockStyle.Fill,
+                        Image = Image.FromFile(bgPath),
+                        SizeMode = PictureBoxSizeMode.StretchImage,
+                        BackColor = Color.Transparent
+                    };
+                    _videoBackground.Paint += VideoBackground_Paint;
+                    pnlLeftBranding.Controls.Add(_videoBackground);
+                    _videoBackground.SendToBack();
+
+                    // Hide the Guna HTML labels so they don't interfere
+                    lblBrandLogo.Visible = false;
+                    lblBrandTitle.Visible = false;
+                    lblBrandDesc.Visible = false;
+
+                    // Generate standard WinForms labels
+                    _nativeLogo = new Label
+                    {
+                        Text = "❖ Ventrix",
+                        Font = new Font("Segoe UI", 22F, FontStyle.Bold),
+                        ForeColor = Color.White,
+                        Location = new Point(60, 60),
+                        AutoSize = true,
+                        BackColor = Color.Transparent,
+                        Parent = _videoBackground
+                    };
+
+                    _nativeDesc = new Label
+                    {
+                        Text = "Your hub for borrowing tech accessories, tools, and lab\nequipment for your coursework. Select your grade level,\nsubject, and the gear you need to get started.",
+                        Font = new Font("Segoe UI", 12F, FontStyle.Regular),
+                        ForeColor = Color.White,
+                        Location = new Point(60, 520),
+                        AutoSize = true,
+                        BackColor = Color.Transparent,
+                        Parent = _videoBackground
+                    };
+                }
+                else
+                {
+                    pnlLeftBranding.BackColor = Color.FromArgb(15, 23, 42);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Background Error: " + ex.Message);
+                pnlLeftBranding.BackColor = Color.FromArgb(15, 23, 42);
+            }
+        }
+
+        private void VideoBackground_Paint(object sender, PaintEventArgs e)
+        {
+            // Enable smooth, high-quality text rendering
+            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            // Scale font size dynamically based on window state
+            float fontSize = WindowState == FormWindowState.Maximized ? 78F : 36F;
+            int titleY = WindowState == FormWindowState.Maximized ? 400 : 300;
+
+            using (Font titleFont = new Font("Segoe UI", fontSize, FontStyle.Bold))
+            using (SolidBrush textBrush = new SolidBrush(Color.White))
+            {
+                e.Graphics.DrawString("Equipment\nBorrowing Portal", titleFont, textBrush, new Point(60, titleY));
+            }
+        }
+
+        private async void BorrowerPortal_Load(object sender, EventArgs e)
+        {
+            await _userService.InitializeDefaultAdminAsync();
+            SetupVideoBackground();
+            var backupService = new DatabaseBackupService();
+            _ = backupService.RunDailyBackupAsync();
+
+            await ToggleMode("Admin");
+
+            // Force an immediate layout update so the Guna shadow renders correctly before showing
+            pnlLoginCard.Refresh();
+        }
+
+        private async Task AnimateCardEntry()
+        {
+            int steps = 30; // Number of pixels to move
+            int delay = 10; // ms per step
+
+            for (int i = 0; i < steps; i++)
+            {
+                // Slide up 1 pixel at a time for a smooth effect
+                pnlLoginCard.Top -= 1;
+                await Task.Delay(delay);
+            }
         }
 
         private void SetupEvents()
         {
+            Load += BorrowerPortal_Load;
+            Resize += BorrowerPortal_Resize;
+
             // Only exit the whole application when the portal itself is the primary (and only) window.
-            // When IsOnSecondScreen is true the Admin Dashboard is the primary window, so closing
-            // the tablet portal should not terminate the app.
             FormClosed += (s, e) =>
             {
                 if (!IsOnSecondScreen)
                     System.Windows.Forms.Application.Exit();
             };
 
-            btnAdminToggle.Click += (s, e) => ToggleMode("Admin");
-            btnStudentToggle.Click += async (s, e) => { ToggleMode("Student"); await EnterBorrowMode(); };
+            btnAdminToggle.Click += async (s, e) => await ToggleMode("Admin");
+            btnStudentToggle.Click += async (s, e) => { await ToggleMode("Student"); await EnterBorrowMode(); };
 
             btnLogin.Click += BtnLogin_Click;
             btnBorrow.Click += BtnBorrow_Click;
@@ -71,17 +203,6 @@ namespace Ventrix.App
             btnAddToCart.Click += BtnAddToCart_Click;
             btnClearCart.Click += (s, e) => { _cart.Clear(); UpdateCartUI(); _ = ValidateUserRoleAndLimits(); };
 
-            // NEW: Double-click to remove a specific item
-            lstCart.DoubleClick += (s, e) => RemoveSelectedCartItem();
-
-            // NEW: Press 'Delete' or 'Backspace' key to remove a specific item
-            lstCart.KeyDown += (s, e) =>
-            {
-                if (e.KeyCode == Keys.Delete || e.KeyCode == Keys.Back)
-                {
-                    RemoveSelectedCartItem();
-                }
-            };
 
             txtPassword.IconRightClick += TxtPassword_IconRightClick;
             txtPassword.MouseMove += txtPassword_MouseMove;
@@ -102,19 +223,57 @@ namespace Ventrix.App
                     e.SuppressKeyPress = true;
                 }
             };
+        }
 
-            Load += async (s, e) =>
+        private void BorrowerPortal_Resize(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Maximized)
             {
-                await _userService.InitializeDefaultAdminAsync();
-                var backupService = new DatabaseBackupService();
-                _ = backupService.RunDailyBackupAsync();
-                ToggleMode("Admin");
-            };
+                if (_nativeLogo != null) { _nativeLogo.Font = new Font("Segoe UI", 36F, FontStyle.Bold); }
+
+                if (_nativeDesc != null)
+                {
+                    _nativeDesc.Font = new Font("Segoe UI", 28F, FontStyle.Regular);
+                    _nativeDesc.Location = new Point(60, 750);
+                }
+
+                lblBrandLogo.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
+                lblBrandTitle.Font = new Font("Segoe UI", 78F, FontStyle.Bold);
+                lblBrandDesc.Font = new Font("Segoe UI", 28F, FontStyle.Regular);
+                lblBrandDesc.Location = new Point(60, 750);
+            }
+            else if (WindowState == FormWindowState.Normal)
+            {
+                if (_nativeLogo != null) { _nativeLogo.Font = new Font("Segoe UI", 22F, FontStyle.Bold); }
+
+                if (_nativeDesc != null)
+                {
+                    _nativeDesc.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+                    _nativeDesc.Location = new Point(60, 520);
+                }
+
+                lblBrandLogo.Font = new Font("Segoe UI", 22F, FontStyle.Bold);
+                lblBrandTitle.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
+                lblBrandDesc.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+                lblBrandDesc.Location = new Point(60, 520);
+            }
+
+            // Force redraw to keep static text crisp and updated on resize
+            if (_videoBackground != null)
+            {
+                _videoBackground.Invalidate();
+            }
         }
 
         #region Modes & UI State
-        public void ToggleMode(string mode)
+
+        public async Task ToggleMode(string mode)
         {
+            // Subtle transition: Dim the entire form slightly before swapping UI
+            for (double i = 1; i > 0.85; i -= 0.05) { this.Opacity = i; await Task.Delay(10); }
+
+            this.SuspendLayout();
+
             txtStudentId.Clear();
             txtPassword.Clear();
             txtSubject.Clear();
@@ -144,6 +303,7 @@ namespace Ventrix.App
             cmbListEquipments.Visible = !isAdmin;
             numQuantity.Visible = !isAdmin;
             txtSubject.Visible = !isAdmin;
+            lblGradeLevelTitle.Visible = !isAdmin;
             cmbGradeLevel.Visible = !isAdmin;
             btnBorrow.Visible = !isAdmin;
             btnReturn.Visible = !isAdmin;
@@ -151,10 +311,11 @@ namespace Ventrix.App
             lblSubject.Visible = !isAdmin;
             lblCreateAccount.Visible = !isAdmin;
             lblEquipmentList.Visible = !isAdmin;
+            pnlInputContainer.Visible = !isAdmin;
 
             btnAddToCart.Visible = !isAdmin;
             btnClearCart.Visible = !isAdmin;
-            lstCart.Visible = !isAdmin;
+            flwCartContainer.Visible = !isAdmin;
 
             // Modern Toggle Styling
             btnAdminToggle.FillColor = isAdmin ? PrimaryBlue : SurfaceGray;
@@ -165,6 +326,12 @@ namespace Ventrix.App
 
             numQuantity.Maximum = isAdmin ? 10 : 2;
             txtStudentId.Focus();
+
+            this.ResumeLayout();
+
+            // Bring the form back to full opacity
+            for (double i = this.Opacity; i <= 1; i += 0.05) { this.Opacity = i; await Task.Delay(10); }
+            this.Opacity = 1.0;
         }
 
         private async Task EnterBorrowMode()
@@ -180,8 +347,7 @@ namespace Ventrix.App
             lblQuantity.Visible = true;
             btnAddToCart.Visible = true;
             btnClearCart.Visible = true;
-            lstCart.Visible = true;
-
+            flwCartContainer.Visible = true;
 
             txtStudentId.Enabled = true;
 
@@ -212,8 +378,7 @@ namespace Ventrix.App
                 lblQuantity.Visible = false;
                 btnAddToCart.Visible = false;
                 btnClearCart.Visible = false;
-                lstCart.Visible = false;
-
+                flwCartContainer.Visible = false;
 
                 cmbListEquipments.Items.Clear();
                 foreach (var record in activeRecords)
@@ -288,19 +453,177 @@ namespace Ventrix.App
 
         private void UpdateCartUI()
         {
-            lstCart.Items.Clear();
-            foreach (var item in _cart)
+            flwCartContainer.Controls.Clear();
+
+            if (_cart.Count == 0)
             {
-                lstCart.Items.Add(item.ToString());
+                // Modern Empty State Layout
+                Guna2Panel pnlEmpty = new Guna2Panel
+                {
+                    Size = new Size(225, 170),
+                    BackColor = Color.Transparent,
+                    FillColor = Color.Transparent
+                };
+
+                Label lblEmpty = new Label
+                {
+                    Text = "Your cart is empty\n\nChoose equipment above and click\n'+ Add to Selection'",
+                    Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                    ForeColor = Color.FromArgb(156, 163, 175), // Muted Gray
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Dock = DockStyle.Fill
+                };
+
+                pnlEmpty.Controls.Add(lblEmpty);
+                flwCartContainer.Controls.Add(pnlEmpty);
+            }
+            else
+            {
+                foreach (var item in _cart)
+                {
+                    // 1. Main Card Container
+                    Guna2Panel pnlCard = new Guna2Panel
+                    {
+                        Size = new Size(226, 65),
+                        BorderRadius = 8,
+                        FillColor = Color.White,
+                        BorderColor = Color.FromArgb(229, 231, 235), // Subtle border
+                        BorderThickness = 1,
+                        Margin = new Padding(0, 0, 0, 6)
+                    };
+
+                    // 2. Product Thumbnail / Icon Placeholder
+                    Guna2Panel pnlImage = new Guna2Panel
+                    {
+                        Size = new Size(45, 45),
+                        BorderRadius = 6,
+                        FillColor = Color.FromArgb(243, 244, 246), // Gray placeholder
+                        Location = new Point(8, 10)
+                    };
+
+                    Label lblIcon = new Label
+                    {
+                        Text = "📦", // Placeholder for actual equipment image/icon
+                        Font = new Font("Segoe UI", 16F),
+                        Dock = DockStyle.Fill,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        BackColor = Color.Transparent
+                    };
+                    pnlImage.Controls.Add(lblIcon);
+
+                    // 3. Item Name Label
+                    Label lblName = new Label
+                    {
+                        Text = item.BaseItemName,
+                        Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(31, 41, 55),
+                        Location = new Point(60, 8),
+                        Size = new Size(130, 20),
+                        AutoEllipsis = true,
+                        BackColor = Color.Transparent
+                    };
+
+                    // 4. FOOLPROOF Interactive Quantity Selector [ - ] [ 1 ] [ + ]
+                    var currentItem = item; // Safe closure
+
+                    Label btnMinus = new Label
+                    {
+                        Text = "−", // IMPORTANT: Using the true mathematical minus symbol here, not a hyphen!
+                        Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                        ForeColor = currentItem.Quantity > 1 ? Color.FromArgb(75, 85, 99) : Color.FromArgb(209, 213, 219),
+                        BackColor = Color.FromArgb(243, 244, 246),
+                        Size = new Size(26, 26),
+                        Location = new Point(60, 32),
+                        Cursor = currentItem.Quantity > 1 ? Cursors.Hand : Cursors.Default,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Padding = new Padding(0, 0, 0, 2) // Nudges the text UP by 2 pixels to perfectly center it
+                    };
+
+                    Label lblQty = new Label
+                    {
+                        Text = currentItem.Quantity.ToString(),
+                        Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(31, 41, 55),
+                        Size = new Size(26, 26),
+                        Location = new Point(86, 32),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        BackColor = Color.Transparent
+                    };
+
+                    Label btnPlus = new Label
+                    {
+                        Text = "+",
+                        Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(75, 85, 99),
+                        BackColor = Color.FromArgb(243, 244, 246),
+                        Size = new Size(26, 26),
+                        Location = new Point(112, 32),
+                        Cursor = Cursors.Hand,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Padding = new Padding(0, 0, 0, 2) // Nudges the text UP by 2 pixels
+                    };
+
+                    // Quantity Events
+                    btnMinus.Click += async (s, ev) =>
+                    {
+                        if (currentItem.Quantity > 1)
+                        {
+                            currentItem.Quantity--;
+                            UpdateCartUI();
+                            await ValidateUserRoleAndLimits();
+                        }
+                    };
+
+                    btnPlus.Click += async (s, ev) =>
+                    {
+                        currentItem.Quantity++;
+                        UpdateCartUI();
+                        await ValidateUserRoleAndLimits();
+                    };
+
+                    // 5. Delete / Remove Item Button (✕)
+                    // Also changed to a Label to ensure the 'X' doesn't disappear
+                    Label btnRemoveItem = new Label
+                    {
+                        Text = "✕",
+                        Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(156, 163, 175),
+                        BackColor = Color.Transparent,
+                        Size = new Size(24, 24),
+                        Location = new Point(195, 8),
+                        Cursor = Cursors.Hand,
+                        TextAlign = ContentAlignment.MiddleCenter
+                    };
+
+                    // Simple hover effect for the remove label
+                    btnRemoveItem.MouseEnter += (s, ev) => { btnRemoveItem.ForeColor = Color.FromArgb(239, 68, 68); };
+                    btnRemoveItem.MouseLeave += (s, ev) => { btnRemoveItem.ForeColor = Color.FromArgb(156, 163, 175); };
+
+                    btnRemoveItem.Click += async (s, ev) =>
+                    {
+                        _cart.Remove(currentItem);
+                        UpdateCartUI();
+                        await ValidateUserRoleAndLimits();
+                    };
+
+                    // Assemble the card components
+                    pnlCard.Controls.Add(pnlImage);
+                    pnlCard.Controls.Add(lblName);
+                    pnlCard.Controls.Add(btnMinus);
+                    pnlCard.Controls.Add(lblQty);
+                    pnlCard.Controls.Add(btnPlus);
+                    pnlCard.Controls.Add(btnRemoveItem);
+
+                    flwCartContainer.Controls.Add(pnlCard);
+                }
             }
         }
 
-        // NEW METHOD: Removes the specifically selected item from the cart
         private void RemoveSelectedCartItem()
-        {
-            if (lstCart.SelectedIndex != -1)
+        {   
+            if (flwCartContainer.Controls.Count > 0)
             {
-                var itemToRemove = _cart[lstCart.SelectedIndex];
+                var itemToRemove = _cart[0]; // This is a simplified approach; you might want to implement a more robust way to identify the selected item
                 var confirm = MessageBox.Show(
                     $"Are you sure you want to remove {itemToRemove.BaseItemName} from your cart?",
                     "Remove Item",
@@ -309,7 +632,7 @@ namespace Ventrix.App
 
                 if (confirm == DialogResult.Yes)
                 {
-                    _cart.RemoveAt(lstCart.SelectedIndex);
+                    _cart.RemoveAt(0);
                     UpdateCartUI();
                     _ = ValidateUserRoleAndLimits();
                 }
@@ -341,7 +664,7 @@ namespace Ventrix.App
 
                     if (adminUser != null)
                     {
-                        await LaunchAdminDashboardAsync(); // <-- Replaces the old popup and dashboard code
+                        await LaunchAdminDashboardAsync();
                     }
                     else
                     {
@@ -397,7 +720,7 @@ namespace Ventrix.App
                     if (specificUnits.Count < cartItem.Quantity)
                     {
                         MessageBox.Show($"Not enough available stock for {cartItem.BaseItemName}. Skipping...", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        continue; // Skips to the next item, leaves this one in the cart
+                        continue;
                     }
 
                     using (var popup = new Popups.ShowMultiUnitSelectionPopup(specificUnits, cartItem.BaseItemName, cartItem.Quantity))
@@ -435,7 +758,6 @@ namespace Ventrix.App
                     }
                 }
 
-                // REPLACE THIS BLOCK INSIDE BtnBorrow_Click:
                 if (successfulCheckouts > 0)
                 {
                     MessageBox.Show("Borrow request successful! Please wait for the admin to approve your items.", "Borrow Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -445,14 +767,12 @@ namespace Ventrix.App
                         _cart.Remove(processedItem);
                     }
 
-                    // If all items were successfully processed, wipe the form clean!
                     if (_cart.Count == 0)
                     {
                         ClearAllInputs();
                     }
                     else
                     {
-                        // If some items failed (e.g. out of stock), just update the cart
                         UpdateCartUI();
                     }
                 }
@@ -461,7 +781,6 @@ namespace Ventrix.App
                     MessageBox.Show("No items were borrowed. Your selection has not been changed.", "Borrowing Incomplete", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                // Only re-validate if there are still items left in the cart
                 if (_cart.Count > 0)
                 {
                     await ValidateUserRoleAndLimits();
@@ -492,7 +811,6 @@ namespace Ventrix.App
             SetLoadingState(true);
             try
             {
-                // --- NEW: Verify if the ID is actually registered in the system first ---
                 var userAccount = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.UserId == studentId && u.Role != UserRole.Admin);
 
                 if (userAccount == null)
@@ -501,7 +819,6 @@ namespace Ventrix.App
                     return;
                 }
 
-                // If registered, proceed to check for active items
                 var activeRecords = (await _borrowService.GetAllBorrowRecordsAsync())
                     .Where(b => b.BorrowerId == studentId && (b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue))
                     .ToList();
@@ -533,9 +850,7 @@ namespace Ventrix.App
 
                             MessageBox.Show($"Successfully requested return for {itemsToReturn.Count} item(s)!\n\nPlease present the physical item(s) to the admin/technician for final confirmation.", "Return Pending Confirmation", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                            // Wipe the inputs clean after a successful return!
                             ClearAllInputs();
-
                             await EnterBorrowMode();
                         }
                     }
@@ -561,7 +876,6 @@ namespace Ventrix.App
 
             if (userAccount != null)
             {
-                // 1. Lockout Check
                 if (userAccount.Strikes >= 3 && userAccount.Role.ToString() != "Admin" && userAccount.Role.ToString() != "Faculty")
                 {
                     MessageBox.Show($"ACCOUNT LOCKED: You have accumulated {userAccount.Strikes} strikes for late or damaged returns.\n\nYou are prohibited from using the borrowing system until a faculty member clears your account.", "Security Lockout", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -576,7 +890,6 @@ namespace Ventrix.App
                     return;
                 }
 
-                // 2. Enable UI
                 cmbListEquipments.Enabled = true;
                 txtSubject.Enabled = true;
                 cmbGradeLevel.Enabled = true;
@@ -585,36 +898,30 @@ namespace Ventrix.App
                 btnBorrow.Enabled = true;
                 btnBorrow.FillColor = PrimaryBlue;
 
-                // 3. Calculate Limits
                 var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == inputId).ToList();
                 int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
                 int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
                 int cartTotal = _cart.Sum(c => c.Quantity);
 
-                // 4. Role-Specific Logic
                 if (userAccount.Role.ToString() == "Student")
                 {
-                    // Remove "Faculty" from options so students cannot select it
                     if (cmbGradeLevel.Items.Contains("Faculty"))
                     {
                         cmbGradeLevel.Items.Remove("Faculty");
                     }
 
-                    // Clear the selection if it was previously set to Faculty
                     if (cmbGradeLevel.SelectedItem?.ToString() == "Faculty")
                     {
                         cmbGradeLevel.SelectedIndex = -1;
                     }
 
-                    // Set student limit to 3 items max
                     int remainingAllowed = 3 - currentlyHolding - currentlyPending - cartTotal;
                     numQuantity.Maximum = Math.Max(0, remainingAllowed);
 
                     cmbGradeLevel.Enabled = true;
                 }
-                else // Faculty or Admin
+                else
                 {
-                    // Re-add "Faculty" if it was removed, then lock it as the selection
                     if (!cmbGradeLevel.Items.Contains("Faculty"))
                     {
                         cmbGradeLevel.Items.Add("Faculty");
@@ -622,8 +929,6 @@ namespace Ventrix.App
 
                     cmbGradeLevel.SelectedItem = "Faculty";
                     cmbGradeLevel.Enabled = false;
-
-                    // Faculty can borrow up to 50 items
                     numQuantity.Maximum = 50;
                 }
             }
@@ -634,8 +939,6 @@ namespace Ventrix.App
         private async Task LoadEquipmentListAsync()
         {
             cmbListEquipments.Items.Clear();
-
-            // CHANGE: Use the new logic that excludes Pending reservations
             var availableItems = await _inventoryService.GetTrueAvailableItemsAsync();
 
             var distinctItemNames = availableItems
@@ -654,7 +957,6 @@ namespace Ventrix.App
             return hashIndex > 0 ? name.Substring(0, hashIndex).Trim() : name.Trim();
         }
 
-
         private void SetLoadingState(bool isLoading)
         {
             this.Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
@@ -664,6 +966,8 @@ namespace Ventrix.App
             btnAddToCart.Enabled = !isLoading;
         }
 
+
+        
         private void SetupFocusHighlighting() { }
         private void TxtPassword_IconRightClick(object sender, EventArgs e) { }
         private void txtPassword_MouseMove(object sender, MouseEventArgs e) { }
@@ -673,7 +977,6 @@ namespace Ventrix.App
         {
             if (keyData == (Keys.Control | Keys.Shift | Keys.D))
             {
-                // Fire and forget the async launch so it runs immediately via shortcut
                 _ = LaunchAdminDashboardAsync();
                 return true;
             }
@@ -691,7 +994,6 @@ namespace Ventrix.App
             if (cmbGradeLevel.Items.Count > 0)
                 cmbGradeLevel.SelectedIndex = -1;
 
-            // --- FIX: Temporarily raise the maximum before resetting to 1 to avoid the crash! ---
             numQuantity.Maximum = 50;
             numQuantity.Value = 1;
 
@@ -704,27 +1006,15 @@ namespace Ventrix.App
 
         // ── Second-screen tablet support ─────────────────────────────────────
 
-        /// <summary>
-        /// Called by <see cref="AdminDashboard"/> when the admin signs out.
-        /// Moves this portal back to the centre of the primary screen,
-        /// clears the second-screen flag, and resets the UI to student mode
-        /// so it is ready for the next borrower.
-        /// </summary>
-        /// 
         private async Task LaunchAdminDashboardAsync()
         {
-            // ── Show the tablet setup prompt ──────────────────────────────
             using var prompt = new DualScreenPopup(_DualScreenService);
             var promptResult = prompt.ShowDialog(this);
 
-            // Instantiate the dashboard
             var dashboard = new AdminDashboard(_inventoryService, _borrowService, _userService, this);
-
-            // FORCE ADMIN DASHBOARD TO PRIMARY SCREEN
             var primaryScreen = Screen.PrimaryScreen ?? Screen.AllScreens[0];
             dashboard.StartPosition = FormStartPosition.Manual;
 
-            // Calculate center position for the dashboard
             int x = primaryScreen.WorkingArea.Left + (primaryScreen.WorkingArea.Width - dashboard.Width) / 2;
             int y = primaryScreen.WorkingArea.Top + (primaryScreen.WorkingArea.Height - dashboard.Height) / 2;
             dashboard.Location = new Point(x, y);
@@ -733,39 +1023,57 @@ namespace Ventrix.App
 
             if (promptResult == DialogResult.OK && _DualScreenService.HasSecondScreen())
             {
-                // Move the portal to the tablet / second screen and keep it visible
                 var secondScreen = _DualScreenService.GetSecondaryScreen()!;
                 _DualScreenService.PositionFormOnScreen(this, secondScreen);
                 IsOnSecondScreen = true;
 
-                // Reset the portal back to student mode for the tablet
-                ToggleMode("Student");
+                await ToggleMode("Student");
                 await EnterBorrowMode();
             }
             else
             {
-                // No second screen chosen — hide as before
                 this.Hide();
             }
         }
-        public void ReturnToMainScreen()
+        private class TransparentPanel : Panel
+        {
+            public TransparentPanel()
+            {
+                SetStyle(ControlStyles.SupportsTransparentBackColor |
+                         ControlStyles.OptimizedDoubleBuffer |
+                         ControlStyles.AllPaintingInWmPaint |
+                         ControlStyles.UserPaint, true);
+                BackColor = Color.Transparent;
+            }
+
+            protected override CreateParams CreateParams
+            {
+                get
+                {
+                    CreateParams cp = base.CreateParams;
+                    cp.ExStyle |= 0x20; // WS_EX_TRANSPARENT makes the panel click-through and fully transparent
+                    return cp;
+                }
+            }
+        }
+        public async void ReturnToMainScreen()
         {
             IsOnSecondScreen = false;
             _DualScreenService.ReturnFormToPrimaryScreen(this);
-            ToggleMode("Admin");
+            await ToggleMode("Admin");
         }
+
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // If a user tries to close the window (e.g., Alt+F4) while it is locked to the second screen, block it.
-            // The only way to close this portal now is for the Admin to sign out from the Dashboard.
             if (IsOnSecondScreen && e.CloseReason == CloseReason.UserClosing)
             {
                 e.Cancel = true;
-                return; // Stop the closing process immediately
+                return;
             }
 
             base.OnFormClosing(e);
         }
+
         private class CartItem
         {
             public string BaseItemName { get; set; }

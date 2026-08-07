@@ -47,6 +47,8 @@ namespace Ventrix.App
         private int historyCurrentPage = 1;
         private int historyTotalPages = 1;
         private const int historyPageSize = 100;
+        private Guna2Transition viewTransition;
+        private Panel loadingOverlay;
 
 
         private string historySortColumn = "Borrower";
@@ -58,6 +60,8 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2Button btnApplyFilters;
         private Guna.UI2.WinForms.Guna2Button btnPrevPage;
         private Guna.UI2.WinForms.Guna2Button btnNextPage;
+        private Guna.UI2.WinForms.Guna2Button btnActionsMenu;
+        private ContextMenuStrip inventoryActionsMenu;
         private Label lblPageInfo;
 
         public AdminDashboard(InventoryService inventoryService, BorrowService borrowService, UserService userService, BorrowerPortal? borrowerPortal = null)
@@ -70,7 +74,42 @@ namespace Ventrix.App
             InitializeComponent();
             SetupHistoryAdvancedControls();
             ThemeManager.Initialize(this);
-            InitializeMaterialSkin();
+            ThemeManager.FixTransparency(this);
+            // 2. Style your sidebar navigation buttons so they blend into the blue
+            // (Replace these names with your actual sidebar button names)
+            ThemeManager.StyleSidebarButton(btnHome);
+            ThemeManager.StyleSidebarButton(btnHistoryNav);
+            ThemeManager.StyleSidebarButton(btnNavAllItems); 
+            ThemeManager.StyleSidebarButton(btnNavAvailable);
+            ThemeManager.StyleSidebarButton(btnNavBorrowed);
+            ThemeManager.StyleSidebarButton(btnNavBorrowers);
+
+            ThemeManager.StyleDataGrid(dgvInventory);
+            ThemeManager.StyleDataGrid(dgvHistory);
+
+            ThemeManager.StyleTextBox(txtSearch);
+
+            ThemeManager.StyleCard(cardTotal);
+            ThemeManager.StyleCard(cardAvailable);
+            ThemeManager.StyleCard(cardRecords);
+            ThemeManager.StyleCard(cardBorrowed);
+
+            // 4. Modernize the 'Clear All' button
+            ThemeManager.StyleActionButton(btnClearActivity, Color.FromArgb(224, 224, 224), Color.Silver);
+            btnClearActivity.ForeColor = Color.Black; // Since it's a light button
+
+            // 5. Style Action Buttons (Excel, PDF, Create, Edit, Delete, etc.)
+            Color successGreen = Color.FromArgb(46, 125, 50);   // Modern green for Excel
+            Color dangerRed = Color.FromArgb(198, 40, 40);      // Modern red for Delete/PDF
+            Color neutralBlue = Color.FromArgb(21, 101, 192);   // Ventrix blue for standard actions
+
+            ThemeManager.StyleActionButton(btnExportExcel, successGreen, Color.FromArgb(56, 142, 60));
+            ThemeManager.StyleActionButton(btnExportPDF, dangerRed, Color.FromArgb(211, 47, 47));
+            ThemeManager.StyleActionButton(btnCreate, neutralBlue, Color.FromArgb(30, 136, 229));
+            ThemeManager.StyleActionButton(btnEdit, neutralBlue, Color.FromArgb(30, 136, 229));
+            ThemeManager.StyleActionButton(btnDelete, dangerRed, Color.FromArgb(211, 47, 47));
+            ThemeManager.StyleActionButton(btnClearActivity, Color.FromArgb(224, 224, 224), Color.Silver);
+            btnClearActivity.ForeColor = Color.Black; // Dark text for the light clear button
 
             isSidebarExpanded = true;
 
@@ -92,6 +131,8 @@ namespace Ventrix.App
                 await SwitchView("Home");
                 btnHome?.Focus();
             };
+
+
         }
 
         protected override CreateParams CreateParams
@@ -216,6 +257,11 @@ namespace Ventrix.App
                 };
             }
 
+
+
+            viewTransition = new Guna2Transition();
+            viewTransition.Interval = 5;
+            viewTransition.AnimationType = Guna.UI2.AnimatorNS.AnimationType.VertSlide;
             // =================================================================================
             // 2. DOUBLE BUFFERING (Prevents UI Flickering)
             // =================================================================================
@@ -357,20 +403,74 @@ namespace Ventrix.App
                 sidebarTimer.Tick += SidebarTimer_Tick;
             }
 
-            if (btnCreate != null) btnCreate.Click += async (s, e) => await btnCreate_Click(s, e);
-            if (btnEdit != null) btnEdit.Click += async (s, e) => await btnEdit_Click(s, e);
-            if (btnDelete != null) btnDelete.Click += async (s, e) => await btnDelete_Click(s, e);
+            // =================================================================================
+            // 5. VERTICAL THREE-DOTS ACTIONS MENU SETUP
+            // =================================================================================
+            btnActionsMenu = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "⋮",
+                Font = new DrawFont("Segoe UI", 16F, FontStyle.Bold),
+
+                // CHANGE: Set to Transparent so the bounding box disappears
+                FillColor = DrawColor.Transparent,
+
+                ForeColor = DrawColor.FromArgb(51, 65, 85),
+                BorderRadius = 8,
+                BorderThickness = 0,
+                CustomBorderThickness = new Padding(0),
+                Size = new DrawSize(45, 40),
+                Cursor = Cursors.Hand,
+                Animated = false,
+                UseTransparentBackground = true
+            };
+
+            // Keep shadow rendering disabled just to be safe
+            btnActionsMenu.ShadowDecoration.Enabled = false;
+            btnActionsMenu.ShadowDecoration.Shadow = new Padding(0);
+            btnActionsMenu.ShadowDecoration.Depth = 0;
+
+            // Ensure no borders accidentally render
+            btnActionsMenu.BorderColor = DrawColor.Transparent;
+            btnActionsMenu.HoverState.BorderColor = DrawColor.Transparent;
+            btnActionsMenu.HoverState.CustomBorderColor = DrawColor.Transparent;
+
+            // Maintain smooth hover states (This will show the nice highlight only when moused over)
+            btnActionsMenu.HoverState.FillColor = DrawColor.FromArgb(224, 231, 255);
+            btnActionsMenu.HoverState.ForeColor = DrawColor.FromArgb(79, 70, 229);
+
+            inventoryActionsMenu = new ContextMenuStrip();
+            inventoryActionsMenu.Font = new DrawFont("Segoe UI", 10F);
+
+            var menuAdd = new ToolStripMenuItem("➕ Add Item");
+            var menuEdit = new ToolStripMenuItem("✏️ Edit Record");
+            var menuDelete = new ToolStripMenuItem("🗑️ Delete Item");
+            var menuSeparator = new ToolStripSeparator();
+            var menuExcel = new ToolStripMenuItem("📊 Export to Excel");
+            var menuPdf = new ToolStripMenuItem("📄 Export to PDF");
+
+            menuAdd.Click += async (s, e) => await btnCreate_Click(s, e);
+            menuEdit.Click += async (s, e) => await btnEdit_Click(s, e);
+            menuDelete.Click += async (s, e) => await btnDelete_Click(s, e);
+
+            menuExcel.Click += (s, e) => {
+                if (pnlHistory != null && pnlHistory.Visible) _ = ExportHistoryToExcelAsync();
+                else ExportToExcel();
+            };
+
+            menuPdf.Click += (s, e) => {
+                if (pnlHistory != null && pnlHistory.Visible) _ = ExportHistoryToPDFAsync();
+                else ExportToPDF();
+            };
+
+            inventoryActionsMenu.Items.AddRange(new ToolStripItem[] { menuAdd, menuEdit, menuDelete, menuSeparator, menuExcel, menuPdf });
+
+            btnActionsMenu.Click += (s, e) => {
+                inventoryActionsMenu.Show(btnActionsMenu, new DrawPoint(0, btnActionsMenu.Height));
+            };
 
             if (btnClearActivity != null) btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
             if (cmbAccountActions != null) cmbAccountActions.SelectedIndexChanged += CmbAccountActions_SelectedIndexChanged;
             if (badgeHealth != null) { badgeHealth.Cursor = Cursors.Hand; badgeHealth.Click += async (s, e) => await LblUrgentHeader_Click(s, e); }
-
-            if (btnExportExcel != null) btnExportExcel.Click += async (s, e) => {
-                if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToExcelAsync(); else ExportToExcel();
-            };
-            if (btnExportPDF != null) btnExportPDF.Click += async (s, e) => {
-                if (pnlHistory != null && pnlHistory.Visible) await ExportHistoryToPDFAsync(); else ExportToPDF();
-            };
 
             if (txtSearch != null)
             {
@@ -385,7 +485,7 @@ namespace Ventrix.App
             }
 
             // =================================================================================
-            // 5. CONTEXT MENU & QR EXPORT ACTIONS
+            // 6. CONTEXT MENU & QR EXPORT ACTIONS
             // =================================================================================
             if (dgvInventory != null)
             {
@@ -491,30 +591,308 @@ namespace Ventrix.App
                 actionMenu.Items.Add(manageQRsBtn);
                 // --- General Actions ---
                 var addStrikeBtn = new ToolStripMenuItem("⚠️ Issue Warning (Add 1 Strike)");
-                addStrikeBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                addStrikeBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        await _userService.AddStrikeAsync(userId);
+                        ToastNotification.Show(this, "1 Strike added to student account.", ToastType.Warning);
+                        await LoadFromDatabase("Records");
+                    }
+                };
                 var lockAccountBtn = new ToolStripMenuItem("🔒 Lock Account (Force 3 Strikes)");
-                lockAccountBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                lockAccountBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        if (MessageBox.Show("Are you sure you want to lock this account?\n\nThis will prevent the student from borrowing any equipment until an admin clears them.", "Lock Account", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                            // Apply strikes until locked
+                            await _userService.AddStrikeAsync(userId);
+                            await _userService.AddStrikeAsync(userId);
+                            await _userService.AddStrikeAsync(userId);
+
+                            ToastNotification.Show(this, "Account is now LOCKED.", ToastType.Warning);
+                            await LoadFromDatabase("Records");
+                        }
+                    }
+                };
                 var unlockAccountBtn = new ToolStripMenuItem("🔓 Unlock Account (Clear All Strikes)");
-                unlockAccountBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                unlockAccountBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        await _userService.ClearStrikesAsync(userId);
+                        ToastNotification.Show(this, "Account UNLOCKED. Strikes reset to 0.", ToastType.Success);
+                        await LoadFromDatabase("Records");
+                    }
+                };
                 var deleteUserBtn = new ToolStripMenuItem("🗑️ Delete User Account");
-                deleteUserBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                deleteUserBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+                        string userName = dgvInventory.SelectedRows[0].Cells["BorrowerName"].Value.ToString();
+
+                        // Double confirmation for deletion
+                        if (MessageBox.Show($"Are you sure you want to permanently delete the account for {userName} ({userId})?", "Delete User", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                await _userService.DeleteUserAsync(userId);
+                                ToastNotification.Show(this, "User account deleted successfully.", ToastType.Success);
+                                await LoadFromDatabase("Records"); // Refresh grid
+                                await UpdateDashboardCounts();
+                            }
+                            catch (Exception ex)
+                            {
+                                // This will trigger if they try to delete someone who still holds items!
+                                MessageBox.Show(ex.Message, "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                };
                 var editUserBtn = new ToolStripMenuItem("✏️ Edit User Account");
-                editUserBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                editUserBtn.Click += async (s, e) => {
+                    if (dgvInventory.SelectedRows.Count > 0 && dgvInventory.Columns.Contains("BorrowerID"))
+                    {
+                        string userId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+
+                        using (var popup = new Popups.EditUserPopup(userId, _userService))
+                        {
+                            // Dim the background for visual focus
+                            Form background = new Form();
+                            using (background)
+                            {
+                                background.StartPosition = FormStartPosition.Manual;
+                                background.FormBorderStyle = FormBorderStyle.None;
+                                background.Opacity = 0.50d;
+                                background.BackColor = System.Drawing.Color.Black;
+                                background.Size = this.Size;
+                                background.Location = this.Location;
+                                background.ShowInTaskbar = false;
+                                background.Show();
+
+                                popup.Owner = background;
+                                popup.ShowDialog();
+                            }
+
+                            // If they saved changes, refresh the grid!
+                            if (popup.WasUpdated)
+                            {
+                                ToastNotification.Show(this, "User updated successfully.", ToastType.Success);
+                                await LoadFromDatabase("Records");
+                            }
+                        }
+                    }
+                };
 
                 var approveBtn = new ToolStripMenuItem("✅ Approve All Items in Request");
-                approveBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                approveBtn.Click += async (s, e) =>
+                {
+                    var recordIds = GetSelectedRecordIds();
+                    if (!recordIds.Any()) return;
+
+                    try
+                    {
+                        this.Cursor = Cursors.WaitCursor;
+                        foreach (var id in recordIds)
+                        {
+                            await _borrowService.ApproveBorrowAsync(id);
+                        }
+                        this.Cursor = Cursors.Default;
+
+                        // Trigger our custom slide-in success toast notification!
+                        ToastNotification.Show(this, "Borrow request approved successfully!", ToastType.Success);
+
+                        await LoadFromDatabase("Borrowed");
+                        await UpdateDashboardCounts();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Cursor = Cursors.Default;
+                        ToastNotification.Show(this, "Error approving request: " + ex.Message, ToastType.Error);
+                    }
+                };
                 var partialApproveBtn = new ToolStripMenuItem("📝 Select Specific Items to Approve...");
-                partialApproveBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                partialApproveBtn.Click += async (s, e) =>
+                {
+                    var recordIds = GetSelectedRecordIds();
+                    if (!recordIds.Any()) return;
+
+                    try
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        var pendingRecords = allRecords.Where(r => recordIds.Contains(r.Id)).ToList();
+
+                        // Open your multi-record selection popup
+                        var selectedIdsToApprove = ShowMultiRecordSelectionPopup(
+                            "Approve Specific Items",
+                            "Select the specific items you wish to approve:",
+                            pendingRecords,
+                            "Approve Selected",
+                            DrawColor.FromArgb(16, 185, 129) // Emerald Green
+                        );
+
+                        if (selectedIdsToApprove.Any())
+                        {
+                            this.Cursor = Cursors.WaitCursor;
+                            foreach (var id in selectedIdsToApprove)
+                            {
+                                await _borrowService.ApproveBorrowAsync(id);
+                            }
+                            this.Cursor = Cursors.Default;
+
+                            ToastNotification.Show(this, $"Successfully approved {selectedIdsToApprove.Count} items!", ToastType.Success);
+
+                            await LoadFromDatabase("Borrowed");
+                            await UpdateDashboardCounts();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Cursor = Cursors.Default;
+                        ToastNotification.Show(this, "Error in partial approval: " + ex.Message, ToastType.Error);
+                    }
+                };
+
                 var confirmReturnBtn = new ToolStripMenuItem("✅ Confirm Return (All Items)");
-                confirmReturnBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                confirmReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        foreach (var id in ids) await _borrowService.ReturnItemAsync(id);
+                        ToastNotification.Show(this, "Return(s) Confirmed!", ToastType.Success);
+                        await LoadFromDatabase("Borrowed");
+                        await UpdateDashboardCounts();
+                    }
+                };
                 var partialReturnBtn = new ToolStripMenuItem("📝 Select Specific Items to Return...");
-                partialReturnBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                partialReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        var pendingReturnRecords = allRecords.Where(r => ids.Contains(r.Id) && r.Status == BorrowStatus.PendingReturn).ToList();
+
+                        if (pendingReturnRecords.Any())
+                        {
+                            var selectedToReturn = ShowMultiRecordSelectionPopup("Return Items", "Select the specific items to confirm return:", pendingReturnRecords, "Confirm Return", DrawColor.MediumSeaGreen);
+                            if (selectedToReturn.Any())
+                            {
+                                foreach (var id in selectedToReturn) await _borrowService.ReturnItemAsync(id);
+                                ToastNotification.Show(this, $"Successfully returned {selectedToReturn.Count} item(s)!", ToastType.Success);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
+
                 var confirmDamagedReturnBtn = new ToolStripMenuItem("⚠️ Select Specific Items to Mark Damaged...");
-                confirmDamagedReturnBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                confirmDamagedReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+
+                        // Get items that are currently out with the borrower
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) &&
+                            (r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Active || r.Status == BorrowStatus.Overdue)).ToList();
+
+                        if (validRecords.Any())
+                        {
+                            // Show the checkbox popup, but styled red for danger
+                            var damagedIds = ShowMultiRecordSelectionPopup(
+                                "Report Damaged Items",
+                                "Select ONLY the specific items that are damaged:\n(Unchecked items will be left alone to be returned normally)",
+                                validRecords,
+                                "Mark Damaged & Penalize",
+                                DrawColor.IndianRed);
+
+                            if (damagedIds.Any())
+                            {
+                                string borrowerId = dgvInventory.SelectedRows[0].Cells["BorrowerID"].Value.ToString();
+
+                                // Mark only the checked items as damaged
+                                foreach (var id in damagedIds)
+                                {
+                                    await _borrowService.ReturnItemAsDamagedAsync(id);
+                                }
+
+                                // Apply 1 strike to the borrower for this incident
+                                await _userService.AddStrikeAsync(borrowerId);
+
+                                ToastNotification.Show(this, $"{damagedIds.Count} item(s) marked Damaged & Strike issued!", ToastType.Warning);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
                 var partialForceReturnBtn = new ToolStripMenuItem("🔙 Select Specific Items to Force Return...");
-                partialForceReturnBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                partialForceReturnBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        // Force return is valid for Active, Overdue, or PendingReturn
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) &&
+                            (r.Status == BorrowStatus.Active || r.Status == BorrowStatus.Overdue || r.Status == BorrowStatus.PendingReturn)).ToList();
+
+                        if (validRecords.Any())
+                        {
+                            var selectedToReturn = ShowMultiRecordSelectionPopup(
+                                "Force Return Items",
+                                "Select the specific items to manually force return to inventory:",
+                                validRecords,
+                                "Force Return",
+                                DrawColor.IndianRed);
+
+                            if (selectedToReturn.Any())
+                            {
+                                await _borrowService.ForceReturnItemsAsync(selectedToReturn);
+                                ToastNotification.Show(this, $"Successfully force returned {selectedToReturn.Count} item(s)!", ToastType.Success);
+                                await LoadFromDatabase("Borrowed");
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
                 var partialOverdueBtn = new ToolStripMenuItem("⏰ Select Specific Items to Mark Overdue...");
-                partialOverdueBtn.Click += async (s, e) => { /* logic hidden for brevity */ };
+                partialOverdueBtn.Click += async (s, e) => {
+                    var ids = GetSelectedRecordIds();
+                    if (ids.Any())
+                    {
+                        var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                        var validRecords = allRecords.Where(r => ids.Contains(r.Id) &&
+                            (r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue)).ToList();
+
+                        if (validRecords.Any())
+                        {
+                            var selectedToOverdue = ShowMultiRecordSelectionPopup(
+                                "Mark Overdue",
+                                "Select the specific items to mark as overdue:",
+                                validRecords,
+                                "Mark Overdue",
+                                DrawColor.DarkOrange);
+
+                            if (selectedToOverdue.Any())
+                            {
+                                // 1. Update the database
+                                await _borrowService.ManuallyMarkOverdueAsync(selectedToOverdue, _userService);
+
+                                ToastNotification.Show(this, $"{selectedToOverdue.Count} item(s) marked Overdue & Strike issued!", ToastType.Warning);
+
+                                // 2. CRITICAL: Refresh the grid data so the colors update
+                                await LoadFromDatabase("Borrowed");
+
+                                // 3. Update the dashboard cards
+                                await UpdateDashboardCounts();
+                            }
+                        }
+                    }
+                };
 
                 // --- Building the Menu ---
                 actionMenu.Items.Add(addStrikeBtn);
@@ -588,6 +966,41 @@ namespace Ventrix.App
                     await LoadHistoryData();
                 };
                 dgvHistory.CellDoubleClick += DgvHistory_CellDoubleClick;
+            }
+
+            // =================================================================================
+            // 7. TACTILE CARD HOVER STATES (Micro-Interactions)
+            // =================================================================================
+            var metricCards = new Control[] { cardTotal, cardAvailable, cardBorrowed, cardRecords };
+            foreach (var card in metricCards)
+            {
+                if (card != null)
+                {
+                    card.Cursor = Cursors.Hand;
+                    card.MouseEnter += (s, e) => {
+                        // If the card is a Guna2Panel or container with a BorderColor property
+                        if (card is Guna.UI2.WinForms.Guna2Panel panel)
+                        {
+                            panel.BorderColor = ThemeManager.AccentBlue;
+                            panel.BorderThickness = 2; // Slight crisp border emphasis on hover
+                        }
+                        else
+                        {
+                            card.BackColor = DrawColor.FromArgb(243, 244, 246); // Soft highlight tint for custom UserControls
+                        }
+                    };
+                    card.MouseLeave += (s, e) => {
+                        if (card is Guna.UI2.WinForms.Guna2Panel panel)
+                        {
+                            panel.BorderColor = ThemeManager.BorderColor;
+                            panel.BorderThickness = 1;
+                        }
+                        else
+                        {
+                            card.BackColor = ThemeManager.SurfaceColor;
+                        }
+                    };
+                }
             }
         }
 
@@ -801,61 +1214,85 @@ namespace Ventrix.App
 
             int topRowY = 20;
             int margin = 25;
+            int availableWidth = pnlGridContainer.Width - (margin * 2);
+
+            // Dynamic width scaling: make Excel and PDF buttons smaller when the window is minimized/narrowed
+            bool isCompact = availableWidth < 820;
+
+            if (btnExportExcel != null)
+            {
+                btnExportExcel.Width = isCompact ? 75 : 105;
+            }
+            if (btnExportPDF != null)
+            {
+                btnExportPDF.Width = isCompact ? 65 : 95;
+            }
+
+            // ========================================================
+            // 1. Position Left-Aligned Buttons (Export / PDF)
+            // ========================================================
+            int leftTracker = margin; // Tracks the physical right-edge of the last button
 
             if (btnExportExcel != null)
             {
                 btnExportExcel.Parent = pnlGridContainer;
-                btnExportExcel.Anchor = AnchorStyles.None;
-                btnExportExcel.Location = new DrawPoint(margin, topRowY);
                 btnExportExcel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnExportExcel.Location = new DrawPoint(leftTracker, topRowY);
                 btnExportExcel.BringToFront();
+                leftTracker = btnExportExcel.Right + 15;
             }
+
             if (btnExportPDF != null)
             {
                 btnExportPDF.Parent = pnlGridContainer;
-                btnExportPDF.Anchor = AnchorStyles.None;
-                btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, topRowY);
                 btnExportPDF.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnExportPDF.Location = new DrawPoint(leftTracker, topRowY);
                 btnExportPDF.BringToFront();
+                leftTracker = btnExportPDF.Right + 15;
             }
 
-            if (btnDelete != null)
-            {
-                btnDelete.Parent = pnlGridContainer;
-                btnDelete.Anchor = AnchorStyles.None;
+            // ========================================================
+            // 2. Safely Position Right-Aligned Buttons (Create & Actions Menu)
+            // ========================================================
+            // We calculate their total width so they move together as a unified block.
+            int actionGroupWidth = 0;
 
-                btnDelete.Location = new DrawPoint(pnlGridContainer.Width - btnDelete.Width - margin, topRowY);
-                btnDelete.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-                btnDelete.BringToFront();
-            }
-            if (btnEdit != null)
-            {
-                btnEdit.Parent = pnlGridContainer;
-                btnEdit.Anchor = AnchorStyles.None;
+            if (btnActionsMenu != null && btnActionsMenu.Visible)
+                actionGroupWidth += btnActionsMenu.Width;
 
-                btnEdit.Location = new DrawPoint(btnDelete.Left - btnEdit.Width - 15, topRowY);
-                btnEdit.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-                btnEdit.BringToFront();
-            }
-            if (btnCreate != null)
+            if (btnCreate != null && btnCreate.Visible)
+                actionGroupWidth += (actionGroupWidth > 0 ? 15 : 0) + btnCreate.Width;
+
+            // Enforce a strict right margin limit, while maintaining the "brick wall" collision on the left
+            int rightEdgeLimit = pnlGridContainer.Width - margin;
+            int startX = Math.Max(leftTracker + 30, rightEdgeLimit - actionGroupWidth);
+
+            if (btnCreate != null && btnCreate.Visible)
             {
                 btnCreate.Parent = pnlGridContainer;
-                btnCreate.Anchor = AnchorStyles.None;
-
-                btnCreate.Location = new DrawPoint(btnEdit.Left - btnCreate.Width - 15, topRowY);
-                btnCreate.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                btnCreate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnCreate.Location = new DrawPoint(startX, topRowY);
                 btnCreate.BringToFront();
+                startX = btnCreate.Right + 15;
             }
 
+            if (btnActionsMenu != null && btnActionsMenu.Visible)
+            {
+                btnActionsMenu.Parent = pnlGridContainer;
+                btnActionsMenu.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnActionsMenu.Location = new DrawPoint(startX, topRowY);
+                btnActionsMenu.BringToFront();
+            }
+
+            // ========================================================
+            // 3. Grid and Registration Panel Layout
+            // ========================================================
             int gridY = topRowY + 50;
 
             if (pnlRegisterBorrower != null && pnlRegisterBorrower.Visible)
             {
                 pnlRegisterBorrower.Parent = pnlGridContainer;
-
-                // --- FIX: Lock to Top/Left so the layout engine doesn't fight our manual resizing ---
                 pnlRegisterBorrower.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-
                 pnlRegisterBorrower.Location = new DrawPoint(margin, gridY);
                 pnlRegisterBorrower.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), 100);
                 pnlRegisterBorrower.BringToFront();
@@ -866,10 +1303,7 @@ namespace Ventrix.App
             if (dgvInventory != null)
             {
                 dgvInventory.Parent = pnlGridContainer;
-
-                // --- NEW: Restore Full Anchoring so the right side tracks perfectly ---
                 dgvInventory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-
                 dgvInventory.Location = new DrawPoint(margin, gridY);
                 dgvInventory.Size = new DrawSize(pnlGridContainer.Width - (margin * 2), pnlGridContainer.Height - gridY - margin);
                 dgvInventory.BringToFront();
@@ -884,60 +1318,267 @@ namespace Ventrix.App
         }
 
         private void ArrangeHistoryView()
+{
+    if (pnlHistory == null) return;
+
+    int topRowY = 20;
+    int margin = 25;
+    int leftTracker = margin;
+
+    // ========================================================
+    // 1. Date Pickers & Filter Button Group (Left-Aligned)
+    // ========================================================
+    if (dtpStartDate != null)
+    {
+        dtpStartDate.Parent = pnlHistory;
+        dtpStartDate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        dtpStartDate.Location = new DrawPoint(leftTracker, topRowY + 4);
+        leftTracker = dtpStartDate.Right + 10;
+    }
+
+    if (dtpEndDate != null)
+    {
+        dtpEndDate.Parent = pnlHistory;
+        dtpEndDate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        dtpEndDate.Location = new DrawPoint(leftTracker, topRowY + 4);
+        leftTracker = dtpEndDate.Right + 15;
+    }
+
+    if (btnFilterDates != null)
+    {
+        btnFilterDates.Parent = pnlHistory;
+        btnFilterDates.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        btnFilterDates.Location = new DrawPoint(leftTracker, topRowY);
+    }
+
+    // ========================================================
+    // 2. DataGridView Layout
+    // ========================================================
+    int gridY = topRowY + 55;
+    if (dgvHistory != null)
+    {
+        dgvHistory.Parent = pnlHistory;
+        dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        dgvHistory.Location = new DrawPoint(margin, gridY);
+        dgvHistory.Size = new DrawSize(pnlHistory.Width - (margin * 2), pnlHistory.Height - gridY - margin);
+        dgvHistory.BringToFront();
+        
+        if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlHistory)
         {
-            if (pnlHistory == null) return;
+            lblEmptyState.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            lblEmptyState.Bounds = dgvHistory.Bounds;
+            lblEmptyState.BringToFront();
+        }
+    }
 
-            if (btnExportExcel != null) { btnExportExcel.Parent = pnlHistory; btnExportExcel.Location = new DrawPoint(25, 20); btnExportExcel.BringToFront(); }
-            if (btnExportPDF != null) { btnExportPDF.Parent = pnlHistory; btnExportPDF.Location = new DrawPoint(btnExportExcel.Right + 15, 20); btnExportPDF.BringToFront(); }
-
-            // Ensure pickers created in SetupHistoryAdvancedControls() are parented to pnlHistory
-            if (dtpStartDate != null && dtpStartDate.Parent != pnlHistory)
+            // ========================================================
+            // 3. Actions Menu (Right-Aligned - Brought to absolute front)
+            // ========================================================
+            if (btnActionsMenu != null && btnActionsMenu.Visible)
             {
-                dtpStartDate.Parent = pnlHistory;
-                dtpStartDate.Visible = true;
-                dtpStartDate.BringToFront();
-            }
-            if (dtpEndDate != null && dtpEndDate.Parent != pnlHistory)
-            {
-                dtpEndDate.Parent = pnlHistory;
-                dtpEndDate.Visible = true;
-                dtpEndDate.BringToFront();
-            }
+                btnActionsMenu.Parent = pnlHistory;
+                btnActionsMenu.Anchor = AnchorStyles.None; // Prevent anchoring interference with manual coordinates
 
-            // Align to match the 36px height of the export buttons
-            dtpStartDate.Location = new DrawPoint(btnExportPDF.Right + 40, 20);
+                // Safeguard against unrendered panel width placing the button off-screen
+                int menuX = pnlHistory.Width > 0 ? pnlHistory.Width - btnActionsMenu.Width - margin : margin;
+                btnActionsMenu.Location = new DrawPoint(Math.Max(margin, menuX), topRowY);
 
-            // Re-use or create the "to" label
-            Label lblTo = pnlHistory.Controls.OfType<Label>().FirstOrDefault(l => l.Text == "to");
-            if (lblTo == null)
-            {
-                lblTo = new Label { Parent = pnlHistory, Text = "to", AutoSize = true, ForeColor = DrawColor.Gray, Font = new DrawFont("Segoe UI Semibold", 10F) };
-            }
-            // Vertically center the text label relative to the 36px high pickers
-            lblTo.Location = new DrawPoint(dtpStartDate.Right + 10, 28);
-
-            dtpEndDate.Location = new DrawPoint(lblTo.Right + 10, 20);
-
-            // Ensure the apply button is parented and visible
-            if (btnApplyFilters != null)
-            {
-                btnApplyFilters.Parent = pnlHistory;
-                btnApplyFilters.Visible = true;
-                btnApplyFilters.BringToFront();
-                btnApplyFilters.Location = new DrawPoint(dtpEndDate.Right + 15, 20);
-            }
-
-            if (dgvHistory != null)
-            {
-                int gridY = 75;
-                dgvHistory.Parent = pnlHistory;
-                dgvHistory.Anchor = AnchorStyles.None;
-                dgvHistory.Location = new DrawPoint(25, gridY);
-                dgvHistory.Size = new DrawSize(pnlHistory.Width - 50, pnlHistory.Height - gridY - 25);
-                dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-                dgvHistory.BringToFront();
+                // Must be called last so it floats cleanly on top of the panel components
+                btnActionsMenu.BringToFront();
             }
         }
+
+        private async Task AnimateCountUp(Ventrix.App.Controls.MetricCard card, string title, int targetValue, DrawColor color)
+        {
+            if (card == null) return;
+
+            int startValue = 0;
+            int steps = 15; // Number of smooth animation frames
+            int duration = 400; // Total duration in milliseconds
+            int interval = duration / steps;
+
+            for (int i = 1; i <= steps; i++)
+            {
+                int currentValue = (int)(startValue + (targetValue - startValue) * ((float)i / steps));
+                card.UpdateMetrics(title, currentValue.ToString("N0"), color);
+                await Task.Delay(interval);
+            }
+
+            // Ensure the exact final value is set at the end
+            card.UpdateMetrics(title, targetValue.ToString("N0"), color);
+        }
+
+        private void StyleHistoryDataGridView()
+        {
+            if (dgvHistory == null) return;
+
+            // Eliminate all visual flicker
+            typeof(DataGridView).InvokeMember("DoubleBuffered",
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+                null, dgvHistory, new object[] { true });
+
+            // Container & Border Setup
+            dgvHistory.BackgroundColor = Color.White;
+            dgvHistory.BorderStyle = BorderStyle.None;
+
+            // --- SHOW VERTICAL AND HORIZONTAL LINES ON HISTORY ---
+            dgvHistory.CellBorderStyle = DataGridViewCellBorderStyle.Single;
+            dgvHistory.GridColor = DrawColor.FromArgb(226, 232, 240);
+
+            dgvHistory.RowHeadersVisible = false;
+            dgvHistory.AllowUserToAddRows = false;
+            dgvHistory.AllowUserToDeleteRows = false;
+            dgvHistory.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvHistory.MultiSelect = false;
+            dgvHistory.ReadOnly = true;
+
+            // Premium SaaS Proportions (Spacious 52px rows with generous horizontal padding)
+            dgvHistory.RowTemplate.Height = 52;
+            dgvHistory.RowsDefaultCellStyle.BackColor = Color.White;
+            dgvHistory.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+            dgvHistory.DefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
+            dgvHistory.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            dgvHistory.DefaultCellStyle.Padding = new Padding(16, 0, 16, 0);
+
+            // Soft Modern Indigo Selection State
+            dgvHistory.DefaultCellStyle.SelectionBackColor = Color.FromArgb(224, 231, 255);
+            dgvHistory.DefaultCellStyle.SelectionForeColor = Color.FromArgb(49, 46, 129);
+
+            // Modern SaaS Header Styling
+            dgvHistory.EnableHeadersVisualStyles = false;
+            dgvHistory.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvHistory.ColumnHeadersHeight = 56;
+            dgvHistory.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(79, 70, 229);
+            dgvHistory.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvHistory.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
+            dgvHistory.ColumnHeadersDefaultCellStyle.Padding = new Padding(16, 0, 0, 0);
+            dgvHistory.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(79, 70, 229);
+            dgvHistory.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.White;
+        }
+
+        private void StyleModernDatePickers()
+        {
+            // Style Start Date Picker to look like a modern SaaS input field
+            if (dtpStartDate != null)
+            {
+                dtpStartDate.FillColor = Color.White;
+                dtpStartDate.ForeColor = Color.FromArgb(51, 65, 85);
+                dtpStartDate.BorderColor = Color.FromArgb(203, 213, 225); // Clean light border
+                dtpStartDate.BorderRadius = 6;
+                dtpStartDate.BorderThickness = 1;
+                dtpStartDate.Font = new System.Drawing.Font("Segoe UI", 9F);
+                dtpStartDate.Format = DateTimePickerFormat.Short;
+            }
+
+            // Style End Date Picker identically
+            if (dtpEndDate != null)
+            {
+                dtpEndDate.FillColor = Color.White;
+                dtpEndDate.ForeColor = Color.FromArgb(51, 65, 85);
+                dtpEndDate.BorderColor = Color.FromArgb(203, 213, 225);
+                dtpEndDate.BorderRadius = 6;
+                dtpEndDate.BorderThickness = 1;
+                dtpEndDate.Font = new System.Drawing.Font("Segoe UI", 9F);
+                dtpEndDate.Format = DateTimePickerFormat.Short;
+            }
+        }
+
+        private void AttachFilterButtonAnimations()
+        {
+            if (btnFilterDates == null) return;
+
+            // Guna2Button controls styling through FillColor instead of FlatStyle/FlatAppearance
+            btnFilterDates.FillColor = Color.FromArgb(30, 64, 175); // Deep Indigo-Blue
+            btnFilterDates.ForeColor = Color.White;
+            btnFilterDates.Cursor = Cursors.Hand;
+            btnFilterDates.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+
+            // Smooth transition event handlers
+            btnFilterDates.MouseEnter += (s, e) => {
+                btnFilterDates.FillColor = Color.FromArgb(79, 70, 229); // Brighter Indigo on hover
+            };
+
+            btnFilterDates.MouseLeave += (s, e) => {
+                btnFilterDates.FillColor = Color.FromArgb(30, 64, 175);
+            };
+        }
+
+        private async void btnNavHistory_Click(object sender, EventArgs e)
+        {
+            await SwitchView("History");
+        }
+
+        private void ShowLoadingState(Control container, bool show)
+        {
+            if (show)
+            {
+                if (loadingOverlay == null || loadingOverlay.Parent != container)
+                {
+                    loadingOverlay?.Dispose();
+                    loadingOverlay = new Panel
+                    {
+                        BackColor = DrawColor.FromArgb(248, 250, 252),
+                        Dock = DockStyle.Fill
+                    };
+
+                    Label lblLoading = new Label
+                    {
+                        Text = "Loading system data...",
+                        Font = new DrawFont("Segoe UI", 11F, FontStyle.Bold),
+                        ForeColor = ThemeManager.TextSecondary,
+                        AutoSize = true
+                    };
+
+                    // Center the loading text
+                    lblLoading.Location = new DrawPoint(
+                        (container.Width - 160) / 2,
+                        (container.Height - 40) / 2
+                    );
+                    lblLoading.Anchor = AnchorStyles.None;
+                    loadingOverlay.Controls.Add(lblLoading);
+                    container.Controls.Add(loadingOverlay);
+                }
+                loadingOverlay.BringToFront();
+                loadingOverlay.Visible = true;
+            }
+            else
+            {
+                if (loadingOverlay != null)
+                {
+                    loadingOverlay.Visible = false;
+                }
+            }
+        }
+
+        private async Task LoadGridRowsStaggered(Guna.UI2.WinForms.Guna2DataGridView grid, List<object[]> rowDataList)
+        {
+            if (grid == null) return;
+
+            grid.Rows.Clear();
+
+            // If there is no data, exit early
+            if (rowDataList == null || !rowDataList.Any()) return;
+
+            // Temporarily disable redrawing to prevent flickering while rows stream in
+            grid.SuspendLayout();
+
+            foreach (var rowValues in rowDataList)
+            {
+                grid.Rows.Add(rowValues);
+
+                // Refresh layout periodically or every few rows to keep it buttery smooth
+                if (grid.Rows.Count % 3 == 0)
+                {
+                    grid.ResumeLayout(false);
+                    grid.PerformLayout();
+                    grid.SuspendLayout();
+                    await Task.Delay(12); // Micro-delay for the staggered cascade effect
+                }
+            }
+
+            grid.ResumeLayout(true);
+        }
+
         private void UpdateSidebarInternalUI(bool showDetails)
         {
             var navBtns = new[] { btnHome, btnHistoryNav, btnNavAllItems, btnNavAvailable, btnNavBorrowed, btnNavBorrowers };
@@ -1157,15 +1798,25 @@ namespace Ventrix.App
 
         private async Task SwitchView(string viewName, string filter = "All")
         {
+            Control activePanel = null;
             if (pnlHomeSummary != null) pnlHomeSummary.Visible = false;
             if (pnlGridContainer != null) pnlGridContainer.Visible = false;
             if (pnlHistory != null) pnlHistory.Visible = false;
 
+            Control targetPanel = null;
+            if (viewName == "Home") targetPanel = pnlHomeSummary;
+            else if (viewName == "Inventory") targetPanel = pnlGridContainer;
+            else if (viewName == "History") targetPanel = pnlHistory;
+
+            // Permanently hide the old individual legacy buttons
             if (btnCreate != null) btnCreate.Visible = false;
             if (btnEdit != null) btnEdit.Visible = false;
             if (btnDelete != null) btnDelete.Visible = false;
             if (btnExportExcel != null) btnExportExcel.Visible = false;
             if (btnExportPDF != null) btnExportPDF.Visible = false;
+
+            // 1. Reset the Actions Menu visibility by default (Hidden on Home and Records)
+            if (btnActionsMenu != null) btnActionsMenu.Visible = false;
 
             if (viewName == "Home")
             {
@@ -1186,19 +1837,40 @@ namespace Ventrix.App
 
                 if (pnlGridContainer != null) { pnlGridContainer.Visible = true; pnlGridContainer.BringToFront(); }
 
-                bool showCrud = (filter == "All" || filter == "Available");
-                if (btnCreate != null) { btnCreate.Visible = showCrud; btnCreate.BringToFront(); }
-                if (btnEdit != null) { btnEdit.Visible = showCrud; btnEdit.BringToFront(); }
-                if (btnDelete != null) { btnDelete.Visible = showCrud; btnDelete.BringToFront(); }
+                bool isRecords = filter.Equals("Records", StringComparison.OrdinalIgnoreCase);
+                bool showCrud = (filter.Equals("All", StringComparison.OrdinalIgnoreCase) || filter.Equals("Available", StringComparison.OrdinalIgnoreCase));
+
+                if (btnActionsMenu != null && inventoryActionsMenu != null)
+                {
+                    if (isRecords)
+                    {
+                        btnActionsMenu.Visible = false;
+                    }
+                    else
+                    {
+                        // Reparent back to grid container if it was on history page
+                        if (btnActionsMenu.Parent != pnlGridContainer)
+                        {
+                            pnlGridContainer.Controls.Add(btnActionsMenu);
+                        }
+
+                        btnActionsMenu.Visible = true;
+                        btnActionsMenu.BringToFront();
+
+                        inventoryActionsMenu.Items[0].Visible = showCrud; // Add Item
+                        inventoryActionsMenu.Items[1].Visible = showCrud; // Edit Record
+                        inventoryActionsMenu.Items[2].Visible = showCrud; // Delete Item
+                        inventoryActionsMenu.Items[3].Visible = showCrud; // Separator
+                        inventoryActionsMenu.Items[4].Visible = true;     // Export to Excel
+                        inventoryActionsMenu.Items[5].Visible = true;     // Export to PDF
+                    }
+                }
 
                 if (pnlRegisterBorrower != null)
                 {
                     pnlRegisterBorrower.Visible = (filter == "Records");
                     if (pnlRegisterBorrower.Visible) pnlRegisterBorrower.BringToFront();
                 }
-
-                if (btnExportExcel != null) { btnExportExcel.Visible = true; btnExportExcel.BringToFront(); }
-                if (btnExportPDF != null) { btnExportPDF.Visible = true; btnExportPDF.BringToFront(); }
 
                 await LoadFromDatabase(filter);
             }
@@ -1207,15 +1879,45 @@ namespace Ventrix.App
                 if (lblDashboardHeader != null) lblDashboardHeader.Text = "TRANSACTION AUDIT HISTORY";
                 HighlightActiveButton(btnHistoryNav);
 
-                if (pnlHistory != null) { pnlHistory.Visible = true; pnlHistory.BringToFront(); }
+                if (pnlHistory != null)
+                {
+                    pnlHistory.Visible = true;
+                    pnlHistory.BringToFront();
+                }
 
-                if (btnExportExcel != null) { btnExportExcel.Visible = true; btnExportExcel.BringToFront(); }
-                if (btnExportPDF != null) { btnExportPDF.Visible = true; btnExportPDF.BringToFront(); }
+                if (btnActionsMenu != null && inventoryActionsMenu != null)
+                {
+                    // Reparent to history container if it was on inventory page
+                    if (btnActionsMenu.Parent != pnlHistory)
+                    {
+                        pnlHistory.Controls.Add(btnActionsMenu);
+                    }
+
+                    btnActionsMenu.Visible = true;
+                    btnActionsMenu.BringToFront();
+
+                    inventoryActionsMenu.Items[0].Visible = false; // Add Item
+                    inventoryActionsMenu.Items[1].Visible = false; // Edit Record
+                    inventoryActionsMenu.Items[2].Visible = false; // Delete Item
+                    inventoryActionsMenu.Items[3].Visible = false; // Separator
+                    inventoryActionsMenu.Items[4].Visible = true;  // Export to Excel
+                    inventoryActionsMenu.Items[5].Visible = true;  // Export to PDF
+                }
 
                 await LoadHistoryData();
             }
 
             RefreshLayout();
+
+            if (activePanel != null && targetPanel != null && activePanel != targetPanel)
+            {
+                ThemeManager.SwapViews(viewTransition, activePanel, targetPanel);
+            }
+            else if (targetPanel != null)
+            {
+                targetPanel.Visible = true;
+                targetPanel.BringToFront();
+            }
             await UpdateDashboardCounts();
         }
 
@@ -1226,213 +1928,238 @@ namespace Ventrix.App
             {
                 Format = DateTimePickerFormat.Short,
                 Width = 140,
-                Height = 36,
+                Height = 38,
                 Value = DateTime.Today.AddMonths(-1),
                 BorderRadius = 8,
-                FillColor = DrawColor.FromArgb(245, 248, 252),
-                ForeColor = DrawColor.FromArgb(64, 64, 64),
+                BorderColor = Color.FromArgb(203, 213, 225),
+                BorderThickness = 1,
+                FillColor = Color.White,
+                ForeColor = Color.FromArgb(51, 65, 85),
                 Font = new DrawFont("Segoe UI", 9.5F),
-                Animated = true,
+                Animated = false,
                 Cursor = Cursors.Hand
             };
+            dtpStartDate.HoverState.BorderColor = Color.FromArgb(129, 140, 248); // Soft indigo hover
 
             // Modernized End Date Picker
             dtpEndDate = new Guna.UI2.WinForms.Guna2DateTimePicker
             {
                 Format = DateTimePickerFormat.Short,
                 Width = 140,
-                Height = 36,
+                Height = 38,
                 Value = DateTime.Today,
                 BorderRadius = 8,
-                FillColor = DrawColor.FromArgb(245, 248, 252),
-                ForeColor = DrawColor.FromArgb(64, 64, 64),
+                BorderColor = Color.FromArgb(203, 213, 225),
+                BorderThickness = 1,
+                FillColor = Color.White,
+                ForeColor = Color.FromArgb(51, 65, 85),
                 Font = new DrawFont("Segoe UI", 9.5F),
-                Animated = true,
+                Animated = false,
                 Cursor = Cursors.Hand
             };
+            dtpEndDate.HoverState.BorderColor = Color.FromArgb(129, 140, 248);
 
-            // Modernized Apply Button
+            // Modernized Apply Button matching the Ventrix Indigo theme
             btnApplyFilters = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "Filter Dates",
-                FillColor = DrawColor.FromArgb(13, 71, 161),
-                ForeColor = DrawColor.White,
+                FillColor = Color.FromArgb(79, 70, 229), // Ventrix Indigo
+                ForeColor = Color.White,
                 BorderRadius = 8,
-                Height = 36,     // Keeps it perfectly aligned with the DatePickers
-                Width = 130,     // INCREASED WIDTH so the text breathes nicely
-                Font = new DrawFont("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                Height = 40,
+                Width = 125,
+                Font = new DrawFont("Segoe UI", 9.5F, FontStyle.Bold),
                 Animated = true,
                 Cursor = Cursors.Hand
             };
+
+            btnApplyFilters.HoverState.FillColor = Color.FromArgb(99, 102, 241);
             btnApplyFilters.Click += async (s, e) => { historyCurrentPage = 1; await LoadHistoryData(); };
             btnFilterDates = btnApplyFilters;
 
-            // Optional: Upgraded Pagination Buttons (if you use them)
-            btnPrevPage = new Guna.UI2.WinForms.Guna2Button { Text = "< Prev", FillColor = DrawColor.FromArgb(240, 240, 240), ForeColor = DrawColor.Black, BorderRadius = 6, Width = 70, Height = 30 };
+            btnPrevPage = new Guna.UI2.WinForms.Guna2Button { Text = "‹ Prev", FillColor = Color.FromArgb(241, 245, 249), ForeColor = Color.FromArgb(51, 65, 85), BorderRadius = 6, Width = 70, Height = 32 };
             btnPrevPage.Click += async (s, e) => { if (historyCurrentPage > 1) { historyCurrentPage--; await LoadHistoryData(); } };
 
-            btnNextPage = new Guna.UI2.WinForms.Guna2Button { Text = "Next >", FillColor = DrawColor.FromArgb(240, 240, 240), ForeColor = DrawColor.Black, BorderRadius = 6, Width = 70, Height = 30 };
+            btnNextPage = new Guna.UI2.WinForms.Guna2Button { Text = "Next ›", FillColor = Color.FromArgb(241, 245, 249), ForeColor = Color.FromArgb(51, 65, 85), BorderRadius = 6, Width = 70, Height = 32 };
             btnNextPage.Click += async (s, e) => { if (historyCurrentPage < historyTotalPages) { historyCurrentPage++; await LoadHistoryData(); } };
 
-            lblPageInfo = new Label { Text = "Page 1 of 1", AutoSize = true, Font = new DrawFont("Segoe UI", 10, FontStyle.Bold) };
+            lblPageInfo = new Label { Text = "Page 1 of 1", AutoSize = true, Font = new DrawFont("Segoe UI", 9.5F, FontStyle.Bold), ForeColor = Color.FromArgb(100, 116, 139) };
+
+            StyleModernDatePickers();
+            AttachFilterButtonAnimations();
         }
 
         private async Task LoadFromDatabase(string filter)
         {
             if (dgvInventory == null) return;
-            dgvInventory.Rows.Clear();
-            dgvInventory.Columns.Clear();
+            ShowLoadingState(pnlGridContainer, true);
 
-            // FIXED: Added Async() to the method call
-            var items = await _inventoryService.GetAllItemsAsync();
-            string search = txtSearch?.Text?.ToLower() ?? "";
-
-            if (!string.IsNullOrEmpty(search))
+            try
             {
-                items = items.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToString().ToLower().Contains(search)).ToList();
-            }
+                dgvInventory.Rows.Clear();
+                dgvInventory.Columns.Clear();
 
-            // 1. UPDATE THIS LINE ("All" Filter)
-            if (filter.Equals("All", StringComparison.OrdinalIgnoreCase))
-            {
-                SetupColumns("Item Name", "Category", "Total Units", "Available", "Borrowed", "Damaged");
-                var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
-
-                var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
-                var outRecords = allRecords.Where(r => r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue).ToList();
-
-                // NEW: Get IDs of physical items tied up in pending requests
-                var pendingItemIds = allRecords.Where(r => r.Status == BorrowStatus.Pending).Select(r => r.InventoryItemId).ToList();
-
-                foreach (var group in groupedItems)
-                {
-                    int total = group.Count();
-
-                    // CHANGED: Available = Physical Available minus those in Pending status
-                    int avail = group.Count(x => x.Status == ItemStatus.Available && !pendingItemIds.Contains(x.Id));
-
-                    int borrowed = outRecords.Count(r => GetBaseItemName(r.ItemName ?? "") == group.Key.BaseName);
-                    int damaged = group.Count(x => x.Condition == Condition.Damaged);
-
-                    dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), total, avail, borrowed, damaged);
-                }
-                if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
-            }
-
-            // 2. UPDATE THIS LINE ("Records" Filter - No changes needed here)
-            else if (filter.Equals("Records", StringComparison.OrdinalIgnoreCase))
-            {
-                SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held", "Strikes", "Account Status");
-
-                var users = (await _userService.GetAllUsersAsync())
-                            .Where(u => u.Role != UserRole.Admin)
-                            .ToList();
-
-                if (!string.IsNullOrEmpty(search))
-                    users = users.Where(u => u.FirstName.ToLower().Contains(search) || u.LastName.ToLower().Contains(search) || u.UserId.ToLower().Contains(search)).ToList();
-
-                var records = await _borrowService.GetAllBorrowRecordsAsync();
-
-                foreach (var u in users)
-                {
-                    int itemsHeld = records.Count(r => r.BorrowerId == u.UserId &&
-                                 (r.Status == BorrowStatus.Active ||
-                                  r.Status == BorrowStatus.Overdue ||
-                                  r.Status == BorrowStatus.PendingReturn));
-                    string accountStatus = u.Strikes >= 3 ? "LOCKED" : "ACTIVE";
-
-                    dgvInventory.Rows.Add(u.UserId, u.FullName, u.Role.ToString(), itemsHeld, u.Strikes, accountStatus);
-                }
-            }
-
-            // 3. UPDATE THIS LINE ("Borrowed" Filter - No changes needed here)
-            else if (filter.Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
-            {
-                SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested/Approved On", "Due Date", "Status");
-                dgvInventory.Columns["RecordIDs"].Visible = false;
-
-                var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
-                var pendingAndActive = allRecords
-                    .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending ||
-                                b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
-                    .ToList();
+                // FIXED: Added Async() to the method call
+                var items = await _inventoryService.GetAllItemsAsync();
+                string search = txtSearch?.Text?.ToLower() ?? "";
 
                 if (!string.IsNullOrEmpty(search))
                 {
-                    pendingAndActive = pendingAndActive.Where(b =>
-                        (b.BorrowerId != null && b.BorrowerId.ToLower().Contains(search)) ||
-                        (b.Borrower != null && b.Borrower.FullName.ToLower().Contains(search)) ||
-                        (b.ItemName != null && b.ItemName.ToLower().Contains(search)) ||
-                        b.Status.ToString().ToLower().Contains(search)
-                    ).ToList();
+                    items = items.Where(i => i.Name.ToLower().Contains(search) || i.Category.ToString().ToLower().Contains(search)).ToList();
                 }
 
-                var groupedRecords = pendingAndActive
-                    .GroupBy(b => new { b.BorrowerId, b.Status })
-                    .Select(g => new {
-                        BorrowerId = g.Key.BorrowerId,
-                        BorrowerName = g.First().Borrower != null ? g.First().Borrower.FullName : "Unknown",
-                        Status = g.Key.Status,
-                        LastUpdate = g.Max(x => x.BorrowDate),
-                        Items = string.Join(", ", g.Select(x => x.ItemName ?? "Unknown Item")),
-                        RecordIDs = string.Join(",", g.Select(x => x.Id))
-                    })
-                    .OrderBy(g => g.Status)
-                    .ThenByDescending(g => g.LastUpdate)
-                    .ToList();
-
-                foreach (var group in groupedRecords)
+                // 1. UPDATE THIS LINE ("All" Filter)
+                if (filter.Equals("All", StringComparison.OrdinalIgnoreCase))
                 {
-                    string dueDateStr;
+                    SetupColumns("Item Name", "Category", "Total Units", "Available", "Borrowed", "Damaged");
+                    var groupedItems = items.GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
 
-                    if (group.Status == BorrowStatus.Pending)
-                    {
-                        dueDateStr = "---";
-                    }
-                    else
-                    {
-                        dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy");
-                    }
+                    var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                    var outRecords = allRecords.Where(r => r.Status == BorrowStatus.Active || r.Status == BorrowStatus.PendingReturn || r.Status == BorrowStatus.Overdue).ToList();
 
-                    dgvInventory.Rows.Add(
-                        group.RecordIDs,
-                        group.BorrowerId,
-                        group.BorrowerName,
-                        group.Items,
-                        group.LastUpdate.ToString("MMM dd, yyyy"),
-                        dueDateStr,
-                        group.Status.ToString()
-                    );
+                    // NEW: Get IDs of physical items tied up in pending requests
+                    var pendingItemIds = allRecords.Where(r => r.Status == BorrowStatus.Pending).Select(r => r.InventoryItemId).ToList();
+
+                    foreach (var group in groupedItems)
+                    {
+                        int total = group.Count();
+
+                        // CHANGED: Available = Physical Available minus those in Pending status
+                        int avail = group.Count(x => x.Status == ItemStatus.Available && !pendingItemIds.Contains(x.Id));
+
+                        int borrowed = outRecords.Count(r => GetBaseItemName(r.ItemName ?? "") == group.Key.BaseName);
+                        int damaged = group.Count(x => x.Condition == Condition.Damaged);
+
+                        dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), total, avail, borrowed, damaged);
+                    }
+                    if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
                 }
 
-                if (dgvInventory.Columns.Contains("Items")) dgvInventory.Columns["Items"].FillWeight = 150;
-                if (dgvInventory.Columns.Contains("DueDate")) dgvInventory.Columns["DueDate"].FillWeight = 110;
-            }
+                // 2. UPDATE THIS LINE ("Records" Filter - No changes needed here)
+                else if (filter.Equals("Records", StringComparison.OrdinalIgnoreCase))
+                {
+                    SetupColumns("Borrower ID", "Borrower Name", "Role", "Items Held", "Strikes", "Account Status");
 
-            // 4. UPDATE THIS LINE ("Available" Filter)
-            else if (filter.Equals("Available", StringComparison.OrdinalIgnoreCase))
+                    var users = (await _userService.GetAllUsersAsync())
+                                .Where(u => u.Role != UserRole.Admin)
+                                .ToList();
+
+                    if (!string.IsNullOrEmpty(search))
+                        users = users.Where(u => u.FirstName.ToLower().Contains(search) || u.LastName.ToLower().Contains(search) || u.UserId.ToLower().Contains(search)).ToList();
+
+                    var records = await _borrowService.GetAllBorrowRecordsAsync();
+
+                    foreach (var u in users)
+                    {
+                        int itemsHeld = records.Count(r => r.BorrowerId == u.UserId &&
+                                     (r.Status == BorrowStatus.Active ||
+                                      r.Status == BorrowStatus.Overdue ||
+                                      r.Status == BorrowStatus.PendingReturn));
+                        string accountStatus = u.Strikes >= 3 ? "LOCKED" : "ACTIVE";
+
+                        dgvInventory.Rows.Add(u.UserId, u.FullName, u.Role.ToString(), itemsHeld, u.Strikes, accountStatus);
+                    }
+                }
+
+                // 3. UPDATE THIS LINE ("Borrowed" Filter - No changes needed here)
+                else if (filter.Equals("Borrowed", StringComparison.OrdinalIgnoreCase))
+                {
+                    SetupColumns("RecordIDs", "Borrower ID", "Borrower Name", "Items", "Requested/Approved On", "Due Date", "Status");
+                    dgvInventory.Columns["RecordIDs"].Visible = false;
+
+                    var allRecords = await _borrowService.GetAllBorrowRecordsAsync();
+                    var pendingAndActive = allRecords
+                        .Where(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Pending ||
+                                    b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn)
+                        .ToList();
+
+                    if (!string.IsNullOrEmpty(search))
+                    {
+                        pendingAndActive = pendingAndActive.Where(b =>
+                            (b.BorrowerId != null && b.BorrowerId.ToLower().Contains(search)) ||
+                            (b.Borrower != null && b.Borrower.FullName.ToLower().Contains(search)) ||
+                            (b.ItemName != null && b.ItemName.ToLower().Contains(search)) ||
+                            b.Status.ToString().ToLower().Contains(search)
+                        ).ToList();
+                    }
+
+                    var groupedRecords = pendingAndActive
+                        .GroupBy(b => new { b.BorrowerId, b.Status })
+                        .Select(g => new
+                        {
+                            BorrowerId = g.Key.BorrowerId,
+                            BorrowerName = g.First().Borrower != null ? g.First().Borrower.FullName : "Unknown",
+                            Status = g.Key.Status,
+                            LastUpdate = g.Max(x => x.BorrowDate),
+                            Items = string.Join(", ", g.Select(x => x.ItemName ?? "Unknown Item")),
+                            RecordIDs = string.Join(",", g.Select(x => x.Id))
+                        })
+                        .OrderBy(g => g.Status)
+                        .ThenByDescending(g => g.LastUpdate)
+                        .ToList();
+
+                    foreach (var group in groupedRecords)
+                    {
+                        string dueDateStr;
+
+                        if (group.Status == BorrowStatus.Pending)
+                        {
+                            dueDateStr = "---";
+                        }
+                        else
+                        {
+                            dueDateStr = group.LastUpdate.AddDays(1).ToString("MMM dd, yyyy");
+                        }
+
+                        dgvInventory.Rows.Add(
+                            group.RecordIDs,
+                            group.BorrowerId,
+                            group.BorrowerName,
+                            group.Items,
+                            group.LastUpdate.ToString("MMM dd, yyyy"),
+                            dueDateStr,
+                            group.Status.ToString()
+                        );
+                    }
+
+                    if (dgvInventory.Columns.Contains("Items")) dgvInventory.Columns["Items"].FillWeight = 150;
+                    if (dgvInventory.Columns.Contains("DueDate")) dgvInventory.Columns["DueDate"].FillWeight = 110;
+                }
+
+                // 4. UPDATE THIS LINE ("Available" Filter)
+                else if (filter.Equals("Available", StringComparison.OrdinalIgnoreCase))
+                {
+                    SetupColumns("Item Name", "Category", "Available Units");
+
+                    // NEW: Get IDs of items tied up in pending requests
+                    var pendingItemIds = (await _borrowService.GetAllBorrowRecordsAsync())
+                        .Where(b => b.Status == BorrowStatus.Pending)
+                        .Select(b => b.InventoryItemId)
+                        .ToList();
+
+                    // CHANGED: Filter out items that are physically available BUT stuck in Pending
+                    var groupedItems = items
+                        .Where(i => i.Status == ItemStatus.Available && !pendingItemIds.Contains(i.Id))
+                        .GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category })
+                        .ToList();
+
+                    var rowsToLoad = new List<object[]>();
+                    foreach (var group in groupedItems)
+                    {
+                        rowsToLoad.Add(new object[] { group.Key.BaseName, group.Key.Category.ToString(), group.Count() });
+                    }
+
+                    // 2. Load with the smooth staggered waterfall animation
+                    await LoadGridRowsStaggered(dgvInventory, rowsToLoad);
+
+                    if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
+                }
+            }
+            finally
             {
-                SetupColumns("Item Name", "Category", "Available Units");
-
-                // NEW: Get IDs of items tied up in pending requests
-                var pendingItemIds = (await _borrowService.GetAllBorrowRecordsAsync())
-                    .Where(b => b.Status == BorrowStatus.Pending)
-                    .Select(b => b.InventoryItemId)
-                    .ToList();
-
-                // CHANGED: Filter out items that are physically available BUT stuck in Pending
-                var groupedItems = items
-                    .Where(i => i.Status == ItemStatus.Available && !pendingItemIds.Contains(i.Id))
-                    .GroupBy(i => new { BaseName = GetBaseItemName(i.Name), i.Category });
-
-                foreach (var group in groupedItems)
-                {
-                    dgvInventory.Rows.Add(group.Key.BaseName, group.Key.Category.ToString(), group.Count());
-                }
-
-                if (dgvInventory.Columns.Contains("ItemName")) dgvInventory.Columns["ItemName"].FillWeight = 150;
+                // Hide the loading overlay once rendering is complete
+                ShowLoadingState(pnlGridContainer, false);
             }
-
             ToggleNoResultsState(dgvInventory.Rows.Count == 0);
         }
 
@@ -1456,7 +2183,15 @@ namespace Ventrix.App
             if (!damagedItems.Any()) AddDashboardAlert("✓ All laboratory systems are operational.", DrawColor.Teal);
             else AddDashboardAlert($"⚠ REPAIR NEEDED: {damagedItems.Count} items require attention. (Click for details)", DrawColor.DarkRed);
 
-            flowRecentActivity?.Controls.Add(new Label { Text = "RECENT ACTIVITY LOG", Font = new DrawFont("Segoe UI", 12, FontStyle.Bold), AutoSize = true });
+            var lblActivityHeader = new Label 
+{ 
+    Text = "ACTIVITY FEED", 
+    Font = new DrawFont("Segoe UI", 9.5F, FontStyle.Bold), 
+    ForeColor = DrawColor.FromArgb(100, 116, 139), // Modern muted slate-gray
+    AutoSize = true,
+    Margin = new Padding(2, 25, 0, 12) // Give it more breathing room
+};
+flowRecentActivity?.Controls.Add(lblActivityHeader);
 
             var rawLogs = (await _borrowService.GetAllBorrowRecordsAsync())
                   .Where(b => b.IsHiddenFromDashboard == false)
@@ -1508,25 +2243,26 @@ namespace Ventrix.App
                 string actionText;
                 DrawColor statusColor;
 
+                // Use active voice and HTML tags (<b>) so we can bold just the user's name later
                 if (isReturned)
                 {
-                    actionText = $"{displayItem} returned by {friendlyName}";
-                    statusColor = DrawColor.Teal;
+                    actionText = $"<b>{friendlyName}</b> returned {displayItem}";
+                    statusColor = DrawColor.FromArgb(16, 185, 129); // Modern Emerald Green
                 }
                 else if (isPendingReturn)
                 {
-                    actionText = $"{friendlyName} requested to return {displayItem}";
-                    statusColor = DrawColor.DarkMagenta;
+                    actionText = $"<b>{friendlyName}</b> requested to return {displayItem}";
+                    statusColor = DrawColor.FromArgb(139, 92, 246); // Modern Violet
                 }
                 else if (hasActive)
                 {
-                    actionText = $"{friendlyName} borrowed {displayItem}";
-                    statusColor = DrawColor.FromArgb(33, 150, 243);
+                    actionText = $"<b>{friendlyName}</b> borrowed {displayItem}";
+                    statusColor = DrawColor.FromArgb(59, 130, 246); // Modern Blue
                 }
                 else
                 {
-                    actionText = $"{friendlyName} requested {displayItem}";
-                    statusColor = DrawColor.Goldenrod;
+                    actionText = $"<b>{friendlyName}</b> requested {displayItem}";
+                    statusColor = DrawColor.FromArgb(245, 158, 11); // Modern Amber
                 }
 
                 DateTime actionTime = isReturned ? (firstRecord.ReturnDate ?? firstRecord.BorrowDate) : firstRecord.BorrowDate;
@@ -1565,9 +2301,40 @@ namespace Ventrix.App
             var card = new Ventrix.App.Controls.ActivityCard(message, time, statusColor);
 
             int safeWidth = flowRecentActivity.ClientSize.Width > 0 ? flowRecentActivity.ClientSize.Width : flowRecentActivity.Width;
-            card.Width = safeWidth - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+            int targetWidth = safeWidth - flowRecentActivity.Padding.Left - flowRecentActivity.Padding.Right - 10;
+            card.Width = targetWidth;
+
+            // Start with height 0 and invisible to create a smooth upward rollout effect
+            int targetHeight = card.Height;
+            card.Height = 0;
+            card.Visible = false;
 
             flowRecentActivity?.Controls.Add(card);
+            card.Visible = true;
+
+            // Use a high-performance local timer for the slide-up effect
+            var animTimer = new System.Windows.Forms.Timer();
+            animTimer.Interval = 10; // ~100 FPS for smoothness
+
+            animTimer.Tick += (s, e) =>
+            {
+                // Smoothly step closer to the target height (easing calculation)
+                int step = Math.Max(1, (targetHeight - card.Height) / 4);
+                card.Height += step;
+
+                // Force the layout engine to reflow surrounding cards smoothly
+                flowRecentActivity.PerformLayout();
+
+                // Stop when it reaches full size
+                if (card.Height >= targetHeight)
+                {
+                    card.Height = targetHeight;
+                    animTimer.Stop();
+                    animTimer.Dispose();
+                }
+            };
+
+            animTimer.Start();
         }
 
         private async Task<IEnumerable<BorrowRecord>> GetFilteredHistoryQuery()
@@ -1610,10 +2377,12 @@ namespace Ventrix.App
         private async Task LoadHistoryData()
         {
             if (dgvHistory == null) return;
+
+            ShowLoadingState(pnlHistory, true);
             dgvHistory.Rows.Clear();
             dgvHistory.Columns.Clear();
 
-            // Setup grouped columns
+            // Setup columns
             dgvHistory.Columns.Add("SchoolId", "School ID");
             dgvHistory.Columns.Add("Borrower", "Borrower Name");
             dgvHistory.Columns.Add("TotalBorrowed", "Total Borrows (In Period)");
@@ -1629,7 +2398,7 @@ namespace Ventrix.App
                 allLogs = allLogs.Where(b => b.BorrowDate >= dtpStartDate.Value.Date && b.BorrowDate <= endOfDay).ToList();
             }
 
-            // 2. --- APPLY THE MISSING SEARCH LOGIC ---
+            // 2. Search Logic
             string search = txtSearch?.Text?.ToLower() ?? "";
             if (!string.IsNullOrEmpty(search))
             {
@@ -1649,7 +2418,7 @@ namespace Ventrix.App
                 LastActive = g.Max(b => b.BorrowDate)
             });
 
-            // 4. --- APPLY PROPER COLUMN SORTING ---
+            // 4. Column Sorting
             switch (historySortColumn)
             {
                 case "SchoolId":
@@ -1670,13 +2439,25 @@ namespace Ventrix.App
                     break;
             }
 
-            // 5. Populate Grid
+            // 5. Build row collection for smooth animation
+            var rowsToLoad = new List<object[]>();
             foreach (var group in userGroupsQuery)
             {
-                dgvHistory.Rows.Add(group.BorrowerId, group.BorrowerName, group.TotalBorrowed, group.ActiveHeld, group.LastActive.ToString("MMM dd, yyyy"));
+                rowsToLoad.Add(new object[] {
+            group.BorrowerId,
+            group.BorrowerName,
+            group.TotalBorrowed,
+            group.ActiveHeld,
+            group.LastActive.ToString("MMM dd, yyyy")
+        });
             }
 
-            // Manage Empty State 
+            StyleHistoryDataGridView();
+
+            // Stream rows in with buttery-smooth staggered animation
+            await LoadGridRowsStaggered(dgvHistory, rowsToLoad);
+
+            ShowLoadingState(pnlHistory, false);
             ToggleNoResultsState(dgvHistory.Rows.Count == 0);
         }
 
@@ -1706,10 +2487,11 @@ namespace Ventrix.App
 
             int borrowedCount = records.Count(x => x.Status == BorrowStatus.Active || x.Status == BorrowStatus.PendingReturn || x.Status == BorrowStatus.Overdue);
 
-            cardTotal?.UpdateMetrics("TOTAL ITEMS", items.Count.ToString("N0"), DrawColor.FromArgb(13, 71, 161));
-            cardAvailable?.UpdateMetrics("AVAILABLE", items.Count(x => x.Status == ItemStatus.Available).ToString("N0"), DrawColor.Teal);
-            cardBorrowed?.UpdateMetrics("BORROWED", borrowedCount.ToString("N0"), DrawColor.FromArgb(192, 0, 0));
-            cardRecords?.UpdateMetrics("BORROWERS", borrowerCount.ToString("N0"), DrawColor.Orange);
+            // Upgraded with smooth count-up animations
+            _ = AnimateCountUp(cardTotal, "TOTAL ITEMS", items.Count, DrawColor.FromArgb(79, 70, 229));
+            _ = AnimateCountUp(cardAvailable, "AVAILABLE", items.Count(x => x.Status == ItemStatus.Available), DrawColor.Teal);
+            _ = AnimateCountUp(cardBorrowed, "BORROWED", borrowedCount, DrawColor.FromArgb(225, 29, 72));
+            _ = AnimateCountUp(cardRecords, "BORROWERS", borrowerCount, DrawColor.FromArgb(217, 119, 6));
 
         }
 
@@ -2236,14 +3018,18 @@ namespace Ventrix.App
 
         private void StyleDataGrids()
         {
-            var grids = new[] { dgvInventory, dgvHistory };
+            // Only apply generic styling to inventory; history has its own dedicated StyleHistoryDataGridView method
+            var grids = new[] { dgvInventory };
             foreach (var grid in grids)
             {
                 if (grid == null) continue;
                 grid.BackgroundColor = DrawColor.White;
                 grid.BorderStyle = BorderStyle.None;
+
+                // --- HIDE VERTICAL LINES ON INVENTORY & RECORDS ---
                 grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-                grid.GridColor = DrawColor.FromArgb(230, 235, 240);
+                grid.GridColor = DrawColor.FromArgb(241, 245, 249);
+
                 grid.RowHeadersVisible = false;
                 grid.AllowUserToAddRows = false;
                 grid.AllowUserToDeleteRows = false;

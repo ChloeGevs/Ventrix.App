@@ -1,134 +1,132 @@
-﻿using System.Drawing;
-using System.Windows.Forms;
-
-namespace Ventrix.App.Popups
+﻿namespace Ventrix.App.Popups
 {
     partial class ShowMultiReturnSelectionPopup
     {
         private System.ComponentModel.IContainer components = null;
-        private Label lblTitle;
-        private Label lblInstruction;
-        private Panel listContainer;
-        private CheckedListBox clbRecords;
-        private Button btnCancel;
-        private Button btnOk;
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
+            if (disposing && (components != null)) components.Dispose();
             base.Dispose(disposing);
         }
 
         private void InitializeComponent()
         {
-            lblTitle = new Label();
-            lblInstruction = new Label();
-            listContainer = new Panel();
-            clbRecords = new CheckedListBox();
-            btnCancel = new Button();
-            btnOk = new Button();
-            listContainer.SuspendLayout();
+            this.components = new System.ComponentModel.Container();
+            lblTitle = new System.Windows.Forms.Label();
+            lblInstruction = new System.Windows.Forms.Label();
+            flowRecords = new System.Windows.Forms.FlowLayoutPanel();
+            btnCancel = new Guna.UI2.WinForms.Guna2Button();
+            btnOk = new Guna.UI2.WinForms.Guna2Button();
+            guna2BorderlessForm1 = new Guna.UI2.WinForms.Guna2BorderlessForm(this.components);
+            panelContent = new System.Windows.Forms.Panel();
+
+            panelContent.SuspendLayout();
             SuspendLayout();
-            // 
+
+            // guna2BorderlessForm1
+            guna2BorderlessForm1.ContainerControl = this;
+            guna2BorderlessForm1.BorderRadius = 16;
+            guna2BorderlessForm1.DockIndicatorTransparencyValue = 0.6D;
+            guna2BorderlessForm1.TransparentWhileDrag = true;
+
+            // panelContent
+            panelContent.BackColor = System.Drawing.Color.FromArgb(250, 252, 253);
+            panelContent.Controls.Add(lblTitle);
+            panelContent.Controls.Add(lblInstruction);
+            panelContent.Controls.Add(flowRecords);
+            panelContent.Controls.Add(btnCancel);
+            panelContent.Controls.Add(btnOk);
+            panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            panelContent.Location = new System.Drawing.Point(0, 0);
+            panelContent.Name = "panelContent";
+            panelContent.Size = new System.Drawing.Size(460, 360); // Compact height
+            panelContent.TabIndex = 0;
+
             // lblTitle
-            // 
             lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTitle.ForeColor = Color.FromArgb(31, 41, 55);
-            lblTitle.Location = new Point(25, 20);
+            lblTitle.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Bold);
+            lblTitle.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            lblTitle.Location = new System.Drawing.Point(20, 18);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(161, 32);
-            lblTitle.TabIndex = 4;
-            lblTitle.Text = "Return Items";
-            // 
+            lblTitle.Size = new System.Drawing.Size(0, 28);
+            lblTitle.Text = "";
+
             // lblInstruction
-            // 
             lblInstruction.AutoSize = true;
-            lblInstruction.Font = new Font("Segoe UI", 10F);
-            lblInstruction.ForeColor = Color.FromArgb(107, 114, 128);
-            lblInstruction.Location = new Point(25, 55);
+            lblInstruction.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblInstruction.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            lblInstruction.Location = new System.Drawing.Point(22, 50);
             lblInstruction.Name = "lblInstruction";
-            lblInstruction.Size = new Size(384, 23);
+            lblInstruction.Size = new System.Drawing.Size(250, 15);
             lblInstruction.TabIndex = 3;
-            lblInstruction.Text = "Check ALL the items you are returning right now:";
-            // 
-            // listContainer
-            // 
-            listContainer.BackColor = Color.White;
-            listContainer.BorderStyle = BorderStyle.FixedSingle;
-            listContainer.Controls.Add(clbRecords);
-            listContainer.ForeColor = Color.FromArgb(209, 213, 219);
-            listContainer.Location = new Point(25, 85);
-            listContainer.Name = "listContainer";
-            listContainer.Size = new Size(430, 185);
-            listContainer.TabIndex = 2;
-            // 
-            // clbRecords
-            // 
-            clbRecords.BorderStyle = BorderStyle.None;
-            clbRecords.CheckOnClick = true;
-            clbRecords.Cursor = Cursors.Hand;
-            clbRecords.Dock = DockStyle.Fill;
-            clbRecords.Font = new Font("Segoe UI", 11F);
-            clbRecords.IntegralHeight = false;
-            clbRecords.Location = new Point(0, 0);
-            clbRecords.Name = "clbRecords";
-            clbRecords.Size = new Size(428, 183);
-            clbRecords.TabIndex = 0;
-            // 
+            lblInstruction.Text = "Select the items you are returning right now.";
+
+            // flowRecords
+            flowRecords.AutoScroll = true;
+            flowRecords.BackColor = System.Drawing.Color.Transparent;
+            flowRecords.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            flowRecords.Location = new System.Drawing.Point(20, 75);
+            flowRecords.Name = "flowRecords";
+            flowRecords.Size = new System.Drawing.Size(420, 195); // Shorter list container to eliminate dead space
+            flowRecords.TabIndex = 2;
+            flowRecords.WrapContents = false;
+
             // btnCancel
-            // 
-            btnCancel.BackColor = Color.White;
-            btnCancel.Cursor = Cursors.Hand;
-            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
-            btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            btnCancel.ForeColor = Color.FromArgb(107, 114, 128);
-            btnCancel.Location = new Point(215, 290);
+            btnCancel.Animated = true;
+            btnCancel.BorderRadius = 18;
+            btnCancel.BorderThickness = 1;
+            btnCancel.BorderColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnCancel.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnCancel.FillColor = System.Drawing.Color.White;
+            btnCancel.HoverState.FillColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            btnCancel.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            btnCancel.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            btnCancel.Location = new System.Drawing.Point(165, 295);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(110, 40);
+            btnCancel.Size = new System.Drawing.Size(130, 38);
             btnCancel.TabIndex = 1;
             btnCancel.Text = "Cancel";
-            btnCancel.UseVisualStyleBackColor = false;
-            btnCancel.Click += BtnCancel_Click;
-            // 
+            btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+
             // btnOk
-            // 
-            btnOk.BackColor = Color.FromArgb(16, 185, 129);
-            btnOk.Cursor = Cursors.Hand;
-            btnOk.FlatAppearance.BorderSize = 0;
-            btnOk.FlatStyle = FlatStyle.Flat;
-            btnOk.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            btnOk.ForeColor = Color.White;
-            btnOk.Location = new Point(335, 290);
+            btnOk.Animated = true;
+            btnOk.BorderRadius = 18;
+            btnOk.Cursor = System.Windows.Forms.Cursors.Hand;
+            btnOk.FillColor = System.Drawing.Color.FromArgb(16, 185, 129);
+            btnOk.HoverState.FillColor = System.Drawing.Color.FromArgb(5, 150, 105);
+            btnOk.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            btnOk.ForeColor = System.Drawing.Color.White;
+            btnOk.Location = new System.Drawing.Point(305, 295);
             btnOk.Name = "btnOk";
-            btnOk.Size = new Size(120, 40);
+            btnOk.Size = new System.Drawing.Size(135, 38);
             btnOk.TabIndex = 0;
-            btnOk.Text = "Request Return";
-            btnOk.UseVisualStyleBackColor = false;
-            btnOk.Click += BtnOk_Click;
-            // 
+            btnOk.Text = "Confirm Return";
+            btnOk.Click += new System.EventHandler(this.btnOk_Click);
+
             // ShowMultiReturnSelectionPopup
-            // 
-            BackColor = Color.White;
-            ClientSize = new Size(500, 390);
-            Controls.Add(btnOk);
-            Controls.Add(btnCancel);
-            Controls.Add(listContainer);
-            Controls.Add(lblInstruction);
-            Controls.Add(lblTitle);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
+            AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.White;
+            ClientSize = new System.Drawing.Size(460, 360); // Smaller overall window footprint
+            Controls.Add(panelContent);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "ShowMultiReturnSelectionPopup";
-            StartPosition = FormStartPosition.CenterParent;
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Return Items";
-            listContainer.ResumeLayout(false);
+            panelContent.ResumeLayout(false);
+            panelContent.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
+
+        private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Label lblInstruction;
+        private System.Windows.Forms.FlowLayoutPanel flowRecords;
+        private Guna.UI2.WinForms.Guna2Button btnCancel;
+        private Guna.UI2.WinForms.Guna2Button btnOk;
+        private Guna.UI2.WinForms.Guna2BorderlessForm guna2BorderlessForm1;
+        private System.Windows.Forms.Panel panelContent;
     }
 }

@@ -3,43 +3,119 @@ using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Threading.Tasks;
-using MaterialSkin.Controls;
 using Ventrix.Application.Services;
 using Ventrix.Domain.Enums;
 using Ventrix.App.Controls;
 
 namespace Ventrix.App.Popups
 {
-    public partial class ItemGroupPopup : MaterialForm
+    public partial class ItemGroupPopup : Form
     {
         private readonly InventoryService _inventoryService;
         private readonly BorrowService _borrowService;
         private readonly string _itemName;
 
+        private int _targetY;
+        private bool _isAnimating = false;
+
+        // Typewriter Effect Fields
+        private string _fullTitleText = "";
+        private int _charIndex = 0;
+        private int _typewriterCounter = 0;
+
         public ItemGroupPopup(InventoryService inventoryService, BorrowService borrowService, string itemName)
         {
             InitializeComponent();
-            ThemeManager.ApplyMaterialTheme(this); 
 
             _inventoryService = inventoryService;
             _borrowService = borrowService;
             _itemName = itemName;
 
-            this.Text = $"Manage Group: {itemName.ToUpper()}";
+            // Prepare the full text, but start the label empty for the typewriter effect
+            _fullTitleText = $"Manage Group: {itemName.ToUpper()}";
+            lblTitle.Text = "";
 
-            StyleGrid(); 
+            this.Opacity = 0;
+            this.StartPosition = FormStartPosition.CenterParent;
+
+            StyleGrid();
 
             gridItems.CellFormatting += GridItems_CellFormatting;
             gridItems.CellDoubleClick += GridItems_CellDoubleClick;
-
             gridItems.KeyDown += GridItems_KeyDown;
+        }
+
+        private async void ItemGroupPopup_Load(object sender, EventArgs e)
+        {
+            _targetY = this.Location.Y;
+            this.Location = new Point(this.Location.X, _targetY + 40);
+
+            System.Windows.Forms.Timer animTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            animTimer.Tick += (object s, EventArgs ev) =>
+            {
+                // Form Fade & Slide Animation
+                this.Opacity += (1.0 - this.Opacity) * 0.2;
+
+                int currentY = this.Location.Y;
+                int distance = currentY - _targetY;
+
+                if (distance > 0)
+                {
+                    int move = (int)Math.Ceiling(distance * 0.2);
+                    this.Location = new Point(this.Location.X, currentY - move);
+                }
+
+                // Typewriter Effect Logic (Appends characters smoothly every 2 ticks)
+                _typewriterCounter++;
+                if (_typewriterCounter % 2 == 0 && _charIndex < _fullTitleText.Length)
+                {
+                    _charIndex++;
+                    lblTitle.Text = _fullTitleText.Substring(0, _charIndex);
+                }
+
+                // Completion check for both form and title
+                if (distance <= 0 && this.Opacity >= 0.98 && _charIndex >= _fullTitleText.Length)
+                {
+                    this.Opacity = 1.0;
+                    this.Location = new Point(this.Location.X, _targetY);
+                    lblTitle.Text = _fullTitleText; // Ensure full text is set accurately
+
+                    animTimer.Stop();
+                    animTimer.Dispose();
+                }
+            };
+            animTimer.Start();
+
+            await LoadData();
+        }
+
+        private async Task ClosePopupAsync(DialogResult result = DialogResult.Cancel)
+        {
+            if (_isAnimating) return;
+            _isAnimating = true;
+
+            System.Windows.Forms.Timer animTimer = new System.Windows.Forms.Timer { Interval = 10 };
+            animTimer.Tick += (object s, EventArgs ev) =>
+            {
+                this.Opacity -= 0.15;
+                this.Location = new Point(this.Location.X, this.Location.Y + 3);
+
+                if (this.Opacity <= 0)
+                {
+                    animTimer.Stop();
+                    animTimer.Dispose();
+                    this.DialogResult = result;
+                    this.Close();
+                }
+            };
+            animTimer.Start();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
             {
-                this.Close();
+                _ = ClosePopupAsync();
                 return true;
             }
 
@@ -54,6 +130,11 @@ namespace Ventrix.App.Popups
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            _ = ClosePopupAsync();
         }
 
         private void GridItems_KeyDown(object sender, KeyEventArgs e)
@@ -78,24 +159,22 @@ namespace Ventrix.App.Popups
             gridItems.BackgroundColor = Color.White;
             gridItems.BorderStyle = BorderStyle.None;
             gridItems.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            gridItems.GridColor = Color.FromArgb(230, 235, 240);
+            gridItems.GridColor = Color.FromArgb(241, 245, 249);
 
-            gridItems.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(13, 71, 161);
-            gridItems.ThemeStyle.HeaderStyle.ForeColor = Color.White;
-            gridItems.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI Semibold", 10F);
+            gridItems.RowTemplate.Height = 55;
+            gridItems.ColumnHeadersHeight = 50;
 
-            gridItems.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(240, 245, 255);
-            gridItems.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(13, 71, 161);
+            gridItems.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(248, 250, 252);
+            gridItems.ThemeStyle.HeaderStyle.ForeColor = Color.FromArgb(71, 85, 105);
+            gridItems.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 10.5F, FontStyle.Bold);
 
-            gridItems.ThemeStyle.AlternatingRowsStyle.BackColor = Color.FromArgb(250, 252, 255);
+            gridItems.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(238, 242, 255);
+            gridItems.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(67, 56, 202);
+
+            gridItems.ThemeStyle.AlternatingRowsStyle.BackColor = Color.FromArgb(252, 253, 255);
 
             gridItems.CellMouseEnter += (s, e) => { if (e.RowIndex >= 0) gridItems.Cursor = Cursors.Hand; };
             gridItems.CellMouseLeave += (s, e) => { if (e.RowIndex >= 0) gridItems.Cursor = Cursors.Default; };
-        }
-
-        private async void ItemGroupPopup_Load(object sender, EventArgs e)
-        {
-            await LoadData();
         }
 
         private string GetBaseItemName(string name)
@@ -127,12 +206,12 @@ namespace Ventrix.App.Popups
 
             int total = specificItems.Count;
             int available = specificItems.Count(x => x.Status == ItemStatus.Available);
-
             int damaged = specificItems.Count(x => x.Condition == Condition.Damaged || x.Status == ItemStatus.Lost);
 
-            lblStats.Text = $"Total Units: {total}   |   Available: {available}   |   Needs Repair: {damaged}";
-            if (damaged > 0) lblStats.ForeColor = Color.IndianRed;
-            else lblStats.ForeColor = Color.FromArgb(64, 64, 64);
+            lblTotalVal.Text = total.ToString();
+            lblAvailVal.Text = available.ToString();
+            lblRepairVal.Text = damaged.ToString();
+            lblRepairVal.ForeColor = damaged > 0 ? Color.FromArgb(225, 29, 72) : Color.FromArgb(15, 23, 42);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -214,13 +293,23 @@ namespace Ventrix.App.Popups
                 string colName = gridItems.Columns[e.ColumnIndex].Name;
                 string value = e.Value.ToString();
 
-                e.CellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+                e.CellStyle.Font = new Font("Segoe UI Semibold", 10F);
+                e.CellStyle.ForeColor = Color.FromArgb(51, 65, 85);
 
                 if (colName == "Status" || colName == "Condition")
                 {
-                    if (value == "Available" || value == "Good") e.CellStyle.ForeColor = Color.MediumSeaGreen;
-                    else if (value == "Borrowed") e.CellStyle.ForeColor = Color.DarkOrange;
-                    else if (value == "Damaged" || value == "Missing" || value == "Lost") e.CellStyle.ForeColor = Color.IndianRed;
+                    if (value == "Available" || value == "Good")
+                    {
+                        e.CellStyle.ForeColor = Color.FromArgb(16, 185, 129);
+                    }
+                    else if (value == "Borrowed")
+                    {
+                        e.CellStyle.ForeColor = Color.FromArgb(217, 119, 6);
+                    }
+                    else if (value == "Damaged" || value == "Missing" || value == "Lost")
+                    {
+                        e.CellStyle.ForeColor = Color.FromArgb(239, 68, 68);
+                    }
                 }
             }
         }
@@ -247,7 +336,7 @@ namespace Ventrix.App.Popups
             if (gridItems.SelectedRows.Count == 0) return;
 
             int id = Convert.ToInt32(gridItems.SelectedRows[0].Cells["ID"].Value);
-            string exactName = gridItems.SelectedRows[0].Cells["Item"].Value.ToString();
+            string exactName = gridItems.SelectedRows[0].Cells["ExactName"].Value.ToString();
 
             if (MessageBox.Show($"Are you sure you want to permanently delete {exactName} (Unit #{id})?", "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
@@ -256,9 +345,8 @@ namespace Ventrix.App.Popups
 
                 if (gridItems.Rows.Count == 0)
                 {
-                    MessageBox.Show($"All units for '{_itemName}' have been deleted.", "Ventrix System", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    MessageBox.Show($"All units for '{_itemName}' have been deleted.", "System", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await ClosePopupAsync(DialogResult.OK);
                 }
             }
         }
