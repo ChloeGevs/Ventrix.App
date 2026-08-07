@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace Ventrix.App
@@ -58,12 +59,12 @@ namespace Ventrix.App
             pnlInputContainer = new Guna.UI2.WinForms.Guna2Panel();
             lblEquipmentList = new Guna.UI2.WinForms.Guna2HtmlLabel();
             lblGradeLevelTitle = new Guna.UI2.WinForms.Guna2HtmlLabel();
-            lblCreateAccount = new Guna.UI2.WinForms.Guna2HtmlLabel();
+            lblCreateAccount = new System.Windows.Forms.Label();
             btnAdminToggle = new Guna.UI2.WinForms.Guna2Button();
             btnStudentToggle = new Guna.UI2.WinForms.Guna2Button();
             lblLoginHeader = new Guna.UI2.WinForms.Guna2HtmlLabel();
             txtStudentId = new Guna.UI2.WinForms.Guna2TextBox();
-            txtPassword = new Guna.UI2.WinForms.Guna2TextBox(); // Restored declaration control
+            txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
             cmbListEquipments = new Guna.UI2.WinForms.Guna2ComboBox();
             lblQuantity = new Guna.UI2.WinForms.Guna2HtmlLabel();
             numQuantity = new Guna.UI2.WinForms.Guna2NumericUpDown();
@@ -174,21 +175,21 @@ namespace Ventrix.App
             pnlLoginCard.Controls.Add(btnStudentToggle);
             pnlLoginCard.Controls.Add(lblLoginHeader);
             pnlLoginCard.Controls.Add(txtStudentId);
-            pnlLoginCard.Controls.Add(txtPassword); // Added back to container children controls
+            pnlLoginCard.Controls.Add(txtPassword);
             pnlLoginCard.Controls.Add(btnReturn);
             pnlLoginCard.Controls.Add(btnBorrow);
             pnlLoginCard.Controls.Add(btnLogin);
             pnlLoginCard.CustomizableEdges = customizableEdges27;
             pnlLoginCard.FillColor = Color.White;
-            pnlLoginCard.Location = new Point(40, 35);
+            pnlLoginCard.Location = new Point(45, 20); // Centered inside pnlRightContainer (640 width - 550 width = 90 / 2 = 45)
             pnlLoginCard.Name = "pnlLoginCard";
             pnlLoginCard.ShadowDecoration.BorderRadius = 16;
-            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(25, 0, 0, 0); 
+            pnlLoginCard.ShadowDecoration.Color = Color.FromArgb(25, 0, 0, 0);
             pnlLoginCard.ShadowDecoration.CustomizableEdges = customizableEdges28;
             pnlLoginCard.ShadowDecoration.Enabled = true;
-            pnlLoginCard.ShadowDecoration.Depth = 15; 
+            pnlLoginCard.ShadowDecoration.Depth = 15;
             pnlLoginCard.ShadowDecoration.Shadow = new Padding(3, 3, 15, 15);
-            pnlLoginCard.Size = new Size(560, 780);
+            pnlLoginCard.Size = new Size(550, 810);
             pnlLoginCard.TabIndex = 0;
 
             // 
@@ -211,7 +212,7 @@ namespace Ventrix.App
             pnlInputContainer.Controls.Add(btnClearCart);
             pnlInputContainer.CustomizableEdges = customizableEdges31;
             pnlInputContainer.FillColor = Color.FromArgb(249, 250, 251);
-            pnlInputContainer.Location = new Point(25, 195);
+            pnlInputContainer.Location = new Point(20, 195);
             pnlInputContainer.Name = "pnlInputContainer";
             pnlInputContainer.ShadowDecoration.CustomizableEdges = customizableEdges32;
             pnlInputContainer.Size = new Size(510, 500);
@@ -226,7 +227,7 @@ namespace Ventrix.App
             lblLoginHeader.ForeColor = Color.FromArgb(31, 41, 55);
             lblLoginHeader.Location = new Point(0, 25);
             lblLoginHeader.Name = "lblLoginHeader";
-            lblLoginHeader.Size = new Size(560, 40);
+            lblLoginHeader.Size = new Size(550, 40);
             lblLoginHeader.TabIndex = 13;
             lblLoginHeader.Text = "Borrowing Portal";
             lblLoginHeader.TextAlignment = ContentAlignment.MiddleCenter;
@@ -239,10 +240,10 @@ namespace Ventrix.App
             btnAdminToggle.CustomizableEdges = customizableEdges1;
             btnAdminToggle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             btnAdminToggle.ForeColor = Color.White;
-            btnAdminToggle.Location = new Point(25, 75);
+            btnAdminToggle.Location = new Point(20, 75);
             btnAdminToggle.Name = "btnAdminToggle";
             btnAdminToggle.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            btnAdminToggle.Size = new Size(245, 38);
+            btnAdminToggle.Size = new Size(248, 38);
             btnAdminToggle.TabIndex = 1;
             btnAdminToggle.Text = "Admin Mode";
 
@@ -254,10 +255,10 @@ namespace Ventrix.App
             btnStudentToggle.CustomizableEdges = customizableEdges3;
             btnStudentToggle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             btnStudentToggle.ForeColor = Color.White;
-            btnStudentToggle.Location = new Point(290, 75);
+            btnStudentToggle.Location = new Point(282, 75);
             btnStudentToggle.Name = "btnStudentToggle";
             btnStudentToggle.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            btnStudentToggle.Size = new Size(245, 38);
+            btnStudentToggle.Size = new Size(248, 38);
             btnStudentToggle.TabIndex = 0;
             btnStudentToggle.Text = "Student Mode";
 
@@ -273,7 +274,7 @@ namespace Ventrix.App
             txtStudentId.FocusedState.BorderColor = Color.FromArgb(37, 99, 235);
             txtStudentId.IconLeft = Properties.Resources.user;
             txtStudentId.IconLeftOffset = new Point(5, 0);
-            txtStudentId.Location = new Point(25, 130);
+            txtStudentId.Location = new Point(20, 130);
             txtStudentId.Margin = new Padding(3, 4, 3, 4);
             txtStudentId.Name = "txtStudentId";
             txtStudentId.PlaceholderText = "Enter ID Number";
@@ -283,7 +284,7 @@ namespace Ventrix.App
             txtStudentId.TextOffset = new Point(5, 0);
 
             // 
-            // txtPassword (Restored completely for Admin Mode access)
+            // txtPassword
             // 
             txtPassword.BorderColor = Color.FromArgb(209, 213, 219);
             txtPassword.BorderRadius = 8;
@@ -296,7 +297,7 @@ namespace Ventrix.App
             txtPassword.IconLeft = Properties.Resources.locked;
             txtPassword.IconLeftOffset = new Point(5, 0);
             txtPassword.IconRight = Properties.Resources.eye;
-            txtPassword.Location = new Point(25, 195);
+            txtPassword.Location = new Point(20, 195);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '●';
@@ -497,7 +498,7 @@ namespace Ventrix.App
             btnLogin.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
             btnLogin.HoverState.FillColor = Color.FromArgb(29, 78, 216);
-            btnLogin.Location = new Point(25, 710);
+            btnLogin.Location = new Point(20, 710);
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges18;
             btnLogin.Size = new Size(510, 48);
@@ -515,10 +516,10 @@ namespace Ventrix.App
             btnReturn.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
             btnReturn.ForeColor = Color.FromArgb(31, 41, 55);
             btnReturn.HoverState.FillColor = Color.FromArgb(229, 231, 235);
-            btnReturn.Location = new Point(25, 710);
+            btnReturn.Location = new Point(20, 710);
             btnReturn.Name = "btnReturn";
             btnReturn.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            btnReturn.Size = new Size(240, 48);
+            btnReturn.Size = new Size(245, 48);
             btnReturn.TabIndex = 7;
             btnReturn.Text = "Return Items";
 
@@ -532,10 +533,10 @@ namespace Ventrix.App
             btnBorrow.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
             btnBorrow.ForeColor = Color.White;
             btnBorrow.HoverState.FillColor = Color.FromArgb(29, 78, 216);
-            btnBorrow.Location = new Point(280, 710);
+            btnBorrow.Location = new Point(285, 710);
             btnBorrow.Name = "btnBorrow";
             btnBorrow.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            btnBorrow.Size = new Size(255, 48);
+            btnBorrow.Size = new Size(245, 48);
             btnBorrow.TabIndex = 8;
             btnBorrow.Text = "Checkout Request";
 
@@ -544,13 +545,13 @@ namespace Ventrix.App
             // 
             lblCreateAccount.BackColor = Color.Transparent;
             lblCreateAccount.Cursor = Cursors.Hand;
-            lblCreateAccount.Font = new Font("Segoe UI", 9.5F);
+            lblCreateAccount.Font = new Font("Segoe UI", 9F);
             lblCreateAccount.ForeColor = Color.FromArgb(156, 163, 175);
-            lblCreateAccount.Location = new Point(140, 785);
             lblCreateAccount.Name = "lblCreateAccount";
-            lblCreateAccount.Size = new Size(280, 25);
-            lblCreateAccount.TabIndex = 12;
+            lblCreateAccount.Size = new Size(320, 22);
             lblCreateAccount.Text = "Need an account? See administrator.";
+            lblCreateAccount.TextAlign = ContentAlignment.MiddleCenter;
+            lblCreateAccount.Location = new Point((pnlLoginCard.Width - lblCreateAccount.Width) / 2, 768);
 
             // 
             // BorrowerPortal
@@ -602,7 +603,7 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2ComboBox cmbGradeLevel;
         private Guna.UI2.WinForms.Guna2Button btnAddToCart;
         private Guna.UI2.WinForms.Guna2Button btnClearCart;
-        private Guna.UI2.WinForms.Guna2HtmlLabel lblCreateAccount;
+        private System.Windows.Forms.Label lblCreateAccount;
         private System.Windows.Forms.FlowLayoutPanel flwCartContainer;
     }
 }

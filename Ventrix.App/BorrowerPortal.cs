@@ -163,7 +163,8 @@ namespace Ventrix.App
             var backupService = new DatabaseBackupService();
             _ = backupService.RunDailyBackupAsync();
 
-            await ToggleMode("Admin");
+            await ToggleMode("Student");
+            await EnterBorrowMode();
 
             // Force an immediate layout update so the Guna shadow renders correctly before showing
             pnlLoginCard.Refresh();
@@ -969,8 +970,32 @@ namespace Ventrix.App
 
         
         private void SetupFocusHighlighting() { }
-        private void TxtPassword_IconRightClick(object sender, EventArgs e) { }
-        private void txtPassword_MouseMove(object sender, MouseEventArgs e) { }
+        private void TxtPassword_IconRightClick(object sender, EventArgs e)
+        {
+            // Toggle system password mask state
+            txtPassword.UseSystemPasswordChar = !txtPassword.UseSystemPasswordChar;
+
+            // Explicitly update the character mask so the view updates instantly
+            if (txtPassword.UseSystemPasswordChar)
+            {
+                txtPassword.PasswordChar = '●';
+            }
+            else
+            {
+                txtPassword.PasswordChar = '\0'; // Reveals the plain text
+            }
+        }
+        private void txtPassword_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.X >= txtPassword.Width - 40)
+            {
+                txtPassword.Cursor = Cursors.Hand;
+            }
+            else
+            {
+                txtPassword.Cursor = Cursors.IBeam; // Standard text input cursor
+            }
+        }
         private void CmbGradeLevel_SelectedIndexChanged(object sender, EventArgs e) { }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
