@@ -218,7 +218,7 @@ namespace Ventrix.App
             btnHome.CustomizableEdges = customizableEdges5;
             btnHome.Font = new Font("Segoe UI", 9F);
             btnHome.ForeColor = Color.White;
-            btnHome.Image = (Image)resources.GetObject("btnHome.Image");
+            btnHome.Image = Properties.Resources.home;
             btnHome.ImageAlign = HorizontalAlignment.Left;
             btnHome.Location = new Point(30, 180);
             btnHome.Name = "btnHome";

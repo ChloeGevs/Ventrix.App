@@ -49,6 +49,7 @@ namespace Ventrix.App
         private const int historyPageSize = 100;
         private Guna2Transition viewTransition;
         private Panel loadingOverlay;
+        private Label lblDateSeparator;
 
 
         private string historySortColumn = "Borrower";
@@ -63,6 +64,7 @@ namespace Ventrix.App
         private Guna.UI2.WinForms.Guna2Button btnActionsMenu;
         private ContextMenuStrip inventoryActionsMenu;
         private Label lblPageInfo;
+        private readonly BorrowerPortal? _borrowerPortalInstance;
 
         public AdminDashboard(InventoryService inventoryService, BorrowService borrowService, UserService userService, BorrowerPortal? borrowerPortal = null)
         {
@@ -469,7 +471,11 @@ namespace Ventrix.App
             };
 
             if (btnClearActivity != null) btnClearActivity.Click += async (s, e) => await ClearRecentActivity();
-            if (cmbAccountActions != null) cmbAccountActions.SelectedIndexChanged += CmbAccountActions_SelectedIndexChanged;
+            if (cmbAccountActions != null)
+            {
+                cmbAccountActions.SelectedIndexChanged -= CmbAccountActions_SelectedIndexChanged; // Prevent duplicate binding
+                cmbAccountActions.SelectedIndexChanged += CmbAccountActions_SelectedIndexChanged;
+            }
             if (badgeHealth != null) { badgeHealth.Cursor = Cursors.Hand; badgeHealth.Click += async (s, e) => await LblUrgentHeader_Click(s, e); }
 
             if (txtSearch != null)
@@ -1335,6 +1341,22 @@ namespace Ventrix.App
         dtpStartDate.Location = new DrawPoint(leftTracker, topRowY + 4);
         leftTracker = dtpStartDate.Right + 10;
     }
+
+    if (lblDateSeparator == null)
+    {
+        lblDateSeparator = new Label
+        {
+            Text = "to",
+            AutoSize = true,
+            Font = new DrawFont("Segoe UI", 9.5F),
+            ForeColor = Color.FromArgb(100, 116, 139)
+        };
+        pnlHistory.Controls.Add(lblDateSeparator);
+    }
+    lblDateSeparator.Parent = pnlHistory;
+    lblDateSeparator.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+    lblDateSeparator.Location = new DrawPoint(leftTracker, topRowY + 10);
+    leftTracker = lblDateSeparator.Right + 10;
 
     if (dtpEndDate != null)
     {
@@ -2685,11 +2707,32 @@ flowRecentActivity?.Controls.Add(lblActivityHeader);
             }
         }
 
-        private void CmbAccountActions_SelectedIndexChanged(object sender, EventArgs e)
+        private async void CmbAccountActions_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbAccountActions?.SelectedItem?.ToString() == "Sign out")
             {
-                SignOutAdmin();
+                if (MessageBox.Show("Are you sure you want to sign out?", "Ventrix System", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    isSigningOut = true;
+
+                    if (_borrowerPortalInstance != null && !_borrowerPortalInstance.IsDisposed)
+                    {
+                        _borrowerPortalInstance.Show();
+                        _borrowerPortalInstance.ReturnToMainScreen();
+                        _borrowerPortalInstance.BringToFront();
+                    }
+                    else
+                    {
+                        var portal = new BorrowerPortal(_inventoryService, _borrowService, _userService);
+                        portal.Show();
+                    }
+
+                    this.Close();
+                }
+                else
+                {
+                    cmbAccountActions.SelectedIndex = -1;
+                }
             }
         }
         #endregion
