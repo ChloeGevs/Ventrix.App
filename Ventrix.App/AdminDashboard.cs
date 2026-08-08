@@ -74,6 +74,7 @@ namespace Ventrix.App
             _borrowerPortal = borrowerPortal;
 
             InitializeComponent();
+            ApplyRoundedCorners(15);
             SetupHistoryAdvancedControls();
             ThemeManager.Initialize(this);
             ThemeManager.FixTransparency(this);
@@ -240,7 +241,7 @@ namespace Ventrix.App
             // 1. FORM SETUP & RESIZING LOGIC
             // =================================================================================
             FormClosed += (s, e) => { if (!isSigningOut) System.Windows.Forms.Application.Exit(); };
-            this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); };
+            this.Resize += (s, e) => { if (this.WindowState != FormWindowState.Minimized) RefreshLayout(); ApplyRoundedCorners(15); };
 
             if (flowRecentActivity != null)
             {
@@ -1323,92 +1324,112 @@ namespace Ventrix.App
             }
         }
 
-        private void ArrangeHistoryView()
-{
-    if (pnlHistory == null) return;
-
-    int topRowY = 20;
-    int margin = 25;
-    int leftTracker = margin;
-
-    // ========================================================
-    // 1. Date Pickers & Filter Button Group (Left-Aligned)
-    // ========================================================
-    if (dtpStartDate != null)
-    {
-        dtpStartDate.Parent = pnlHistory;
-        dtpStartDate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        dtpStartDate.Location = new DrawPoint(leftTracker, topRowY + 4);
-        leftTracker = dtpStartDate.Right + 10;
-    }
-
-    if (lblDateSeparator == null)
-    {
-        lblDateSeparator = new Label
+        private void ApplyRoundedCorners(int radius)
         {
-            Text = "to",
-            AutoSize = true,
-            Font = new DrawFont("Segoe UI", 9.5F),
-            ForeColor = Color.FromArgb(100, 116, 139)
-        };
-        pnlHistory.Controls.Add(lblDateSeparator);
-    }
-    lblDateSeparator.Parent = pnlHistory;
-    lblDateSeparator.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-    lblDateSeparator.Location = new DrawPoint(leftTracker, topRowY + 10);
-    leftTracker = lblDateSeparator.Right + 10;
+            // Only apply when not minimized to avoid rendering glitches
+            if (this.WindowState == FormWindowState.Minimized) return;
 
-    if (dtpEndDate != null)
-    {
-        dtpEndDate.Parent = pnlHistory;
-        dtpEndDate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        dtpEndDate.Location = new DrawPoint(leftTracker, topRowY + 4);
-        leftTracker = dtpEndDate.Right + 15;
-    }
-
-    if (btnFilterDates != null)
-    {
-        btnFilterDates.Parent = pnlHistory;
-        btnFilterDates.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        btnFilterDates.Location = new DrawPoint(leftTracker, topRowY);
-    }
-
-    // ========================================================
-    // 2. DataGridView Layout
-    // ========================================================
-    int gridY = topRowY + 55;
-    if (dgvHistory != null)
-    {
-        dgvHistory.Parent = pnlHistory;
-        dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-        dgvHistory.Location = new DrawPoint(margin, gridY);
-        dgvHistory.Size = new DrawSize(pnlHistory.Width - (margin * 2), pnlHistory.Height - gridY - margin);
-        dgvHistory.BringToFront();
-        
-        if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlHistory)
-        {
-            lblEmptyState.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-            lblEmptyState.Bounds = dgvHistory.Bounds;
-            lblEmptyState.BringToFront();
-        }
-    }
-
-            // ========================================================
-            // 3. Actions Menu (Right-Aligned - Brought to absolute front)
-            // ========================================================
-            if (btnActionsMenu != null && btnActionsMenu.Visible)
+            using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
             {
-                btnActionsMenu.Parent = pnlHistory;
-                btnActionsMenu.Anchor = AnchorStyles.None; // Prevent anchoring interference with manual coordinates
+                System.Drawing.Rectangle bounds = new System.Drawing.Rectangle(0, 0, this.Width, this.Height);
+                int d = radius * 2;
 
-                // Safeguard against unrendered panel width placing the button off-screen
-                int menuX = pnlHistory.Width > 0 ? pnlHistory.Width - btnActionsMenu.Width - margin : margin;
-                btnActionsMenu.Location = new DrawPoint(Math.Max(margin, menuX), topRowY);
+                path.AddArc(bounds.X, bounds.Y, d, d, 180, 90);
+                path.AddArc(bounds.X + bounds.Width - d, bounds.Y, d, d, 270, 90);
+                path.AddArc(bounds.X + bounds.Width - d, bounds.Y + bounds.Height - d, d, d, 0, 90);
+                path.AddArc(bounds.X, bounds.Y + bounds.Height - d, d, d, 90, 90);
+                path.CloseFigure();
 
-                // Must be called last so it floats cleanly on top of the panel components
-                btnActionsMenu.BringToFront();
+                this.Region = new System.Drawing.Region(path);
             }
         }
+
+        private void ArrangeHistoryView()
+        {
+            if (pnlHistory == null) return;
+
+            int topRowY = 20;
+            int margin = 25;
+            int leftTracker = margin;
+
+            // ========================================================
+            // 1. Date Pickers & Filter Button Group (Left-Aligned)
+            // ========================================================
+            if (dtpStartDate != null)
+            {
+                dtpStartDate.Parent = pnlHistory;
+                dtpStartDate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                dtpStartDate.Location = new DrawPoint(leftTracker, topRowY + 4);
+                leftTracker = dtpStartDate.Right + 10;
+            }
+
+            if (lblDateSeparator == null)
+            {
+                lblDateSeparator = new Label
+                {
+                    Text = "to",
+                    AutoSize = true,
+                    Font = new DrawFont("Segoe UI", 9.5F),
+                    ForeColor = Color.FromArgb(100, 116, 139)
+                };
+                pnlHistory.Controls.Add(lblDateSeparator);
+            }
+            lblDateSeparator.Parent = pnlHistory;
+            lblDateSeparator.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            lblDateSeparator.Location = new DrawPoint(leftTracker, topRowY + 10);
+            leftTracker = lblDateSeparator.Right + 10;
+
+            if (dtpEndDate != null)
+            {
+                dtpEndDate.Parent = pnlHistory;
+                dtpEndDate.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                dtpEndDate.Location = new DrawPoint(leftTracker, topRowY + 4);
+                leftTracker = dtpEndDate.Right + 15;
+            }
+
+            if (btnFilterDates != null)
+            {
+                btnFilterDates.Parent = pnlHistory;
+                btnFilterDates.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                btnFilterDates.Location = new DrawPoint(leftTracker, topRowY);
+            }
+
+            // ========================================================
+            // 2. DataGridView Layout
+            // ========================================================
+            int gridY = topRowY + 55;
+            if (dgvHistory != null)
+            {
+                dgvHistory.Parent = pnlHistory;
+                dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+                dgvHistory.Location = new DrawPoint(margin, gridY);
+                dgvHistory.Size = new DrawSize(pnlHistory.Width - (margin * 2), pnlHistory.Height - gridY - margin);
+                dgvHistory.BringToFront();
+        
+                if (lblEmptyState != null && lblEmptyState.Visible && lblEmptyState.Parent == pnlHistory)
+                {
+                    lblEmptyState.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                    lblEmptyState.Bounds = dgvHistory.Bounds;
+                    lblEmptyState.BringToFront();
+                }
+            }
+
+             // ========================================================
+             // 3. Actions Menu (Right-Aligned - Brought to absolute front)
+             // ========================================================
+             if (btnActionsMenu != null && btnActionsMenu.Visible)
+             {
+                  btnActionsMenu.Parent = pnlHistory;
+                  btnActionsMenu.Anchor = AnchorStyles.None; // Prevent anchoring interference with manual coordinates
+
+                  // Safeguard against unrendered panel width placing the button off-screen
+                  int menuX = pnlHistory.Width > 0 ? pnlHistory.Width - btnActionsMenu.Width - margin : margin;
+                  btnActionsMenu.Location = new DrawPoint(Math.Max(margin, menuX), topRowY);
+
+                  // Must be called last so it floats cleanly on top of the panel components
+                  btnActionsMenu.BringToFront();
+             }
+         }
 
         private async Task AnimateCountUp(Ventrix.App.Controls.MetricCard card, string title, int targetValue, DrawColor color)
         {

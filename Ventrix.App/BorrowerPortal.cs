@@ -424,6 +424,7 @@ namespace Ventrix.App
                 cmbGradeLevel.SelectedIndex = -1;
                 return;
             }
+
             int requestedQty = (int)numQuantity.Value;
             string baseItemName = cmbListEquipments.Text;
 
@@ -432,9 +433,19 @@ namespace Ventrix.App
             int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
             int cartTotal = _cart.Sum(c => c.Quantity);
 
-            if (userAccount.Role == UserRole.Student && (currentlyHolding + currentlyPending + cartTotal + requestedQty > 3))
+            // Enforce role-based maximum limits (Students max 3 total items, Faculty max 50)
+            int maxAllowedTotal = (userAccount.Role == UserRole.Student) ? 3 : 50;
+            int existingQtyInCart = _cart.Where(c => c.BaseItemName == baseItemName).Sum(c => c.Quantity);
+            int prospectiveTotal = currentlyHolding + currentlyPending + cartTotal + requestedQty;
+
+            if (prospectiveTotal > maxAllowedTotal)
             {
-                MessageBox.Show($"Limit reached!\n\nYou currently hold: {currentlyHolding} item(s)\nPending Requests: {currentlyPending}\nItems in Cart: {cartTotal}\n\nYou can only have up to 3 items at a time.", "Limit Reached", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                int allowedForThisRequest = Math.Max(0, maxAllowedTotal - (currentlyHolding + currentlyPending + cartTotal));
+                string limitMessage = userAccount.Role == UserRole.Student
+                    ? $"Limit reached!\n\nYou currently hold: {currentlyHolding}\nPending Requests: {currentlyPending}\nItems in Cart: {cartTotal}\n\nStudents can only have up to 3 items total at a time."
+                    : $"Faculty limit reached (Max 50 items).";
+
+                MessageBox.Show(limitMessage, "Limit Reached", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -488,7 +499,7 @@ namespace Ventrix.App
                         Size = new Size(226, 65),
                         BorderRadius = 8,
                         FillColor = Color.White,
-                        BorderColor = Color.FromArgb(229, 231, 235), // Subtle border
+                        BorderColor = Color.FromArgb(229, 231, 235),
                         BorderThickness = 1,
                         Margin = new Padding(0, 0, 0, 6)
                     };
@@ -498,13 +509,13 @@ namespace Ventrix.App
                     {
                         Size = new Size(45, 45),
                         BorderRadius = 6,
-                        FillColor = Color.FromArgb(243, 244, 246), // Gray placeholder
+                        FillColor = Color.FromArgb(243, 244, 246),
                         Location = new Point(8, 10)
                     };
 
                     Label lblIcon = new Label
                     {
-                        Text = "📦", // Placeholder for actual equipment image/icon
+                        Text = "🛒",
                         Font = new Font("Segoe UI", 16F),
                         Dock = DockStyle.Fill,
                         TextAlign = ContentAlignment.MiddleCenter,
@@ -524,20 +535,20 @@ namespace Ventrix.App
                         BackColor = Color.Transparent
                     };
 
-                    // 4. FOOLPROOF Interactive Quantity Selector [ - ] [ 1 ] [ + ]
                     var currentItem = item; // Safe closure
 
+                    // 4. Perfect Centered Interactive Quantity Selector [ − ] [ Qty ] [ + ]
                     Label btnMinus = new Label
                     {
-                        Text = "−", // IMPORTANT: Using the true mathematical minus symbol here, not a hyphen!
-                        Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                        Text = "−",
+                        Font = new Font("Segoe UI", 11F, FontStyle.Bold),
                         ForeColor = currentItem.Quantity > 1 ? Color.FromArgb(75, 85, 99) : Color.FromArgb(209, 213, 219),
                         BackColor = Color.FromArgb(243, 244, 246),
-                        Size = new Size(26, 26),
+                        Size = new Size(24, 24),
                         Location = new Point(60, 32),
                         Cursor = currentItem.Quantity > 1 ? Cursors.Hand : Cursors.Default,
                         TextAlign = ContentAlignment.MiddleCenter,
-                        Padding = new Padding(0, 0, 0, 2) // Nudges the text UP by 2 pixels to perfectly center it
+                        UseCompatibleTextRendering = true // Forces accurate engine-level vertical/horizontal alignment
                     };
 
                     Label lblQty = new Label
@@ -545,26 +556,27 @@ namespace Ventrix.App
                         Text = currentItem.Quantity.ToString(),
                         Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
                         ForeColor = Color.FromArgb(31, 41, 55),
-                        Size = new Size(26, 26),
-                        Location = new Point(86, 32),
+                        Size = new Size(30, 24),
+                        Location = new Point(84, 32),
                         TextAlign = ContentAlignment.MiddleCenter,
-                        BackColor = Color.Transparent
+                        BackColor = Color.Transparent,
+                        UseCompatibleTextRendering = true
                     };
 
                     Label btnPlus = new Label
                     {
                         Text = "+",
-                        Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                        Font = new Font("Segoe UI", 11F, FontStyle.Bold),
                         ForeColor = Color.FromArgb(75, 85, 99),
                         BackColor = Color.FromArgb(243, 244, 246),
-                        Size = new Size(26, 26),
-                        Location = new Point(112, 32),
+                        Size = new Size(24, 24),
+                        Location = new Point(114, 32),
                         Cursor = Cursors.Hand,
                         TextAlign = ContentAlignment.MiddleCenter,
-                        Padding = new Padding(0, 0, 0, 2) // Nudges the text UP by 2 pixels
+                        UseCompatibleTextRendering = true // Forces accurate engine-level vertical/horizontal alignment
                     };
 
-                    // Quantity Events
+                    // Quantity Events with Maximum Limit Validations
                     btnMinus.Click += async (s, ev) =>
                     {
                         if (currentItem.Quantity > 1)
@@ -577,13 +589,27 @@ namespace Ventrix.App
 
                     btnPlus.Click += async (s, ev) =>
                     {
+                        string studentId = txtStudentId.Text.Trim();
+                        var userAccount = (await _userService.GetAllUsersAsync()).FirstOrDefault(u => u.UserId == studentId);
+                        int maxAllowedTotal = (userAccount != null && userAccount.Role == UserRole.Student) ? 3 : 50;
+
+                        var allUserRecords = (await _borrowService.GetAllBorrowRecordsAsync()).Where(b => b.BorrowerId == studentId).ToList();
+                        int currentlyHolding = allUserRecords.Count(b => b.Status == BorrowStatus.Active || b.Status == BorrowStatus.Overdue || b.Status == BorrowStatus.PendingReturn);
+                        int currentlyPending = allUserRecords.Count(b => b.Status == BorrowStatus.Pending);
+                        int cartTotalWithoutThisItem = _cart.Where(c => c != currentItem).Sum(c => c.Quantity);
+
+                        if (currentlyHolding + currentlyPending + cartTotalWithoutThisItem + currentItem.Quantity + 1 > maxAllowedTotal)
+                        {
+                            MessageBox.Show($"Cannot increase quantity. Maximum item limit ({maxAllowedTotal}) reached.", "Limit Reached", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
                         currentItem.Quantity++;
                         UpdateCartUI();
                         await ValidateUserRoleAndLimits();
                     };
 
                     // 5. Delete / Remove Item Button (✕)
-                    // Also changed to a Label to ensure the 'X' doesn't disappear
                     Label btnRemoveItem = new Label
                     {
                         Text = "✕",
@@ -593,10 +619,10 @@ namespace Ventrix.App
                         Size = new Size(24, 24),
                         Location = new Point(195, 8),
                         Cursor = Cursors.Hand,
-                        TextAlign = ContentAlignment.MiddleCenter
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        UseCompatibleTextRendering = true
                     };
 
-                    // Simple hover effect for the remove label
                     btnRemoveItem.MouseEnter += (s, ev) => { btnRemoveItem.ForeColor = Color.FromArgb(239, 68, 68); };
                     btnRemoveItem.MouseLeave += (s, ev) => { btnRemoveItem.ForeColor = Color.FromArgb(156, 163, 175); };
 
@@ -975,14 +1001,16 @@ namespace Ventrix.App
             // Toggle system password mask state
             txtPassword.UseSystemPasswordChar = !txtPassword.UseSystemPasswordChar;
 
-            // Explicitly update the character mask so the view updates instantly
+            // Explicitly update the character mask and switch the right icon asset
             if (txtPassword.UseSystemPasswordChar)
             {
                 txtPassword.PasswordChar = '●';
+                txtPassword.IconRight = Properties.Resources.eye; // Show open eye when password is hidden
             }
             else
             {
                 txtPassword.PasswordChar = '\0'; // Reveals the plain text
+                txtPassword.IconRight = Properties.Resources.hide; // Show closed/slash eye when password is visible
             }
         }
         private void txtPassword_MouseMove(object sender, MouseEventArgs e)
